@@ -118,26 +118,20 @@ public class AudioPlayerService: AudioPlayerServiceProtocol {
     private func setupEngineCallbacks() {
         engine.onTimeControlStatusChanged = { [weak self] playing, buffering in
             guard let self = self else { return }
-            if playing {
-                self.isPlaying = true
-                self.isBuffering = buffering
-                if !buffering { self.retryCount = 0 }
-            } else {
-                // A `.paused` transition only ends playback if the *user* asked
-                // for it. AVPlayer reports `.paused` transiently while it
-                // replaces items (queue top-up, track advance, item rebuild),
-                // and clearing the flag there used to strand the player: the
-                // resume path in handleItemReady was gated on this very flag.
-                // When we still intend to play, treat it as buffering so the
-                // UI shows a spinner rather than a paused state, and let
-                // handleItemReady restart the transport.
-                if self.isPlayRequested && !self.isExplicitlyPaused {
-                    self.isPlaying = true
-                    self.isBuffering = true
-                } else {
-                    self.isPlaying = false
-                    self.isBuffering = false
-                }
+            // The whole "plays for a second then pauses" bug lived in this
+            // branch. The rule now lives in PlaybackTransportState so it can be
+            // asserted without a live AVPlayer; see that type for why the
+            // transient `.paused` must not be allowed to revoke intent.
+            let resolved = PlaybackTransportState.resolve(
+                transportPlaying: playing,
+                transportBuffering: buffering,
+                isPlayRequested: self.isPlayRequested,
+                isExplicitlyPaused: self.isExplicitlyPaused
+            )
+            self.isPlaying = resolved.isPlaying
+            self.isBuffering = resolved.isBuffering
+            if case .playing(let isBuffering) = resolved, !isBuffering {
+                self.retryCount = 0
             }
             self.syncWidgetState()
         }

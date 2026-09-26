@@ -107,7 +107,7 @@ jobs:
         run: |
           . .github/scripts/step-tree.sh
           step_tree "Verify Swift iOS Package" audit \
-            "checkout:Checkout Repository|audit:Security Audit|resolve:Resolve Package Dependencies|build:Build & Typecheck Package" \
+            "checkout:Checkout Repository|audit:Security Audit|resolve:Resolve Package Dependencies|build:Build & Typecheck Package|test:Run Unit Tests" \
             "checkout=${{ steps.checkout.outcome }}"
           ./scripts/security-audit.sh
 
@@ -116,7 +116,7 @@ jobs:
         run: |
           . .github/scripts/step-tree.sh
           step_tree "Verify Swift iOS Package" resolve \
-            "checkout:Checkout Repository|audit:Security Audit|resolve:Resolve Package Dependencies|build:Build & Typecheck Package" \
+            "checkout:Checkout Repository|audit:Security Audit|resolve:Resolve Package Dependencies|build:Build & Typecheck Package|test:Run Unit Tests" \
             "checkout=${{ steps.checkout.outcome }};audit=${{ steps.audit.outcome }}"
           swift package resolve
 
@@ -125,9 +125,39 @@ jobs:
         run: |
           . .github/scripts/step-tree.sh
           step_tree "Verify Swift iOS Package" build \
-            "checkout:Checkout Repository|audit:Security Audit|resolve:Resolve Package Dependencies|build:Build & Typecheck Package" \
+            "checkout:Checkout Repository|audit:Security Audit|resolve:Resolve Package Dependencies|build:Build & Typecheck Package|test:Run Unit Tests" \
             "checkout=${{ steps.checkout.outcome }};audit=${{ steps.audit.outcome }};resolve=${{ steps.resolve.outcome }}"
           xcodebuild build-for-testing -scheme Audiobookphile -destination "generic/platform=iOS Simulator" CODE_SIGNING_ALLOWED=NO -quiet
+
+      # `build-for-testing` only COMPILES the test bundle; it never runs it. The
+      # App scheme's TestAction had an empty <Testables> list, so the
+      # AudiobookphileTests target was never built and never executed anywhere
+      # in CI -- the playback state machine had tests on disk that had never
+      # once run. The scheme now registers the target, and this step is what
+      # actually executes it.
+      - name: Run Unit Tests
+        id: test
+        run: |
+          . .github/scripts/step-tree.sh
+          step_tree "Verify Swift iOS Package" test \
+            "checkout:Checkout Repository|audit:Security Audit|resolve:Resolve Package Dependencies|build:Build & Typecheck Package|test:Run Unit Tests" \
+            "checkout=${{ steps.checkout.outcome }};audit=${{ steps.audit.outcome }};resolve=${{ steps.resolve.outcome }};build=${{ steps.build.outcome }}"
+          # Same simulator the Maestro e2e workflow already pins, so the runner
+          # is known to have it. xcpretty is used when present purely for
+          # readable output -- it is never allowed to mask the exit status, and
+          # a failing suite is never re-run just to produce nicer logs.
+          if command -v xcpretty >/dev/null 2>&1; then
+            set -o pipefail
+            xcodebuild test \
+              -scheme App \
+              -destination "platform=iOS Simulator,name=iPhone 17 Pro" \
+              CODE_SIGNING_ALLOWED=NO | xcpretty
+          else
+            xcodebuild test \
+              -scheme App \
+              -destination "platform=iOS Simulator,name=iPhone 17 Pro" \
+              CODE_SIGNING_ALLOWED=NO
+          fi
 
   deploy-mobile:
     name: Deploy iOS & macOS App (TestFlight / Xcode Cloud)
