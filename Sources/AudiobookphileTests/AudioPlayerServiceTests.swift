@@ -9,7 +9,15 @@ final class AudioPlayerServiceTests: XCTestCase {
     }
 
     override func tearDown() async throws {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
+        // Every test in this class drives `AudioPlayerService.shared`, a
+        // process-wide singleton holding a live AVQueuePlayer, KVO observers, a
+        // sync timer and a retry counter. Without this reset the tests inherited
+        // each other's engine state, and the swap test below failed on a COLD
+        // simulator while passing every warm run -- the signature of a
+        // cross-test race rather than a product defect. `closeSession` is the
+        // app's own teardown path, so this adds no new production surface.
+        await AudioPlayerService.shared.closeSession()
+        try? await Task.sleep(nanoseconds: 100_000_000)
     }
 
     func testInitialState() async throws {
@@ -140,16 +148,29 @@ final class AudioPlayerServiceTests: XCTestCase {
         // …then the user starts session B without closing A first.
         service.startPlayback(session: makeSession(id: "swap-B"))
 
-        // Yield so any spawned teardown task gets a chance to run (it used to
-        // run here and wipe the queue of session B).
-        await Task.yield()
-        await Task.yield()
-        try? await Task.sleep(nanoseconds: 50_000_000)
+        // The queue is built synchronously by loadQueue, but AVPlayer's own
+        // settling (and a cold simulator's first AVFoundation work) is not. A
+        // fixed sleep is a race: it passed on warm runs and failed cold, and the
+        // failure said nothing about why. Wait for the condition instead, with a
+        // bounded budget, and report the engine's own view of the world if it
+        // never arrives so the next occurrence is diagnosable.
+        let deadline = Date().addingTimeInterval(2.0)
+        while service.engine.queuedItemsCount == 0 && Date() < deadline {
+            try? await Task.sleep(nanoseconds: 25_000_000)
+        }
 
         XCTAssertEqual(service.session?.id, "swap-B")
         XCTAssertGreaterThan(
             service.engine.queuedItemsCount, 0,
-            "New session's playback queue must survive the session swap"
+            """
+            New session's playback queue must survive the session swap. \
+            session=\(service.session?.id ?? "nil") \
+            queued=\(service.engine.queuedItemsCount) \
+            currentTime=\(service.currentTime) \
+            isPlaying=\(service.isPlaying) \
+            duration=\(service.duration) \
+            trackCount=\(service.session?.audioTracks.count ?? 0)
+            """
         )
         XCTAssertTrue(service.isPlaying)
     }
