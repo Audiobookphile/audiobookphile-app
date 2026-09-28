@@ -31,6 +31,17 @@ MODE="check"
 MIN_FREE_MEM_PCT="${CI_MIN_FREE_MEM_PCT:-10}"
 MIN_FREE_SWAP_PCT="${CI_MIN_FREE_SWAP_PCT:-5}"
 MAX_LOAD_PER_CORE="${CI_MAX_LOAD_PER_CORE:-4}"
+# Load is reported but does NOT fail the gate unless this is set.
+#
+# The failure this script exists to prevent is the OOM killer taking `next dev`,
+# a Swift compiler or a simulator out mid-job. That is a MEMORY event. Load
+# average counts runnable and uninterruptible tasks, which on a workstation that
+# legitimately runs several agents at once is high as a matter of course --
+# measured at 4.1/core here with 46% of memory free and every build running at
+# full speed. Gating on it would refuse work on a perfectly healthy box, and a
+# gate that cries wolf gets disabled, which costs the real signal. Set
+# CI_GATE_ON_LOAD=1 to opt back in where load genuinely is what you are catching.
+GATE_ON_LOAD="${CI_GATE_ON_LOAD:-0}"
 
 CORES="$(sysctl -n hw.logicalcpu 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null || echo 1)"
 
@@ -99,20 +110,28 @@ echo "🖥️  Host pressure: ${MEM_PCT:-?}% memory free, ${SWAP_PCT:-?}% swap f
 echo "    thresholds: memory>=${MIN_FREE_MEM_PCT}% swap>=${MIN_FREE_SWAP_PCT}% load<=${MAX_LOAD_PER_CORE}/core"
 
 VIOLATIONS=()
+NOTES=()
 [ -n "$MEM_PCT" ] && [ "$MEM_PCT" -lt "$MIN_FREE_MEM_PCT" ] && \
   VIOLATIONS+=("only ${MEM_PCT}% of memory is free (< ${MIN_FREE_MEM_PCT}%)")
 [ -n "$SWAP_PCT" ] && [ "$SWAP_PCT" -lt "$MIN_FREE_SWAP_PCT" ] && \
   VIOLATIONS+=("only ${SWAP_PCT}% of swap is free (< ${MIN_FREE_SWAP_PCT}%) -- the host is already thrashing")
-awk -v l="$LPC" -v m="$MAX_LOAD_PER_CORE" 'BEGIN{exit !(l > m)}' && \
-  VIOLATIONS+=("load average is ${LPC} per core (> ${MAX_LOAD_PER_CORE})")
+if [ "$GATE_ON_LOAD" = "1" ]; then
+  awk -v l="$LPC" -v m="$MAX_LOAD_PER_CORE" 'BEGIN{exit !(l > m)}' && \
+    VIOLATIONS+=("load average is ${LPC} per core (> ${MAX_LOAD_PER_CORE})")
+else
+  awk -v l="$LPC" -v m="$MAX_LOAD_PER_CORE" 'BEGIN{exit !(l > m)}' && \
+    NOTES+=("load average is ${LPC} per core (> ${MAX_LOAD_PER_CORE})")
+fi
 
 if [ "${#VIOLATIONS[@]}" -eq 0 ]; then
-  echo "    ✅ host has headroom"
+  echo "    ✅ host has headroom for a build"
+  [ "${#NOTES[@]}" -gt 0 ] && echo "    ℹ️  ${NOTES[*]} (informational)"
   exit 0
 fi
 
 if [ "$MODE" = "report" ]; then
   echo "    ⚠️  under pressure: ${VIOLATIONS[*]}"
+  [ "${#NOTES[@]}" -gt 0 ] && echo "    ℹ️  ${NOTES[*]}"
   top_hogs
   exit 0
 fi
@@ -138,6 +157,6 @@ $(top_hogs)
      3. Genuinely just busy: wait, or re-run once the load average decays.
 
    To override the gate for a deliberate one-off:
-     CI_MIN_FREE_MEM_PCT=0 CI_MIN_FREE_SWAP_PCT=0 CI_MAX_LOAD_PER_CORE=999 ./scripts/host-pressure.sh
+     CI_MIN_FREE_MEM_PCT=0 CI_MIN_FREE_SWAP_PCT=0 ./scripts/host-pressure.sh
 EOF
 exit 1
