@@ -45,6 +45,29 @@ cannot go through `Skip.env`: xcconfig treats `//` as a comment, so URLs
 truncate to `http:` and the local placeholder anon key (`testkey`) gets baked
 instead — the app then sends a garbage `apikey` and every login 401s.
 
+**Do not add `ServerURL` to `Skip.env` or `ci_post_clone.sh` to work around a
+pre-fill problem** — that is the same `//`-in-xcconfig trap, one step removed
+from where it is already documented. The Info.plist patch in `run.sh` is the
+supported route, and it re-signs the app afterwards, which a `Skip.env` change
+would not.
+
+Because the server field is usually **already filled in** by that patch, the
+login flows only type the URL when it is actually empty. They test for the
+`Server URL` placeholder, which SwiftUI shows only while the field is empty:
+
+```yaml
+- runFlow:
+    when:
+      visible: "Server URL"   # placeholder visible == field needs a value
+    commands:
+      - tapOn: { id: "abp_server_url_field" }
+      - inputText: ${output.server}
+```
+
+This is what makes the flows work in both directions: a patched build skips the
+typing (and cannot append to a pre-filled field), while a cold build with no
+`ServerURL` in the Info.plist still types the URL exactly as before.
+
 Build the app for the simulator, then boot one. **The build must be code-signed
 (ad-hoc; the default for simulator destinations) — `CODE_SIGNING_ALLOWED=NO`
 breaks the login flow**: an unsigned app cannot write to the keychain, so

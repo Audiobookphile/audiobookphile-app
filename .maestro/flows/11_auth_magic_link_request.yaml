@@ -23,10 +23,16 @@ tags:
     when:
       visible: "Sign In"
     commands:
-      - tapOn:
-          id: "abp_server_url_field"
-      - inputText: ${output.server}
-      - pressKey: Enter
+      - runFlow:
+          when:
+            # See _login.yaml: the placeholder is visible only while the field is
+            # empty, so pre-filled builds (ServerURL in Skip.env) skip typing.
+            visible: "Server URL"
+          commands:
+            - tapOn:
+                id: "abp_server_url_field"
+            - inputText: ${output.server}
+            - pressKey: Enter
       - tapOn:
           id: "abp_email_field"
       - inputText: ${output.email}
