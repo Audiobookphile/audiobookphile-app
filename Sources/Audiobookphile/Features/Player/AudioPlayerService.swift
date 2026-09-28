@@ -793,7 +793,9 @@ public class AudioPlayerService: AudioPlayerServiceProtocol {
     // MARK: - Sleep Timer
 
     public func startSleepTimer(duration: TimeInterval) {
-        sleepTimer.setSleepTimer(minutes: Int(duration / 60)) { [weak self] in
+        // Seconds are passed through untouched. Rounding to whole minutes here
+        // made "End of Chapter" stop playback early -- see setSleepTimer(seconds:).
+        sleepTimer.setSleepTimer(seconds: duration) { [weak self] in
             self?.pause()
         }
     }
