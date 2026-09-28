@@ -24,10 +24,18 @@ jobs:
   lint-swift:
     name: SwiftLint
     runs-on: [self-hosted, macOS]
+    # These three jobs had no timeout, so a wedged simulator or a Gradle daemon
+    # that never returned held a self-hosted runner for the full 6-hour default.
+    # With three repos sharing one host, a single hung job starves the others.
+    timeout-minutes: 20
     steps:
       - name: Checkout Repository
         id: checkout
         uses: actions/checkout@v7
+
+      - name: Host Pressure Preflight
+        id: host
+        run: ./scripts/host-pressure.sh
 
       - name: Install SwiftLint
         id: install
@@ -50,10 +58,21 @@ jobs:
   skip-verify:
     name: Skip Cross-Platform Verify
     runs-on: [self-hosted, macOS]
+    timeout-minutes: 30
     steps:
       - name: Checkout Repository
         id: checkout
         uses: actions/checkout@v7
+
+      - name: Host Pressure Preflight
+        id: host
+        run: ./scripts/host-pressure.sh
+
+      # Recorded BEFORE the Gradle build so the reap step below can tell this
+      # job's daemons from daemons that were already on the shared host.
+      - name: Snapshot Pre-existing Build Daemons
+        id: daemons_before
+        run: ./scripts/reap-daemons.sh --snapshot "$RUNNER_TEMP/daemons-before.txt"
 
       - name: Setup Java
         id: java
@@ -80,13 +99,37 @@ jobs:
             "checkout=${{ steps.checkout.outcome }};java=${{ steps.java.outcome }};install=${{ steps.install.outcome }}"
           skip verify --fix
 
+      # `skip verify` drives a real Gradle build, and Gradle leaves behind two
+      # long-lived daemons: the Gradle daemon and the Kotlin compile daemon.
+      # On a self-hosted runner those OUTLIVE the job -- measured on this host at
+      # ~1.4 GB resident and ~440% CPU, still running long after the workflow had
+      # finished, with 8 GB of swap in use. Every later job on the same box then
+      # starts into a host that is already thrashing, which is how an unrelated
+      # change comes back red.
+      #
+      # Only the daemons that appeared during THIS job are killed: the runners for
+      # all three repos share this host with the developer's own work, and a
+      # blanket `pkill -f KotlinCompileDaemon` from CI would reach into someone
+      # else's in-flight Android build. The job's result is already recorded by
+      # the step above, so reaping can never mask a failure.
+      - name: Reap This Job's Build Daemons
+        if: always()
+        run: ./scripts/reap-daemons.sh --reap "$RUNNER_TEMP/daemons-before.txt"
+
   verify-swift:
     name: Verify Swift iOS Package
     runs-on: [self-hosted, macOS]
+    # build-for-testing plus a simulator test run on a shared, memory-constrained
+    # host. 45 is generous; the point is that it is not unbounded.
+    timeout-minutes: 45
     steps:
       - name: Checkout Repository
         id: checkout
         uses: actions/checkout@v7
+
+      - name: Host Pressure Preflight
+        id: host
+        run: ./scripts/host-pressure.sh
 
       - name: Select Xcode Toolchain
         id: toolchain
@@ -158,6 +201,17 @@ jobs:
               -destination "platform=iOS Simulator,name=iPhone 17 Pro" \
               CODE_SIGNING_ALLOWED=NO
           fi
+
+      # Booting a simulator leaves it running, and a running Simulator.app is
+      # hundreds of MB of RSS that the next job on this host inherits. Shut it
+      # down and print the host state either way, so a red build on a calm box
+      # stays distinguishable from a red build on a thrashing one.
+      - name: Simulator Hygiene & Host Postmortem
+        if: always()
+        run: |
+          echo "🧹 Shutting down simulators left running by the test run..."
+          xcrun simctl shutdown all 2>/dev/null || true
+          ./scripts/host-pressure.sh --report
 
   deploy-mobile:
     name: Deploy iOS & macOS App (TestFlight / Xcode Cloud)
