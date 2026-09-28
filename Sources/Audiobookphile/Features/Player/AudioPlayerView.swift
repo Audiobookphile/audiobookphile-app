@@ -268,6 +268,7 @@ public struct AudioPlayerView: View {
                 PlayerQuickActionsView(
                     viewModel: viewModel,
                     coverIsLight: coverIsLight,
+                    isUiLocked: isUiLocked,
                     showAddBookmark: $showAddBookmark,
                     showBookmarksList: $showBookmarksList,
                     showSleepTimer: $showSleepTimer,

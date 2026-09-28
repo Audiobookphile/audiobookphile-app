@@ -35,6 +35,13 @@ public struct PlaybackControlsView: View {
                     viewModel.jumpToChapterStart()
                 }
             )
+            // The lock is applied to EVERY transport control, not just the two jump
+            // buttons it was originally wired to. Chapter navigation and
+            // play/pause stayed live while locked, so "Lock Controls" -- whose whole
+            // purpose is not mis-touching playback -- did not actually lock
+            // playback.
+            .disabled(isUiLocked)
+            .opacity(isUiLocked ? 0.3 : 1.0)
 
             Spacer()
 
@@ -79,8 +86,8 @@ public struct PlaybackControlsView: View {
                     viewModel.jumpToNextChapter()
                 }
             )
-            .opacity(viewModel.hasNextChapter ? 1.0 : 0.3)
-            .disabled(!viewModel.hasNextChapter)
+            .opacity(isUiLocked || !viewModel.hasNextChapter ? 0.3 : 1.0)
+            .disabled(isUiLocked || !viewModel.hasNextChapter)
         }
     }
 
@@ -129,5 +136,9 @@ public struct PlaybackControlsView: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(viewModel.isPlaying ? "Pause" : "Play"))
         .accessibilityAddTraits(.isButton)
+        // Play/pause is the control most likely to be hit by accident, and it was
+        // the one most conspicuously still live while locked.
+        .disabled(isUiLocked)
+        .opacity(isUiLocked ? 0.3 : 1.0)
     }
 }

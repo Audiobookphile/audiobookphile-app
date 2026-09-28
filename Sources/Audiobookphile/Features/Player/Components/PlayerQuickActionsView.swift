@@ -16,9 +16,19 @@ public struct PlayerQuickActionsView: View {
     @Binding var showChapters: Bool
     @Binding var showAIInsights: Bool
 
+    /// When the player's Lock Controls toggle is on, this whole row is inert.
+    ///
+    /// Deliberately NOT defaulted. A defaulted `isUiLocked: Bool = false` compiles
+    /// at any call site that forgets it, which is precisely how the transport
+    /// controls ended up half-locked in the first place: the flag reached two of
+    /// the six controls it was meant to cover. Required means a new or edited call
+    /// site that omits it fails to build instead of silently unlocking.
+    var isUiLocked: Bool
+
     public init(
         viewModel: AudioPlayerViewModel,
         coverIsLight: Bool,
+        isUiLocked: Bool,
         showAddBookmark: Binding<Bool>,
         showBookmarksList: Binding<Bool>,
         showSleepTimer: Binding<Bool>,
@@ -28,6 +38,7 @@ public struct PlayerQuickActionsView: View {
     ) {
         self.viewModel = viewModel
         self.coverIsLight = coverIsLight
+        self.isUiLocked = isUiLocked
         self._showAddBookmark = showAddBookmark
         self._showBookmarksList = showBookmarksList
         self._showSleepTimer = showSleepTimer
@@ -38,6 +49,7 @@ public struct PlayerQuickActionsView: View {
 
     public var body: some View {
         VStack(spacing: 12) {
+
             // Tier 1: Primary Action Pills (Playback Speed, Sleep Timer, AI Insights)
             HStack(spacing: 8) {
                 // Playback Speed Menu Pill
@@ -149,5 +161,7 @@ public struct PlayerQuickActionsView: View {
                 AirPlayButton(color: coverIsLight ? DesignTokens.Color.background : DesignTokens.Color.foreground, size: 40)
             }
         }
+        .disabled(isUiLocked)
+        .opacity(isUiLocked ? 0.4 : 1.0)
     }
 }
