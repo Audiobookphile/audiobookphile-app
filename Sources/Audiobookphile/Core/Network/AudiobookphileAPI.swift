@@ -1589,7 +1589,25 @@ public final class KeychainManager: Sendable {
             throw KeychainError.saveFailed
         }
         #else
-        // Android Safe SharedPreferences Store
+        // Android: plain SharedPreferences, via Skip's AndroidUserDefaults.
+        //
+        // NOT secure storage. Skip 1.9.10 exposes no KeyStore or
+        // EncryptedSharedPreferences bridge, so `UserDefaults.standard` lands in an
+        // unencrypted XML file inside app storage, which is included in Android
+        // auto-backup and readable by anything with app-data access. The access
+        // and refresh tokens are written here, so on a rooted device or a restored
+        // backup they are recoverable, and a refresh token is a long-lived
+        // credential.
+        //
+        // The risk is currently bounded rather than absent: Android playback is a
+        // no-op shell in this repo (AudioPlayerEngine has no Media3/ExoPlayer
+        // binding and initializePlayer is a no-op under SKIP), so Android cannot
+        // reach a streaming URL. The exposure grows the moment playback lands.
+        //
+        // The fix is a Skip platform bridge over the Android KeyStore, not a
+        // change here -- there is no secure API to call from Swift. Until that
+        // exists, do not treat this store as safe, and keep the token out of
+        // anything that leaves the device.
         UserDefaults.standard.set(serverURL, forKey: serverURLKey)
         UserDefaults.standard.set(token, forKey: tokenKey)
         UserDefaults.standard.set(refreshToken, forKey: refreshTokenKey)
@@ -1620,7 +1638,8 @@ public final class KeychainManager: Sendable {
 
         return (serverURL, token, credentials["refreshToken"] ?? "")
         #else
-        // Android Secure SharedPreferences Retrieval
+        // Plain SharedPreferences -- see the note on the write path above for why
+        // this is not secure storage and what has to change.
         guard let serverURL = UserDefaults.standard.string(forKey: serverURLKey),
               let token = UserDefaults.standard.string(forKey: tokenKey) else {
             return nil

@@ -521,6 +521,21 @@ public class AudioPlayerService: AudioPlayerServiceProtocol {
             return nil
         }
         
+        // Bearer token as a QUERY PARAMETER, for relative paths only.
+        //
+        // Absolute URLs are left untouched because the backend's playback API
+        // returns presigned absolute URLs that already authorise themselves --
+        // appending a bearer token to one would leak a long-lived credential to
+        // whatever host signed it. The relative-path branch is the legacy
+        // self-hosted-style `/api/stream/...` shape, resolved against
+        // `abp_serverURL`, and there is no way to attach a header to an
+        // AVPlayerItem: `AVURLAssetHTTPHeaderFieldsKey` is undocumented, and the
+        // supported route is an AVAssetResourceLoader, which is a large refactor.
+        //
+        // The cost of this branch is that the token ends up in the request URL,
+        // so it can appear in server access logs and in any URL the player
+        // reports. Prefer fixing the stream to return a presigned absolute URL --
+        // that makes this branch unreachable -- rather than widening it.
         let token = AppState.shared.token
         if !token.isEmpty && !trimmedPath.hasPrefix("http") {
             var queryItems = components.queryItems ?? []
