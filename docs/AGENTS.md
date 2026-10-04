@@ -9,7 +9,7 @@ Welcome! If you are an AI coding assistant (e.g., Antigravity, Claude, Copilot, 
 This project is a **dual-platform Skip (Swift/Kotlin) application** — a premium, serverless audiobook and podcast client for the Audiobookphile ecosystem, built natively for iOS and Android. The codebase descends from the [Audiobookshelf iOS client](https://github.com/advplyr/audiobookshelf-app) but is a **standalone project**: it no longer tracks upstream and does not target self-hosted Audiobookshelf servers.
 
 ### The Source of Truth
-The authoritative functional reference is the **Audiobookphile backend** ([audiobookphile-backend](https://github.com/organicnz/audiobookphile-backend)) — a Supabase (Postgres + Auth + Storage) and Backblaze B2 stack served through the `api` edge function. Feature scope, endpoints, and payloads are defined there and in the API docs in this repo.
+The authoritative functional reference is the **Audiobookphile backend** ([audiobookphile-backend](https://github.com/Audiobookphile/audiobookphile-backend)) — a Supabase (Postgres + Auth + Storage) and Backblaze B2 stack served through the `api` edge function. Feature scope, endpoints, and payloads are defined there and in the API docs in this repo.
 
 Your goal is to **deliver all Audiobookphile functionality** with the gorgeous, premium **Liquid Glass (LG)** native visual style.
 

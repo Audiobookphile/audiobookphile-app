@@ -2,7 +2,7 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in this project, please report it by opening a [GitHub Security Advisory](https://github.com/audiobookphile/audiobookphile-client-react/security/advisories/new) or by emailing the maintainer directly. All reports will be reviewed promptly.
+If you discover a security vulnerability in this project, please report it by opening a [GitHub Security Advisory](https://github.com/Audiobookphile/audiobookphile-app/security/advisories/new) or by emailing the maintainer directly. All reports will be reviewed promptly.
 
 Please include the following in your report:
 

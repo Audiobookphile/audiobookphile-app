@@ -30,7 +30,7 @@ To build and run this project, you need a macOS environment with the following i
 
 2. **Clone the Repository:**
    ```bash
-   git clone https://github.com/organicnz/audiobookphile-app.git
+   git clone https://github.com/Audiobookphile/audiobookphile-app.git
    cd audiobookphile-app
    ```
 

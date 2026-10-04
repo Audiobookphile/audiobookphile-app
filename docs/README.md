@@ -190,7 +190,7 @@ Documentation being prepared. Main focus areas:
 
 ### Documentation
 
-- [Audiobookphile Backend](https://github.com/organicnz/audiobookphile-backend)
+- [Audiobookphile Backend](https://github.com/Audiobookphile/audiobookphile-backend)
 - [Audiobookphile API](https://api.audiobookphile.org/)
 - [Swift Documentation](https://swift.org/documentation/)
 - [SwiftUI Tutorials](https://developer.apple.com/tutorials/swiftui)
