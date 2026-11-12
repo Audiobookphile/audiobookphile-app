@@ -107,6 +107,9 @@ public struct ConnectView: View {
             TwoFactorChallengeView()
         }
         .onAppear {
+            if !appState.serverURL.isEmpty {
+                serverURL = appState.serverURL
+            }
             withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
                 isAnimating = true
             }
@@ -138,6 +141,11 @@ public struct ConnectView: View {
                 }
             }
             #endif
+        }
+        .onChange(of: appState.serverURL) { _, newServer in
+            if !newServer.isEmpty {
+                serverURL = newServer
+            }
         }
     }
 
