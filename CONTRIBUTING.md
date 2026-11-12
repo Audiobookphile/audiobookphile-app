@@ -71,3 +71,4 @@ All contributors and participants are expected to adhere to the [Code of Conduct
 3. **Push to your fork and submit a PR:**
    - Describe the changes and indicate whether they affect iOS, Android, or both.
    - Include screenshots or screen recordings for any visual changes.
+
