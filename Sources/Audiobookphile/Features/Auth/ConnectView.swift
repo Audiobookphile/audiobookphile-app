@@ -109,6 +109,14 @@ public struct ConnectView: View {
         .onAppear {
             if !appState.serverURL.isEmpty {
                 serverURL = appState.serverURL
+            } else if serverURL.isEmpty {
+                serverURL = "https://audiobookphile.app"
+            }
+            if let u = appState.pendingUsername, !u.isEmpty {
+                username = u
+            }
+            if let p = appState.pendingPassword, !p.isEmpty {
+                password = p
             }
             withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
                 isAnimating = true
@@ -146,6 +154,12 @@ public struct ConnectView: View {
             if !newServer.isEmpty {
                 serverURL = newServer
             }
+            if let u = appState.pendingUsername, !u.isEmpty {
+                username = u
+            }
+            if let p = appState.pendingPassword, !p.isEmpty {
+                password = p
+            }
         }
     }
 
@@ -178,6 +192,55 @@ public struct ConnectView: View {
 
     private var formSection: some View {
         VStack(spacing: 16) {
+            // 1-Click Live Demo Banner
+            Button {
+                serverURL = "https://audiobookphile.app"
+                username = "demo@audiobookphile.app"
+                password = "AudiobookphileDemo2026!"
+
+                #if os(iOS) && !SKIP
+                let generator = UIImpactFeedbackGenerator(style: .medium)
+                generator.impactOccurred()
+                #endif
+
+                Task {
+                    do {
+                        try await appState.login(
+                            serverURL: "https://audiobookphile.app",
+                            username: "demo@audiobookphile.app",
+                            password: "AudiobookphileDemo2026!"
+                        )
+                        viewModel.saveRecentServer(address: "https://audiobookphile.app", username: "demo@audiobookphile.app")
+                    } catch {
+                        viewModel.errorMessage = error.localizedDescription
+                        viewModel.showError = true
+                    }
+                }
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "sparkles")
+                        .foregroundStyle(Color.orange)
+                    Text("🚀 Try Live Demo (1-Click)")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Color.primary)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(Color.secondary)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color.orange.opacity(0.12))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(Color.orange.opacity(0.3), lineWidth: 1)
+                        )
+                )
+            }
+            .buttonStyle(.plain)
+
             // Server URL
             GlassTextField(
                 text: $serverURL,

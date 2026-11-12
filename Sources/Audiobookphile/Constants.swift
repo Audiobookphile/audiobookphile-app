@@ -13,15 +13,18 @@ public enum EnvironmentConfig {
     public static let appGroupIdentifier = "group.organicnz.audiobookphile"
 
     public static var serverURL: String {
-        Bundle.main.object(forInfoDictionaryKey: "ServerURL") as? String ?? ""
+        let bundleURL = Bundle.main.object(forInfoDictionaryKey: "ServerURL") as? String ?? ""
+        return bundleURL.isEmpty ? "https://audiobookphile.app" : bundleURL
     }
 
     public static var supabaseURL: String {
-        Bundle.main.object(forInfoDictionaryKey: "SupabaseURL") as? String ?? ""
+        let bundleURL = Bundle.main.object(forInfoDictionaryKey: "SupabaseURL") as? String ?? ""
+        return bundleURL.isEmpty ? "https://uffjxiwowclumvtnyvol.supabase.co" : bundleURL
     }
 
     public static var supabaseAnonKey: String {
-        Bundle.main.object(forInfoDictionaryKey: "SupabaseAnonKey") as? String ?? ""
+        let bundleKey = Bundle.main.object(forInfoDictionaryKey: "SupabaseAnonKey") as? String ?? ""
+        return bundleKey.isEmpty ? "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmZmp4aXdvd2NsdW12dG55dm9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ1MTY5MDMsImV4cCI6MjExMDA5MjkwM30.7LJ_Xv7YwmPJoLsezuq5p87LbBK_dWx-IoC4bZT6x30" : bundleKey
     }
 
     /// Sentry DSN for crash/error reporting. Empty disables telemetry entirely.

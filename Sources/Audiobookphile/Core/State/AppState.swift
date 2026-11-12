@@ -34,6 +34,8 @@ public class AppState {
     public var settings = AppSettings()
 
     public var serverURL: String = ""
+    public var pendingUsername: String?
+    public var pendingPassword: String?
     public var token: String = ""
 
 
