@@ -26,3 +26,4 @@ The mobile client (`audiobookphile-app`) delivers a native Liquid Glass (LG) exp
    - Extract primary and secondary hues from cover art to drive background aura gradients (`FluidAuraBackground`).
 4. **Haptics and Motion**:
    - Use `.applySensoryFeedback(trigger:)` for subtle tactile feedback during chapter scrubs and play/pause transitions.
+
