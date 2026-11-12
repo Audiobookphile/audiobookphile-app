@@ -6,6 +6,8 @@
 
 # macOS
 .DS_Store
+.DS_Store.*
+._*
 
 # gradle properties
 local.properties
@@ -91,10 +93,14 @@ docs/APP_STORE_METADATA.md
 Darwin/*.log
 
 # Export options (contains Team ID)
-exportOptions.plist
+exportOptions*.plist
 
 # Maestro e2e local credentials
 .maestro/.env
+
+# Python
+__pycache__/
+*.pyc
 
 # Local dev tooling (contain local API tokens / simulator IDs)
 query_metrics.py

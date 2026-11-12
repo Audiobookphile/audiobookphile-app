@@ -86,8 +86,17 @@ The shared design system lives at the monorepo root: `design-system/tokens.json`
 
 Audiobookphile's mobile client descends from the [Audiobookshelf iOS app](https://github.com/advplyr/audiobookshelf-app). We forked it in 2025 to build a serverless architecture (Supabase backend) that Audiobookshelf's self-hosted model never needed, and have since diverged significantly — this repository is a standalone project and no longer tracks upstream.
 
+## Related Repositories
+
+- [Audiobookphile Web](https://github.com/Audiobookphile/audiobookphile-web) — Next.js 16 Web Application.
+- [Audiobookphile Backend](https://github.com/Audiobookphile/audiobookphile-backend) — Supabase PostgreSQL database schemas, migrations, and Deno Edge Functions.
+
+## License
+
+This project is licensed under the [MIT License](./LICENSE).
+
 ## Contributing
 
-Pull requests are highly encouraged! When contributing to the Swift codebase, keep in mind that the code must be compatible with Skip's transpilation process. Avoid using iOS-only proprietary APIs unless you surround them with `#if !SKIP` compiler directives and provide an Android alternative.
+Pull requests are highly encouraged! Please review [CONTRIBUTING.md](./CONTRIBUTING.md) and our [Code of Conduct](./CODE_OF_CONDUCT.md).
 
 Join us on [Discord](https://discord.gg/pJsjuNCKRq) to discuss features and development.

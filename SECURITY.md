@@ -11,20 +11,20 @@ Please include the following in your report:
 - Step-by-step instructions to reproduce the issue
 - Potential impact of the vulnerability
 
-## Supported Versions
-
-Security updates are provided for the latest stable version only.
-
 ## Scope
 
-This repository covers the Next.js frontend client. The Supabase backend (database, auth, storage) is managed separately. For Supabase-specific security concerns, refer to the [Supabase security documentation](https://supabase.com/docs/guides/platform/security).
+This repository covers the native mobile application for iOS and Android (Swift/Skip).
 
 ### Key Security Boundaries
 
-- `SUPABASE_SERVICE_ROLE_KEY` is used server-side only (Route Handlers and Server Actions). It is never exposed to the browser or included in the client bundle.
-- Row Level Security (RLS) is enabled on all Supabase tables. Application-layer checks are a secondary defence.
-- Audio files are stored in a private Supabase Storage bucket and accessed only via time-limited signed URLs generated server-side.
-- OAuth callbacks are handled via `src/app/auth/callback/route.ts` using `supabase.auth.exchangeCodeForSession()`.
+- Authentication sessions (access tokens and refresh tokens) are securely persisted in the platform Keychain (iOS) and EncryptedSharedPreferences (Android).
+- Biometric authentication (Face ID / Touch ID / Passkeys) integrates with platform-level biometric prompts (`LocalAuthentication` / `BiometricManager`).
+- Network requests communicate exclusively over HTTPS and WSS with App Transport Security (ATS) enforcement.
+- Sentry telemetry is scrubbed of PII and can be completely disabled by leaving `SENTRY_DSN` empty in `Skip.env`.
+
+## Supported Versions
+
+Security updates are provided for the latest release on the `main` branch.
 
 ## Acknowledgements
 
