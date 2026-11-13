@@ -39,20 +39,18 @@ public enum APIEndpoint {
     case custom(path: String)
     
     public func urlString(baseURL: String) -> String {
-        let isDirectSupabase = baseURL.contains(".supabase.co") || baseURL.contains("54321")
-        // First-party web origins serve the edge API under /api (canonical
-        // audiobookphile.app; vercel.app is the legacy equivalent).
-        let isFirstPartyWeb = baseURL.contains("audiobookphile.app") || baseURL.contains("vercel.app") || baseURL.hasSuffix("/api")
-        let isSupabaseBackend = isDirectSupabase || isFirstPartyWeb
+        let trimmedBase = baseURL.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        let isDirectSupabase = trimmedBase.contains(".supabase.co") || trimmedBase.contains("54321")
         
-        var base = baseURL
-        if isDirectSupabase && !baseURL.contains("/functions/v1") {
-            base = "\(baseURL)/functions/v1"
+        var base = trimmedBase
+        if isDirectSupabase && !base.contains("/functions/v1") {
+            base = "\(base)/functions/v1"
         }
         
         var adjustedPath = path
-        if isSupabaseBackend && !path.starts(with: "/api") {
-            adjustedPath = "/api\(path)"
+        // In the Audiobookphile unified ecosystem, all Edge API routes are rooted under /api
+        if !adjustedPath.starts(with: "/api") {
+            adjustedPath = "/api\(adjustedPath)"
         }
         
         if base.hasSuffix("/api") && adjustedPath.starts(with: "/api") {
