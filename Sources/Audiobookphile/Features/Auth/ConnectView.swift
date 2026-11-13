@@ -109,6 +109,8 @@ public struct ConnectView: View {
         .onAppear {
             if !appState.serverURL.isEmpty {
                 serverURL = appState.serverURL
+            } else if let saved = UserDefaults.standard.string(forKey: "abp_serverURL"), !saved.isEmpty {
+                serverURL = saved
             } else if serverURL.isEmpty {
                 serverURL = "https://audiobookphile.app"
             }
