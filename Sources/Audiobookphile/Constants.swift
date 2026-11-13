@@ -19,12 +19,12 @@ public enum EnvironmentConfig {
 
     public static var supabaseURL: String {
         let bundleURL = Bundle.main.object(forInfoDictionaryKey: "SupabaseURL") as? String ?? ""
-        return bundleURL.isEmpty ? "https://uffjxiwowclumvtnyvol.supabase.co" : bundleURL
+        return bundleURL.isEmpty ? "https://trbxxtanyichimxlbmhy.supabase.co" : bundleURL
     }
 
     public static var supabaseAnonKey: String {
         let bundleKey = Bundle.main.object(forInfoDictionaryKey: "SupabaseAnonKey") as? String ?? ""
-        return bundleKey.isEmpty ? "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmZmp4aXdvd2NsdW12dG55dm9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ1MTY5MDMsImV4cCI6MjExMDA5MjkwM30.7LJ_Xv7YwmPJoLsezuq5p87LbBK_dWx-IoC4bZT6x30" : bundleKey
+        return bundleKey.isEmpty ? "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyYnh4dGFueWljaGlteGxibWh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ1MjMxMDYsImV4cCI6MjExMDA5OTEwNn0.n0_tH6xcpMJy61AzywKc6BKwnU3YdtE4wNYbCwq553A" : bundleKey
     }
 
     /// Sentry DSN for crash/error reporting. Empty disables telemetry entirely.
