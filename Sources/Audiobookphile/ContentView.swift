@@ -94,34 +94,28 @@ public struct ContentView: View {
         } ?? [:]
 
         // 1. Server configuration deep link: audiobookphile://connect?server=https://...
-        if url.host == "connect" || url.path.hasPrefix("/connect") {
-            let server = params["server"] ?? ""
-            if !server.isEmpty {
-                appState.serverURL = server
-                UserDefaults.standard.set(server, forKey: "abp_serverURL")
-                print("[ContentView] Server address auto-mapped via deep link: \(server)")
-            }
+        if let link = ConnectDeepLink.parse(url) {
+            appState.serverURL = link.server
+            UserDefaults.standard.set(link.server, forKey: "abp_serverURL")
+            print("[ContentView] Server address auto-mapped via deep link: \(link.server)")
 
-            let username = params["username"] ?? ""
-            let password = params["password"] ?? ""
-            let autoLogin = params["autoLogin"] == "1" || params["autoLogin"] == "true"
-
-            if !username.isEmpty {
+            if let username = link.username, !username.isEmpty {
                 appState.pendingUsername = username
             }
-            if !password.isEmpty {
+            if let password = link.password, !password.isEmpty {
                 appState.pendingPassword = password
             }
 
-            if !server.isEmpty && !username.isEmpty && !password.isEmpty && autoLogin {
+            if let username = link.username, let password = link.password,
+               !username.isEmpty, !password.isEmpty, link.autoLogin {
                 Task {
                     do {
                         try await appState.login(
-                            serverURL: server,
+                            serverURL: link.server,
                             username: username,
                             password: password
                         )
-                        ConnectViewModel().saveRecentServer(address: server, username: username)
+                        ConnectViewModel().saveRecentServer(address: link.server, username: username)
                         print("[ContentView] 1-Click deep link login succeeded for \(username)")
                     } catch {
                         print("[ContentView] Deep link auto-login failed: \(error)")
