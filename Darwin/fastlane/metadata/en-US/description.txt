@@ -1,1 +1,11 @@
-A great new app built with Skip!
+Audiobookphile is a modern, privacy-focused audiobook player built for seamless personal library streaming.
+
+Features:
+• Dynamic Liquid Glass interface with adaptive cover artwork theming
+• Seamless 1-click server connection and auto-mapping
+• Offline caching and playback queue management
+• Variable speed playback and smart sleep timers
+• Chapter navigation, bookmarking, and listening stats
+• Multi-format audio support with hardware-accelerated playback
+
+Stream from your self-hosted or cloud Audiobookphile instance anywhere.

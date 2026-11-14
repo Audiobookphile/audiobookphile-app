@@ -14,17 +14,23 @@ public enum EnvironmentConfig {
 
     public static var serverURL: String {
         let bundleURL = Bundle.main.object(forInfoDictionaryKey: "ServerURL") as? String ?? ""
-        return bundleURL.isEmpty ? "https://audiobookphile.app" : bundleURL
+        if bundleURL.isEmpty {
+            return "https://audiobookphile.app"
+        }
+        return bundleURL.hasSuffix("/api") ? String(bundleURL.dropLast(4)) : bundleURL
     }
 
     public static var supabaseURL: String {
         let bundleURL = Bundle.main.object(forInfoDictionaryKey: "SupabaseURL") as? String ?? ""
-        return bundleURL.isEmpty ? "https://trbxxtanyichimxlbmhy.supabase.co" : bundleURL
+        if bundleURL.isEmpty || bundleURL.contains("test.supabase.co") || bundleURL.contains("your-supabase-url") {
+            return "https://trbxxtanyichimxlbmhy.supabase.co"
+        }
+        return bundleURL
     }
 
     public static var supabaseAnonKey: String {
         let bundleKey = Bundle.main.object(forInfoDictionaryKey: "SupabaseAnonKey") as? String ?? ""
-        if !bundleKey.isEmpty {
+        if !bundleKey.isEmpty && bundleKey != "testkey" && !bundleKey.contains("your_supabase_anon_key") {
             return bundleKey
         }
         // Default public demo anon key (base64-encoded to prevent false-positive pattern matches in static security audits)
