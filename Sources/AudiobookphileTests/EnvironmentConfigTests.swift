@@ -24,3 +24,4 @@ final class EnvironmentConfigTests: XCTestCase {
         XCTAssertTrue(key.starts(with: "eyJ"))
     }
 }
+

@@ -23,7 +23,7 @@ concurrency:
 jobs:
   lint-swift:
     name: SwiftLint
-    runs-on: [self-hosted, macOS]
+    runs-on: ${{ vars.MOBILE_RUNNER != '' && fromJSON(vars.MOBILE_RUNNER) || 'macos-14' }}
     # These three jobs had no timeout, so a wedged simulator or a Gradle daemon
     # that never returned held a self-hosted runner for the full 6-hour default.
     # With three repos sharing one host, a single hung job starves the others.
@@ -57,7 +57,7 @@ jobs:
 
   skip-verify:
     name: Skip Cross-Platform Verify
-    runs-on: [self-hosted, macOS]
+    runs-on: ${{ vars.MOBILE_RUNNER != '' && fromJSON(vars.MOBILE_RUNNER) || 'macos-14' }}
     timeout-minutes: 30
     steps:
       - name: Checkout Repository
@@ -118,7 +118,7 @@ jobs:
 
   verify-swift:
     name: Verify Swift iOS Package
-    runs-on: [self-hosted, macOS]
+    runs-on: ${{ vars.MOBILE_RUNNER != '' && fromJSON(vars.MOBILE_RUNNER) || 'macos-14' }}
     # build-for-testing plus a simulator test run on a shared, memory-constrained
     # host. 45 is generous; the point is that it is not unbounded.
     timeout-minutes: 45
@@ -217,7 +217,7 @@ jobs:
     name: Deploy iOS & macOS App (TestFlight / Xcode Cloud)
     needs: [lint-swift, skip-verify, verify-swift]
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
-    runs-on: [self-hosted, macOS]
+    runs-on: ${{ vars.MOBILE_RUNNER != '' && fromJSON(vars.MOBILE_RUNNER) || 'macos-14' }}
     timeout-minutes: 15
     concurrency:
       group: ci-mobile-deploy-${{ github.ref }}
@@ -246,7 +246,7 @@ jobs:
     name: Create Sentry Release (App)
     needs: [verify-swift]
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
-    runs-on: [self-hosted, macOS]
+    runs-on: ${{ vars.MOBILE_RUNNER != '' && fromJSON(vars.MOBILE_RUNNER) || 'macos-14' }}
     timeout-minutes: 10
     steps:
       - name: Checkout Repository

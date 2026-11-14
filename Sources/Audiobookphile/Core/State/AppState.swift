@@ -120,6 +120,12 @@ public class AppState {
         AuthManager.shared.logout(appState: self)
     }
 
+    public func deleteAccount() async throws {
+        guard let user = currentUser else { return }
+        try await AudiobookphileAPI.shared.deleteAccount(userId: user.id)
+        logout()
+    }
+
     public func updateSettings(_ newSettings: AppSettings) {
         self.settings = newSettings
         Task {

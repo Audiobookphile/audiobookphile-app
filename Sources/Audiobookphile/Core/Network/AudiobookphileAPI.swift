@@ -1258,6 +1258,15 @@ public actor AudiobookphileAPI {
         return user
     }
 
+    public func deleteAccount(userId: String) async throws {
+        guard let url = URL(string: APIEndpoint.deleteAccount(userId: userId).urlString(baseURL: self.baseURL)) else {
+            throw APIError.invalidResponse
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        _ = try await executeRequest(request, responseType: EmptyResponse.self)
+    }
+
     public func getSimilarItems(itemId: String) async throws -> [Book] {
         guard let url = URL(string: APIEndpoint.getSimilarItems(itemId: itemId).urlString(baseURL: self.baseURL)) else {
             throw APIError.invalidResponse

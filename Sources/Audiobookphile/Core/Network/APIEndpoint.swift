@@ -36,6 +36,7 @@ public enum APIEndpoint {
     case getSimilarItems(itemId: String)
     case getSearchHistory
     case authInvite
+    case deleteAccount(userId: String)
     case custom(path: String)
     
     public func urlString(baseURL: String) -> String {
@@ -96,6 +97,7 @@ public enum APIEndpoint {
         case .getSimilarItems(let itemId): return "/api/items/\(itemId)/similar"
         case .getSearchHistory: return "/api/me/search/history"
         case .authInvite: return "/api/auth/invite"
+        case .deleteAccount(let userId): return "/api/users/\(userId)"
         case .custom(let path): return path
         }
     }

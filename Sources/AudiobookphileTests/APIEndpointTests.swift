@@ -42,5 +42,10 @@ final class APIEndpointTests: XCTestCase {
         let url = APIEndpoint.searchSemantic.urlString(baseURL: "https://books.example.com")
         XCTAssertEqual(url, "https://books.example.com/api/search-semantic")
     }
+
+    func testDeleteAccountEndpoint() {
+        let url = APIEndpoint.deleteAccount(userId: "user-123").urlString(baseURL: "https://books.example.com")
+        XCTAssertEqual(url, "https://books.example.com/api/users/user-123")
+    }
 }
 
