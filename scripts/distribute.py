@@ -268,6 +268,7 @@ def sync_screenshots(app_id: str, screenshots_base_dir: str):
         "APP_IPHONE_67": os.path.join(screenshots_base_dir, "iphone_67"),
         "APP_IPHONE_65": os.path.join(screenshots_base_dir, "iphone_65"),
         "APP_IPHONE_55": os.path.join(screenshots_base_dir, "iphone_55"),
+        "APP_IPHONE_DUO": os.path.join(screenshots_base_dir, "iphone_duo"),
         "APP_IPAD_PRO_3GEN_129": os.path.join(screenshots_base_dir, "ipad_129"),
     }
 
