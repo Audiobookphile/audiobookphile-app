@@ -513,6 +513,7 @@ def sync_screenshots(app_id: str, screenshots_base_dir: str):
 
         preview_mapping = {
             "IPHONE_67": os.path.join(previews_dir, "iphone_67_preview.mp4"),
+            "IPHONE_DUO": os.path.join(previews_dir, "iphone_duo_preview.mp4"),
             "IPAD_PRO_3GEN_129": os.path.join(previews_dir, "ipad_129_preview.mp4"),
         }
 
