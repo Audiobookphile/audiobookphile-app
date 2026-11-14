@@ -1,0 +1,38 @@
+appId: club.foodshare.audiobookphile
+name: Capture Detail and Player
+---
+# Tap on The Time Machine
+- tapOn: "The Time Machine"
+
+- extendedWaitUntil:
+    visible:
+      id: "abp_play_book_button"
+    timeout: 15000
+
+# Screenshot 3: Book Detail View with Chapters, Metadata, and Download
+- takeScreenshot: shot_03_book_detail
+
+# Tap Play button to start audio playback
+- tapOn:
+    id: "abp_play_book_button"
+
+# Wait for player sheet / playback
+- extendedWaitUntil:
+    visible:
+      id: "abp_player_play_pause"
+    timeout: 10000
+    optional: true
+
+# Screenshot 4: Now Playing Audio Player with Live Scrubber
+- takeScreenshot: shot_04_player
+
+# Tap Back/Dismiss, then tap Downloads
+- back
+- tapOn: "Downloads"
+- extendedWaitUntil:
+    visible: "Downloads"
+    timeout: 10000
+    optional: true
+
+# Screenshot 5: Offline Downloads & Storage Management
+- takeScreenshot: shot_05_downloads

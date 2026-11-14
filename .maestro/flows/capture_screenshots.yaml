@@ -1,0 +1,65 @@
+appId: club.foodshare.audiobookphile
+name: Capture App Store Screenshots
+---
+- launchApp:
+    clearState: true
+
+- extendedWaitUntil:
+    visible: "🚀 Try Live Demo (1-Click)"
+    timeout: 15000
+
+# 1. Connect / Welcome Screen with 1-Click Demo
+- takeScreenshot: shot_01_connect
+
+# Tap 1-Click Demo to instantly log in
+- tapOn: "🚀 Try Live Demo (1-Click)"
+
+# Wait for post-login view (Collections tab or Library tab)
+- extendedWaitUntil:
+    visible: "Collections"
+    timeout: 30000
+
+# 2. Navigate to Library / Bookshelf
+- tapOn: "Library"
+- extendedWaitUntil:
+    visible: "Filter"
+    timeout: 15000
+
+# 2. Main Bookshelf Library Screen
+- takeScreenshot: shot_02_bookshelf
+
+# 3. Tap on first audiobook to open Book Detail
+- tapOn:
+    point: "50%,40%"
+
+- extendedWaitUntil:
+    visible:
+      id: "abp_play_book_button"
+    timeout: 15000
+
+# 3. Book Detail Screen with Chapters & Download
+- takeScreenshot: shot_03_book_detail
+
+# 4. Start playback and open full player
+- tapOn:
+    id: "abp_play_book_button"
+
+- extendedWaitUntil:
+    visible:
+      id: "abp_player_play_pause"
+    timeout: 10000
+    optional: true
+
+# 4. Now Playing Player Screen
+- takeScreenshot: shot_04_player
+
+# 5. Tap back to return to library, then tap Account/Settings
+- back
+- runFlow:
+    when:
+      visible: "Settings"
+    commands:
+      - tapOn: "Settings"
+
+# 5. Settings & Cloud Sync Screen
+- takeScreenshot: shot_05_settings

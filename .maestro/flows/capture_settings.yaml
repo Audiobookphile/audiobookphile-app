@@ -1,0 +1,12 @@
+appId: club.foodshare.audiobookphile
+name: Capture Settings
+---
+- tapOn:
+    point: "91%,8%"
+
+- extendedWaitUntil:
+    visible: "Account"
+    timeout: 5000
+    optional: true
+
+- takeScreenshot: shot_07_settings

@@ -1,0 +1,22 @@
+appId: club.foodshare.audiobookphile
+name: Capture Collections and Downloads
+---
+# Dismiss player sheet
+- tapOn:
+    point: "8%,6%"
+
+- runFlow:
+    when:
+      visible: "Collections"
+    commands:
+      - tapOn: "Collections"
+
+- takeScreenshot: shot_05_collections
+
+- runFlow:
+    when:
+      visible: "Downloads"
+    commands:
+      - tapOn: "Downloads"
+
+- takeScreenshot: shot_06_downloads
