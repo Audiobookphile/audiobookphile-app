@@ -228,6 +228,55 @@ def upload_screenshot_file(set_id: str, file_path: str):
     return shot_id
 
 
+def upload_creative_asset(app_id: str, file_path: str) -> str:
+    """Uploads a creative asset (Header, Search Results, Universal) to the App Asset Library."""
+    file_name = os.path.basename(file_path)
+    file_size = os.path.getsize(file_path)
+    with open(file_path, "rb") as f:
+        file_bytes = f.read()
+
+    payload = {
+        "data": {
+            "type": "appAssetLibraryImages",
+            "attributes": {
+                "fileName": file_name,
+                "fileSize": file_size,
+                "category": "CREATIVE_ASSETS"
+            },
+            "relationships": {
+                "assetLibrary": {
+                    "data": {"type": "appAssetLibraries", "id": app_id}
+                }
+            }
+        }
+    }
+    res = api_request("POST", "/appAssetLibraryImages", payload)
+    img_id = res["data"]["id"]
+    ops = res["data"]["attributes"]["uploadOperations"]
+
+    for op in ops:
+        url = op["url"]
+        offset = op["offset"]
+        length = op["length"]
+        chunk = file_bytes[offset:offset+length]
+        req = urllib.request.Request(url, data=chunk, method="PUT")
+        for h in op.get("requestHeaders", []):
+            req.add_header(h["name"], h["value"])
+        with urllib.request.urlopen(req) as put_resp:
+            pass
+
+    commit_payload = {
+        "data": {
+            "type": "appAssetLibraryImages",
+            "id": img_id,
+            "attributes": {"uploaded": True}
+        }
+    }
+    api_request("PATCH", f"/appAssetLibraryImages/{img_id}", commit_payload)
+    print(f"  ✓ Uploaded creative asset {file_name} to Asset Library (ID: {img_id}).")
+    return img_id
+
+
 def sync_screenshots(app_id: str, screenshots_base_dir: str):
     """
     Audits and synchronizes screenshot sets for iPhone 6.7\" and iPad 12.9\" Pro (3rd Gen)
@@ -340,18 +389,70 @@ def sync_screenshots(app_id: str, screenshots_base_dir: str):
     creative_dir = os.path.join(screenshots_base_dir, "creative")
     if os.path.isdir(creative_dir):
         print(f"\n🎨 Auditing Creative Assets (Product Page Header, Search Results, Universal):")
+        
+        # Fetch existing library images
+        lib_imgs_res = api_request("GET", f"/appAssetLibraries/{app_id}/images?filter[category]=CREATIVE_ASSETS")
+        lib_imgs = {img.get("attributes", {}).get("fileName"): img for img in lib_imgs_res.get("data", [])}
+
         creative_files = {
-            "Product Page Header (21:9 - 3840x1646)": "header.png",
-            "Search Results Asset (3:2 - 3840x2560)": "search_results.png",
-            "Universal Creative Asset (16:9 - 5244x2950)": "universal_creative.png",
+            "header.png": ("Product Page Header (21:9 - 3840x1646)", "PRODUCT_PAGE_HEADER_ASSET"),
+            "search_results.png": ("Search Results Asset (3:2 - 3840x2560)", "APP_STORE_SEARCH_RESULTS_ASSET"),
+            "universal_creative.png": ("Universal Creative Asset (16:9 - 5244x2950)", None),
         }
-        for desc, fname in creative_files.items():
+
+        uploaded_ids = {}
+        for fname, (desc, p_type) in creative_files.items():
             fpath = os.path.join(creative_dir, fname)
-            if os.path.isfile(fpath):
-                fsize = os.path.getsize(fpath)
-                print(f"  ✓ {desc}: {fname} [{fsize} bytes] (Verified 0-alpha)")
-            else:
+            if not os.path.isfile(fpath):
                 print(f"  ⚠️ Missing {fname}")
+                continue
+
+            existing_img = lib_imgs.get(fname)
+            if existing_img:
+                img_id = existing_img["id"]
+                uploaded_ids[fname] = img_id
+                attrs = existing_img.get("attributes", {})
+                state = attrs.get("state")
+                dimensions = f"{attrs.get('imageAsset', {}).get('width')}x{attrs.get('imageAsset', {}).get('height')}"
+                print(f"  ✓ {desc}: {fname} [ID: {img_id}] -> State: {state} ({dimensions})")
+            elif is_editable:
+                print(f"  Uploading {fname} ({desc})...")
+                img_id = upload_creative_asset(app_id, fpath)
+                uploaded_ids[fname] = img_id
+            else:
+                fsize = os.path.getsize(fpath)
+                print(f"  ✓ {desc}: {fname} [{fsize} bytes] (Ready locally)")
+
+        # Placements check
+        placements_res = api_request("GET", f"/appStoreVersionLocalizations/{loc_id}/placements")
+        current_placements = {p.get("attributes", {}).get("placementType"): p for p in placements_res.get("data", [])}
+
+        print(f"\n  Checking Placements for Version {v_str}:")
+        for p_type_name in ["PRODUCT_PAGE_HEADER_ASSET", "APP_STORE_SEARCH_RESULTS_ASSET"]:
+            p = current_placements.get(p_type_name)
+            if p:
+                print(f"    ✓ {p_type_name}: Active (ID: {p['id']})")
+            elif not is_editable:
+                print(f"    ℹ️ {p_type_name}: Version is in '{v_state}' (Apple freezes placement linking during review).")
+            else:
+                target_fname = "header.png" if p_type_name == "PRODUCT_PAGE_HEADER_ASSET" else "search_results.png"
+                img_id = uploaded_ids.get(target_fname)
+                if img_id:
+                    print(f"    Linking {p_type_name} to {target_fname} (ID: {img_id})...")
+                    try:
+                        api_request("POST", "/appAssetLibraryPlacements", {
+                            "data": {
+                                "type": "appAssetLibraryPlacements",
+                                "attributes": {"placementType": p_type_name},
+                                "relationships": {
+                                    "appStoreVersionLocalization": {"data": {"type": "appStoreVersionLocalizations", "id": loc_id}},
+                                    "image": {"data": {"type": "appAssetLibraryImages", "id": img_id}}
+                                }
+                            }
+                        })
+                        print(f"    ✓ Linked {p_type_name} successfully!")
+                    except Exception as e:
+                        print(f"    ⚠️ Could not link {p_type_name}: {e}")
 
 
 def distribute_testflight(app_id: str, build_id: str, group_name: Optional[str] = None, whats_new: Optional[str] = None):
