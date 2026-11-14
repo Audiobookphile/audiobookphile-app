@@ -300,9 +300,13 @@ def distribute_testflight(app_id: str, build_id: str, group_name: Optional[str] 
 def distribute_production(app_id: str, build_id: str, version_string: Optional[str] = None, whats_new: Optional[str] = None, submit_review: bool = False):
     print(f"\n🚀 Preparing Production App Store Release for build {build_id}...")
 
-    # 1. Find App Store Version in PREPARE_FOR_SUBMISSION
-    versions_res = api_request("GET", f"/apps/{app_id}/appStoreVersions?filter[appStoreState]=PREPARE_FOR_SUBMISSION")
+    # 1. Find App Store Version in editable state (PREPARE_FOR_SUBMISSION, REJECTED, DEVELOPER_REJECTED)
+    versions_res = api_request("GET", f"/apps/{app_id}/appStoreVersions?filter[appStoreState]=PREPARE_FOR_SUBMISSION,REJECTED,DEVELOPER_REJECTED")
     versions = versions_res.get("data", [])
+    if not versions:
+        # Fallback to inspecting all iOS versions
+        all_versions = api_request("GET", f"/apps/{app_id}/appStoreVersions?filter[platform]=IOS").get("data", [])
+        versions = [v for v in all_versions if v.get("attributes", {}).get("appStoreState") in ("PREPARE_FOR_SUBMISSION", "REJECTED", "DEVELOPER_REJECTED")]
     version_obj = None
 
     if versions:
@@ -362,35 +366,41 @@ def distribute_production(app_id: str, build_id: str, version_string: Optional[s
         print("\n📤 Submitting App Store Version for Review...")
         set_age_rating(app_id)
         try:
-            # Query existing open review submission or create a new one
-            open_subs = api_request("GET", f"/apps/{app_id}/reviewSubmissions?filter[state]=READY_FOR_REVIEW").get("data", [])
-            if open_subs:
-                sub_id = open_subs[0]["id"]
+            # Check for existing submission with unresolved issues first (resubmission flow)
+            unresolved_subs = api_request("GET", f"/apps/{app_id}/reviewSubmissions?filter[state]=UNRESOLVED_ISSUES").get("data", [])
+            if unresolved_subs:
+                sub_id = unresolved_subs[0]["id"]
+                print(f"  Resubmitting existing submission with unresolved issues: {sub_id}")
             else:
-                sub_res = api_request("POST", "/reviewSubmissions", {
-                    "data": {
-                        "type": "reviewSubmissions",
-                        "attributes": {"platform": "IOS"},
-                        "relationships": {
-                            "app": {"data": {"type": "apps", "id": app_id}}
+                # Query existing open review submission or create a new one
+                open_subs = api_request("GET", f"/apps/{app_id}/reviewSubmissions?filter[state]=READY_FOR_REVIEW").get("data", [])
+                if open_subs:
+                    sub_id = open_subs[0]["id"]
+                else:
+                    sub_res = api_request("POST", "/reviewSubmissions", {
+                        "data": {
+                            "type": "reviewSubmissions",
+                            "attributes": {"platform": "IOS"},
+                            "relationships": {
+                                "app": {"data": {"type": "apps", "id": app_id}}
+                            }
                         }
-                    }
-                })
-                sub_id = sub_res.get("data", {}).get("id")
+                    })
+                    sub_id = sub_res.get("data", {}).get("id")
 
-            # Check if version item already attached
-            items = api_request("GET", f"/reviewSubmissions/{sub_id}/items").get("data", [])
-            attached = any(item.get("relationships", {}).get("appStoreVersion", {}).get("data", {}).get("id") == version_id for item in items)
-            if not attached:
-                api_request("POST", "/reviewSubmissionItems", {
-                    "data": {
-                        "type": "reviewSubmissionItems",
-                        "relationships": {
-                            "reviewSubmission": {"data": {"type": "reviewSubmissions", "id": sub_id}},
-                            "appStoreVersion": {"data": {"type": "appStoreVersions", "id": version_id}}
+                # Check if version item already attached
+                items = api_request("GET", f"/reviewSubmissions/{sub_id}/items").get("data", [])
+                attached = any(item.get("relationships", {}).get("appStoreVersion", {}).get("data", {}).get("id") == version_id for item in items)
+                if not attached:
+                    api_request("POST", "/reviewSubmissionItems", {
+                        "data": {
+                            "type": "reviewSubmissionItems",
+                            "relationships": {
+                                "reviewSubmission": {"data": {"type": "reviewSubmissions", "id": sub_id}},
+                                "appStoreVersion": {"data": {"type": "appStoreVersions", "id": version_id}}
+                            }
                         }
-                    }
-                })
+                    })
 
             api_request("PATCH", f"/reviewSubmissions/{sub_id}", {
                 "data": {
@@ -438,7 +448,7 @@ def main():
     p_prod.add_argument("--build-version", help="Build number to wait for (e.g. 302)")
     p_prod.add_argument("--version-string", help="Version string to create if none exists (e.g. 1.0.1)")
     p_prod.add_argument("--whats-new", help="What's new in this version release notes")
-    p_prod.add_argument("--submit-review", action="store_true", help="Submit to App Store review")
+    p_prod.add_argument("--submit-review", "--submit", dest="submit_review", action="store_true", help="Submit to App Store review")
 
     # next-build-number
     p_num = subparsers.add_parser("next-build-number", help="Get next build number from App Store Connect")
