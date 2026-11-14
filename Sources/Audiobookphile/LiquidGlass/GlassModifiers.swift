@@ -188,7 +188,7 @@ extension View {
 
     /// Apply an ambient colored glow shadow behind elements
     func ambientGlow(
-        color: Color = Color.cyan,
+        color: Color = Color.appPrimary,
         radius: CGFloat = 20,
         opacity: Double = 0.35,
         y: CGFloat = 8

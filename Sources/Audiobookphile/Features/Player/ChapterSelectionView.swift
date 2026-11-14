@@ -78,9 +78,9 @@ public struct ChapterSelectionView: View {
                             } label: {
                                 Image(systemName: "sparkles")
                                     .font(.body)
-                                    .foregroundStyle(.cyan)
+                                    .foregroundStyle(Color.appPrimary)
                                     .padding(8)
-                                    .background(Color.cyan.opacity(0.15), in: Circle())
+                                    .background(Color.appPrimary.opacity(0.15), in: Circle())
                             }
                             .buttonStyle(.plain)
                         }

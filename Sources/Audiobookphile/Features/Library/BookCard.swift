@@ -228,7 +228,7 @@ public struct BookCard: View {
                         width: geometry.size.width * progress,
                         height: 4
                     )
-                    .shadow(color: Color.cyan.opacity(0.5), radius: 4)
+                    .shadow(color: Color.appPrimary.opacity(0.5), radius: 4)
             }
         }
         .frame(height: 4)

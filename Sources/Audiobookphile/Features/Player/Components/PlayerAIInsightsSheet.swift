@@ -38,7 +38,7 @@ public struct PlayerAIInsightsSheet: View {
                     HStack(spacing: 8) {
                         Image(systemName: "sparkles")
                             .font(.title3.bold())
-                            .foregroundStyle(.cyan)
+                            .foregroundStyle(Color.appPrimary)
                         Text("AI Insights Engine")
                             .font(.headline)
                             .foregroundStyle(.white)
@@ -55,11 +55,11 @@ public struct PlayerAIInsightsSheet: View {
                         }
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(insights.isCached ? Color.cyan.opacity(0.15) : Color.green.opacity(0.15))
-                        .foregroundStyle(insights.isCached ? Color.cyan : Color.green)
+                        .background(insights.isCached ? Color.appPrimary.opacity(0.15) : Color.green.opacity(0.15))
+                        .foregroundStyle(insights.isCached ? Color.appPrimary : Color.green)
                         .clipShape(Capsule())
                         .overlay(
-                            Capsule().strokeBorder((insights.isCached ? Color.cyan : Color.green).opacity(0.4), lineWidth: 1)
+                            Capsule().strokeBorder((insights.isCached ? Color.appPrimary : Color.green).opacity(0.4), lineWidth: 1)
                         )
                     }
 
@@ -91,7 +91,7 @@ public struct PlayerAIInsightsSheet: View {
                 if isLoading {
                     VStack(spacing: 16) {
                         ProgressView()
-                            .tint(.cyan)
+                            .tint(Color.appPrimary)
                             .scaleEffect(1.2)
                         Text("Compiling AI Book Insights...")
                             .font(.subheadline.bold())
@@ -119,7 +119,7 @@ public struct PlayerAIInsightsSheet: View {
                             loadInsights()
                         }
                         .buttonStyle(.borderedProminent)
-                        .tint(.cyan)
+                        .tint(Color.appPrimary)
                         .padding(.top, 8)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -146,10 +146,10 @@ public struct PlayerAIInsightsSheet: View {
                                             .font(.caption.bold())
                                             .padding(.horizontal, 12)
                                             .padding(.vertical, 6)
-                                            .background(Color.cyan.opacity(0.15))
-                                            .foregroundStyle(.cyan)
+                                            .background(Color.appPrimary.opacity(0.15))
+                                            .foregroundStyle(Color.appPrimary)
                                             .clipShape(Capsule())
-                                            .overlay(Capsule().strokeBorder(Color.cyan.opacity(0.3), lineWidth: 1))
+                                            .overlay(Capsule().strokeBorder(Color.appPrimary.opacity(0.3), lineWidth: 1))
                                     }
                                 }
                             }
@@ -158,10 +158,10 @@ public struct PlayerAIInsightsSheet: View {
                             VStack(alignment: .leading, spacing: 10) {
                                 HStack {
                                     Image(systemName: "text.quote")
-                                        .foregroundStyle(.cyan)
+                                        .foregroundStyle(Color.appPrimary)
                                     Text("Executive Summary")
                                         .font(.headline)
-                                        .foregroundStyle(.cyan)
+                                        .foregroundStyle(Color.appPrimary)
 
                                     Spacer()
 
@@ -195,7 +195,7 @@ public struct PlayerAIInsightsSheet: View {
                                         HStack(alignment: .top, spacing: 10) {
                                             Image(systemName: "checkmark.seal.fill")
                                                 .font(.subheadline)
-                                                .foregroundStyle(.cyan)
+                                                .foregroundStyle(Color.appPrimary)
                                                 .padding(.top, 2)
                                             Text(takeaway)
                                                 .font(.subheadline)

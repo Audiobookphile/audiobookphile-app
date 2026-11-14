@@ -38,7 +38,7 @@ public struct ChapterAIInsightsSheet: View {
                     HStack(spacing: 8) {
                         Image(systemName: "sparkles")
                             .font(.title3.bold())
-                            .foregroundStyle(.cyan)
+                            .foregroundStyle(Color.appPrimary)
                         Text("Chapter AI Insights")
                             .font(.headline)
                             .foregroundStyle(.white)
@@ -87,7 +87,7 @@ public struct ChapterAIInsightsSheet: View {
                 if isLoading {
                     VStack(spacing: 16) {
                         ProgressView()
-                            .tint(.cyan)
+                            .tint(Color.appPrimary)
                             .scaleEffect(1.2)
                         Text("Analyzing Chapter Content...")
                             .font(.subheadline.bold())
@@ -115,7 +115,7 @@ public struct ChapterAIInsightsSheet: View {
                             loadInsights()
                         }
                         .buttonStyle(.borderedProminent)
-                        .tint(.cyan)
+                        .tint(Color.appPrimary)
                         .padding(.top, 8)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -126,10 +126,10 @@ public struct ChapterAIInsightsSheet: View {
                             VStack(alignment: .leading, spacing: 10) {
                                 HStack {
                                     Image(systemName: "doc.text.fill")
-                                        .foregroundStyle(.cyan)
+                                        .foregroundStyle(Color.appPrimary)
                                     Text("Chapter Summary")
                                         .font(.headline)
-                                        .foregroundStyle(.cyan)
+                                        .foregroundStyle(Color.appPrimary)
 
                                     Spacer()
 
@@ -164,7 +164,7 @@ public struct ChapterAIInsightsSheet: View {
                                         HStack(alignment: .top, spacing: 10) {
                                             Image(systemName: "checkmark.seal.fill")
                                                 .font(.subheadline)
-                                                .foregroundStyle(.cyan)
+                                                .foregroundStyle(Color.appPrimary)
                                                 .padding(.top, 2)
                                             Text(takeaway)
                                                 .font(.subheadline)
