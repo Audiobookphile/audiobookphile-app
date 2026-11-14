@@ -34,9 +34,15 @@ public class AudioPlayerSleepTimer {
                 if let r = self.remaining {
                     if r <= 1 {
                         self.stopTimerInternal()
+                        AudioPlayerService.shared.setVolume(1.0)
                         onComplete()
                     } else {
                         self.remaining = r - 1
+                        // Graceful volume fade-out in final 15 seconds
+                        if r <= 16 {
+                            let fadeFactor = max(0.05, Float(r - 1) / 15.0)
+                            AudioPlayerService.shared.setVolume(fadeFactor)
+                        }
                     }
                 }
             }
@@ -48,6 +54,7 @@ public class AudioPlayerSleepTimer {
     @discardableResult
     public func resetSleepTimer() -> Bool {
         guard let initial = initialDuration, let onComplete = onCompleteCallback else { return false }
+        AudioPlayerService.shared.setVolume(1.0)
         setSleepTimer(seconds: initial, onComplete: onComplete)
         return true
     }
@@ -60,6 +67,7 @@ public class AudioPlayerSleepTimer {
 
     public func stopSleepTimer(clearInitial: Bool = true) {
         stopTimerInternal()
+        AudioPlayerService.shared.setVolume(1.0)
         if clearInitial {
             initialDuration = nil
             onCompleteCallback = nil

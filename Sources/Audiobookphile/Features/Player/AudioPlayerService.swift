@@ -894,6 +894,12 @@ public class AudioPlayerService: AudioPlayerServiceProtocol {
     }
     
     // MARK: - Engine Passthroughs
+
+    public func setVolume(_ volume: Float) {
+        #if !SKIP && !os(Android)
+        engine.player?.volume = max(0.0, min(1.0, volume))
+        #endif
+    }
     
     public func applyAudioDSP() {
         engine.applyAudioDSP()
