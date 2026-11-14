@@ -363,6 +363,9 @@ public class AuthManager {
         appState.pending2FATempToken = nil
         appState.pending2FAServerURL = nil
         appState.pending2FAMethods = nil
+        appState.navigation.showingAccount = false
+        appState.navigation.showingSettings = false
+        appState.navigation.showingStats = false
         UserDefaults.standard.removeObject(forKey: StorageKeys.lastLibraryId)
     }
 
