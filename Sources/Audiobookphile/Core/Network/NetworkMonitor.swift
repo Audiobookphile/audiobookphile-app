@@ -117,7 +117,7 @@ public class NetworkMonitor {
 
 // MARK: - Settings
 
-public enum StreamingPolicy: String, Codable, CaseIterable {
+public enum StreamingPolicy: String, Codable, CaseIterable, Sendable {
     case always = "ALWAYS"
     case wifiOnly = "WIFI_ONLY"
     case never = "NEVER"
@@ -131,7 +131,7 @@ public enum StreamingPolicy: String, Codable, CaseIterable {
     }
 }
 
-public enum DownloadPolicy: String, Codable, CaseIterable {
+public enum DownloadPolicy: String, Codable, CaseIterable, Sendable {
     case always = "ALWAYS"
     case wifiOnly = "WIFI_ONLY"
     case never = "NEVER"

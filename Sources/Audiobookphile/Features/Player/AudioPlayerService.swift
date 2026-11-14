@@ -239,7 +239,18 @@ public class AudioPlayerService: AudioPlayerServiceProtocol {
             self.bookmarks = fetched
         }
 
-        self.playbackRate = session.playbackRate
+        if AppState.shared.settings.perBookPlaybackSpeedEnabled {
+            let savedRate = UserDefaults.standard.float(forKey: "perBookPlaybackRate-\(session.libraryItemId)")
+            if savedRate >= 0.25 && savedRate <= 4.0 {
+                self.playbackRate = savedRate
+            } else if session.playbackRate >= 0.25 && session.playbackRate <= 4.0 {
+                self.playbackRate = session.playbackRate
+            } else {
+                self.playbackRate = Float(AppState.shared.settings.defaultPlaybackSpeed)
+            }
+        } else {
+            self.playbackRate = session.playbackRate > 0 ? session.playbackRate : Float(AppState.shared.settings.defaultPlaybackSpeed)
+        }
         syncManager.setLastSyncedTime(session.currentTime)
 
         let pendingKey = "pendingSeekTime-\(session.id)"
@@ -395,6 +406,9 @@ public class AudioPlayerService: AudioPlayerServiceProtocol {
 
     public func setPlaybackRate(_ rate: Float) {
         self.playbackRate = rate
+        if let session = session, AppState.shared.settings.perBookPlaybackSpeedEnabled {
+            UserDefaults.standard.set(rate, forKey: "perBookPlaybackRate-\(session.libraryItemId)")
+        }
         #if !SKIP && !os(Android)
         if isPlaying {
             engine.play(rate: rate)
@@ -797,6 +811,13 @@ public class AudioPlayerService: AudioPlayerServiceProtocol {
                 self?.syncWidgetState()
             })
             self.syncWidgetState()
+
+            if AppState.shared.settings.autoDeleteFinishedDownloads {
+                Task { @MainActor in
+                    try? DownloadService.shared.deleteDownload(bookId: session.libraryItemId)
+                    self.logger.info("Auto-deleted finished download for \(session.libraryItemId)")
+                }
+            }
         }
     }
 

@@ -43,10 +43,18 @@ final class UpstreamFeaturesTests: XCTestCase {
         XCTAssertTrue(settings.smartRewindEnabled)
         XCTAssertEqual(settings.smartRewindSeconds, 20)
         XCTAssertTrue(settings.shakeToResetSleepTimer)
+        XCTAssertTrue(settings.perBookPlaybackSpeedEnabled)
+        XCTAssertFalse(settings.autoDeleteFinishedDownloads)
+        XCTAssertEqual(settings.streamingPolicy, .always)
+        XCTAssertEqual(settings.downloadPolicy, .wifiOnly)
 
         settings.smartRewindEnabled = false
         settings.smartRewindSeconds = 15
         settings.shakeToResetSleepTimer = false
+        settings.perBookPlaybackSpeedEnabled = false
+        settings.autoDeleteFinishedDownloads = true
+        settings.streamingPolicy = .wifiOnly
+        settings.downloadPolicy = .never
 
         let encoded = try JSONEncoder().encode(settings)
         let decoded = try JSONDecoder().decode(AppSettings.self, from: encoded)
@@ -54,6 +62,10 @@ final class UpstreamFeaturesTests: XCTestCase {
         XCTAssertFalse(decoded.smartRewindEnabled)
         XCTAssertEqual(decoded.smartRewindSeconds, 15)
         XCTAssertFalse(decoded.shakeToResetSleepTimer)
+        XCTAssertFalse(decoded.perBookPlaybackSpeedEnabled)
+        XCTAssertTrue(decoded.autoDeleteFinishedDownloads)
+        XCTAssertEqual(decoded.streamingPolicy, .wifiOnly)
+        XCTAssertEqual(decoded.downloadPolicy, .never)
     }
 
     func testBookMetadataAbridgedDecoding() throws {

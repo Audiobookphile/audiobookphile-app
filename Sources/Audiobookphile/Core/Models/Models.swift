@@ -97,6 +97,10 @@ public struct AppSettings: Codable, Sendable {
     public var smartRewindEnabled: Bool = true
     public var smartRewindSeconds: Int = 20
     public var shakeToResetSleepTimer: Bool = true
+    public var perBookPlaybackSpeedEnabled: Bool = true
+    public var autoDeleteFinishedDownloads: Bool = false
+    public var streamingPolicy: StreamingPolicy = .always
+    public var downloadPolicy: DownloadPolicy = .wifiOnly
 
     // Audio & Hardware Accessibility Settings
     public var spokenAudioModeEnabled: Bool = true
@@ -138,6 +142,10 @@ public struct AppSettings: Codable, Sendable {
         smartRewindEnabled = try container.decodeIfPresent(Bool.self, forKey: .smartRewindEnabled) ?? true
         smartRewindSeconds = try container.decodeIfPresent(Int.self, forKey: .smartRewindSeconds) ?? 20
         shakeToResetSleepTimer = try container.decodeIfPresent(Bool.self, forKey: .shakeToResetSleepTimer) ?? true
+        perBookPlaybackSpeedEnabled = try container.decodeIfPresent(Bool.self, forKey: .perBookPlaybackSpeedEnabled) ?? true
+        autoDeleteFinishedDownloads = try container.decodeIfPresent(Bool.self, forKey: .autoDeleteFinishedDownloads) ?? false
+        streamingPolicy = try container.decodeIfPresent(StreamingPolicy.self, forKey: .streamingPolicy) ?? .always
+        downloadPolicy = try container.decodeIfPresent(DownloadPolicy.self, forKey: .downloadPolicy) ?? .wifiOnly
     }
 
     public enum CodingKeys: String, CodingKey {
@@ -166,6 +174,10 @@ public struct AppSettings: Codable, Sendable {
         case smartRewindEnabled
         case smartRewindSeconds
         case shakeToResetSleepTimer
+        case perBookPlaybackSpeedEnabled
+        case autoDeleteFinishedDownloads
+        case streamingPolicy
+        case downloadPolicy
     }
 }
 

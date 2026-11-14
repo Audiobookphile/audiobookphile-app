@@ -85,6 +85,14 @@ public class DownloadService: NSObject, URLSessionDownloadDelegate {
     }
 
     public func downloadBook(_ book: Book) async {
+        if AppState.shared.settings.downloadPolicy == .wifiOnly && NetworkMonitor.shared.isMetered {
+            print("[Download] Blocked: Download on cellular is disabled (policy: wifiOnly)")
+            return
+        }
+        if AppState.shared.settings.downloadPolicy == .never {
+            print("[Download] Blocked: Downloads are disabled by policy")
+            return
+        }
         if downloads.contains(where: { $0.libraryItemId == book.id && $0.status == .completed }) {
             return
         }

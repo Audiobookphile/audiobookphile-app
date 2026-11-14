@@ -426,6 +426,20 @@ public struct SettingsView: View {
                 title: "Shake to Reset Sleep Timer",
                 isOn: $viewModel.shakeToResetSleepTimer
             )
+
+            // Remember Speed Per Book
+            SettingsToggleRow(
+                icon: "speedometer",
+                title: "Remember Speed Per Book",
+                isOn: $viewModel.perBookPlaybackSpeedEnabled
+            )
+
+            // Auto-Delete Finished Downloads
+            SettingsToggleRow(
+                icon: "trash.circle.fill",
+                title: "Auto-Delete Finished Downloads",
+                isOn: $viewModel.autoDeleteFinishedDownloads
+            )
         }
     }
 
@@ -490,21 +504,41 @@ public struct SettingsView: View {
     private var networkSection: some View {
         SettingsSection(title: "Network") {
             // Streaming on cellular
-            SettingsRow(
-                icon: "antenna.radiowaves.left.and.right",
-                title: "Stream on Cellular",
-                value: viewModel.streamingPolicy.displayName
-            ) {
-                // Action
+            Picker(selection: Binding(
+                get: { viewModel.streamingPolicy },
+                set: { viewModel.streamingPolicy = $0 }
+            )) {
+                ForEach(StreamingPolicy.allCases, id: \.self) { policy in
+                    Text(policy.displayName).tag(policy)
+                }
+            } label: {
+                HStack {
+                    Image(systemName: "antenna.radiowaves.left.and.right")
+                        .foregroundStyle(Color.appPrimary)
+                        .frame(width: 28)
+                    Text("Stream on Cellular")
+                        .foregroundStyle(.primary)
+                }
+                .padding(.vertical, 12)
             }
 
             // Download on cellular
-            SettingsRow(
-                icon: "arrow.down.circle",
-                title: "Download on Cellular",
-                value: viewModel.downloadPolicy.displayName
-            ) {
-                // Action
+            Picker(selection: Binding(
+                get: { viewModel.downloadPolicy },
+                set: { viewModel.downloadPolicy = $0 }
+            )) {
+                ForEach(DownloadPolicy.allCases, id: \.self) { policy in
+                    Text(policy.displayName).tag(policy)
+                }
+            } label: {
+                HStack {
+                    Image(systemName: "arrow.down.circle")
+                        .foregroundStyle(Color.appPrimary)
+                        .frame(width: 28)
+                    Text("Download on Cellular")
+                        .foregroundStyle(.primary)
+                }
+                .padding(.vertical, 12)
             }
         }
     }
@@ -799,6 +833,24 @@ public class SettingsViewModel {
         }
     }
 
+    public var perBookPlaybackSpeedEnabled: Bool {
+        get { AppState.shared.settings.perBookPlaybackSpeedEnabled }
+        set {
+            var s = AppState.shared.settings
+            s.perBookPlaybackSpeedEnabled = newValue
+            AppState.shared.updateSettings(s)
+        }
+    }
+
+    public var autoDeleteFinishedDownloads: Bool {
+        get { AppState.shared.settings.autoDeleteFinishedDownloads }
+        set {
+            var s = AppState.shared.settings
+            s.autoDeleteFinishedDownloads = newValue
+            AppState.shared.updateSettings(s)
+        }
+    }
+
     public var hapticsEnabled: Bool {
         get { AppState.shared.settings.hapticsEnabled }
         set { 
@@ -930,8 +982,23 @@ public class SettingsViewModel {
         }
     }
 
-    public var streamingPolicy: StreamingPolicy = .always
-    public var downloadPolicy: DownloadPolicy = .wifiOnly
+    public var streamingPolicy: StreamingPolicy {
+        get { AppState.shared.settings.streamingPolicy }
+        set {
+            var s = AppState.shared.settings
+            s.streamingPolicy = newValue
+            AppState.shared.updateSettings(s)
+        }
+    }
+
+    public var downloadPolicy: DownloadPolicy {
+        get { AppState.shared.settings.downloadPolicy }
+        set {
+            var s = AppState.shared.settings
+            s.downloadPolicy = newValue
+            AppState.shared.updateSettings(s)
+        }
+    }
 
     public var libraryStats: LibraryStats?
     public var userStats: UserStatsData?
