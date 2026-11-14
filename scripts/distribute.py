@@ -228,6 +228,112 @@ def upload_screenshot_file(set_id: str, file_path: str):
     return shot_id
 
 
+def sync_screenshots(app_id: str, screenshots_base_dir: str):
+    """
+    Audits and synchronizes screenshot sets for iPhone 6.7\" and iPad 12.9\" Pro (3rd Gen)
+    to the active App Store Version localization.
+    """
+    print(f"\n📸 Auditing & Synchronizing App Store Screenshots from: {screenshots_base_dir}...")
+
+    # 1. Get iOS versions
+    versions_res = api_request("GET", f"/apps/{app_id}/appStoreVersions?filter[platform]=IOS")
+    versions = versions_res.get("data", [])
+    if not versions:
+        raise RuntimeError("No iOS App Store Versions found for this app.")
+
+    editable_versions = [v for v in versions if v.get("attributes", {}).get("appStoreState") in ("PREPARE_FOR_SUBMISSION", "REJECTED", "DEVELOPER_REJECTED")]
+    target_version = editable_versions[0] if editable_versions else versions[0]
+
+    v_id = target_version["id"]
+    v_state = target_version.get("attributes", {}).get("appStoreState")
+    v_str = target_version.get("attributes", {}).get("versionString")
+    print(f"  Target Version: {v_str} (ID: {v_id}, State: {v_state})")
+
+    # Fetch localizations
+    locs_res = api_request("GET", f"/appStoreVersions/{v_id}/appStoreVersionLocalizations")
+    locs = locs_res.get("data", [])
+    if not locs:
+        raise RuntimeError(f"No localizations found for version {v_str}.")
+
+    loc = locs[0]
+    loc_id = loc["id"]
+    locale = loc.get("attributes", {}).get("locale", "en-US")
+    print(f"  Localization: {locale} (ID: {loc_id})")
+
+    # Fetch existing screenshot sets
+    existing_sets_res = api_request("GET", f"/appStoreVersionLocalizations/{loc_id}/appScreenshotSets")
+    existing_sets = {s.get("attributes", {}).get("screenshotDisplayType"): s for s in existing_sets_res.get("data", [])}
+
+    display_type_mapping = {
+        "APP_IPHONE_67": os.path.join(screenshots_base_dir, "iphone_67"),
+        "APP_IPAD_PRO_3GEN_129": os.path.join(screenshots_base_dir, "ipad_129"),
+    }
+
+    is_editable = v_state in ("PREPARE_FOR_SUBMISSION", "REJECTED", "DEVELOPER_REJECTED")
+
+    for display_type, folder in display_type_mapping.items():
+        print(f"\n  Checking Display Type: {display_type} (source: {folder})")
+        existing_set = existing_sets.get(display_type)
+        set_id = existing_set["id"] if existing_set else None
+
+        if set_id:
+            shots_res = api_request("GET", f"/appScreenshotSets/{set_id}/appScreenshots")
+            shots = shots_res.get("data", [])
+            print(f"    Existing set ID: {set_id} ({len(shots)} screenshots registered)")
+            for s in shots:
+                s_attrs = s.get("attributes", {})
+                s_name = s_attrs.get("fileName")
+                s_state = s_attrs.get("assetDeliveryState", {}).get("state")
+                s_size = s_attrs.get("fileSize")
+                print(f"      - {s_name} [{s_size} bytes] -> State: {s_state}")
+        else:
+            print(f"    No existing screenshot set on App Store Connect for {display_type}.")
+
+        if not os.path.isdir(folder):
+            print(f"    ⚠️ Local folder not found: {folder}. Skipping.")
+            continue
+
+        local_files = sorted([f for f in os.listdir(folder) if f.lower().endswith(".png")])
+        print(f"    Found {len(local_files)} local screenshots: {local_files}")
+
+        if not is_editable:
+            print(f"    ℹ️ Version {v_str} is currently '{v_state}' (locked by Apple Review). Screenshot sets are frozen by App Store Connect.")
+            continue
+
+        # If editable, create set if needed and upload
+        if not set_id:
+            print(f"    Creating screenshot set for {display_type}...")
+            create_payload = {
+                "data": {
+                    "type": "appScreenshotSets",
+                    "attributes": {"screenshotDisplayType": display_type},
+                    "relationships": {
+                        "appStoreVersionLocalization": {
+                            "data": {"type": "appStoreVersionLocalizations", "id": loc_id}
+                        }
+                    }
+                }
+            }
+            new_set = api_request("POST", "/appScreenshotSets", create_payload)
+            set_id = new_set["data"]["id"]
+            print(f"    ✓ Created screenshot set ID: {set_id}")
+
+        existing_names = set()
+        if existing_set:
+            shots_res = api_request("GET", f"/appScreenshotSets/{set_id}/appScreenshots")
+            existing_names = {s.get("attributes", {}).get("fileName") for s in shots_res.get("data", [])}
+
+        for file_name in local_files:
+            file_path = os.path.join(folder, file_name)
+            if file_name in existing_names:
+                print(f"    ✓ Screenshot already exists on ASC: {file_name}")
+                continue
+            print(f"    Uploading {file_name}...")
+            upload_screenshot_file(set_id, file_path)
+
+    print("\n🎉 Screenshot audit and synchronization completed successfully!")
+
+
 def distribute_testflight(app_id: str, build_id: str, group_name: Optional[str] = None, whats_new: Optional[str] = None):
     print(f"\n🚀 Distributing build {build_id} to TestFlight...")
 
@@ -454,6 +560,11 @@ def main():
     p_num = subparsers.add_parser("next-build-number", help="Get next build number from App Store Connect")
     p_num.add_argument("--bundle-id", default=os.environ.get("APP_BUNDLE_ID", "club.foodshare.audiobookphile"))
 
+    # screenshots
+    p_shots = subparsers.add_parser("screenshots", help="Audit and sync App Store screenshots")
+    p_shots.add_argument("--bundle-id", default=os.environ.get("APP_BUNDLE_ID", "club.foodshare.audiobookphile"))
+    p_shots.add_argument("--dir", default="build/screenshots", help="Path to build/screenshots directory")
+
     args = parser.parse_args()
 
     app = get_app(args.bundle_id)
@@ -507,6 +618,10 @@ def main():
             build = poll_build_ready(app_id, target_version=args.build_version)
             build_id = build["id"]
         distribute_production(app_id, build_id, version_string=args.version_string, whats_new=args.whats_new, submit_review=args.submit_review)
+
+    elif args.command == "screenshots":
+        shots_dir = os.path.abspath(args.dir)
+        sync_screenshots(app_id, shots_dir)
 
 
 if __name__ == "__main__":

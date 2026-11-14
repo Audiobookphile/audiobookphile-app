@@ -26,6 +26,7 @@ Commands:
   production              Poll ingestion, attach to App Store Version, and submit
   all-testflight          Run archive -> export -> upload -> testflight
   all-production          Run archive -> export -> upload -> production
+  screenshots             Audit and synchronize screenshots to App Store Version
   status                  Check current builds, TestFlight groups, and versions
 
 Options:
@@ -188,6 +189,9 @@ case "$COMMAND" in
     ;;
   status)
     python3 "$SCRIPT_DIR/distribute.py" status "$@"
+    ;;
+  screenshots)
+    python3 "$SCRIPT_DIR/distribute.py" screenshots "$@"
     ;;
   testflight)
     python3 "$SCRIPT_DIR/distribute.py" testflight "$@"
