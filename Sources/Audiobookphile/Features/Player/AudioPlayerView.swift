@@ -20,6 +20,7 @@ public struct AudioPlayerView: View {
 
     @State var showChapters = false
     @State var showSleepTimer = false
+    @State var showCarMode = false
     @State var showMoreMenu = false
     @State var isUiLocked = false
     @State var showBookmarksList = false
@@ -29,6 +30,7 @@ public struct AudioPlayerView: View {
     @State var newBookmarkTitle = ""
     @State var isAnimatingBackground = false
     @State var isRetrying = false
+    @State var sleepTimerToast: String?
 
     @State var colorLoader = DynamicColorLoader()
 
@@ -58,6 +60,39 @@ public struct AudioPlayerView: View {
             if let playbackError = AudioPlayerService.shared.playbackError {
                 playbackFailureView(playbackError)
             }
+
+            // Sleep timer shake reset toast
+            if let toast = sleepTimerToast {
+                VStack {
+                    Spacer()
+                    HStack(spacing: 8) {
+                        Image(systemName: "moon.fill")
+                            .foregroundStyle(Color.appPrimary)
+                        Text(toast)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.white)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .background(.ultraThinMaterial, in: Capsule())
+                    .overlay(Capsule().strokeBorder(Color.white.opacity(0.2), lineWidth: 0.5))
+                    .shadow(radius: 10)
+                    .padding(.bottom, 120)
+                }
+                .transition(.opacity.combined(with: .scale))
+            }
+        }
+        #if os(iOS) && !SKIP
+        .fullScreenCover(isPresented: $showCarMode) {
+            CarModeView(viewModel: viewModel)
+        }
+        #else
+        .sheet(isPresented: $showCarMode) {
+            CarModeView(viewModel: viewModel)
+        }
+        #endif
+        .onReceive(NotificationCenter.default.publisher(for: .deviceDidShakeNotification)) { _ in
+            handleShake()
         }
         .applyToolbarAdapters(isLight: colorLoader.isLight, isHidden: isUiLocked)
         .ignoresSafeArea()
@@ -118,6 +153,7 @@ public struct AudioPlayerView: View {
             .presentationDetents([.medium, .large])
         }
         .confirmationDialog("Player Options", isPresented: $showMoreMenu, titleVisibility: .visible) {
+            Button("Car Mode") { showCarMode = true }
             Button("Go to Sleep Timer") { showSleepTimer = true }
             Button("View Chapters") { showChapters = true }
             Button("Add Bookmark") { showAddBookmark = true }
@@ -310,6 +346,16 @@ public struct AudioPlayerView: View {
             Spacer()
 
             Button {
+                showCarMode = true
+            } label: {
+                Image(systemName: "car.fill")
+                    .font(.title2)
+                    .foregroundStyle(coverIsLight ? DesignTokens.Color.background : DesignTokens.Color.foreground)
+            }
+            .accessibilityLabel("Car Mode")
+            .padding(.trailing, 16)
+
+            Button {
                 withAnimation {
                     isUiLocked.toggle()
                 }
@@ -348,6 +394,26 @@ public struct AudioPlayerView: View {
                 .foregroundStyle((coverIsLight ? DesignTokens.Color.background : DesignTokens.Color.foreground).opacity(0.7))
                 .multilineTextAlignment(.center)
                 .lineLimit(1)
+        }
+    }
+
+    private func handleShake() {
+        guard appState.settings.shakeToResetSleepTimer else { return }
+        if AudioPlayerService.shared.isSleepTimerActive {
+            #if !SKIP && os(iOS)
+            let generator = UINotificationFeedbackGenerator()
+            generator.notificationOccurred(.success)
+            #endif
+            AudioPlayerService.shared.resetSleepTimer()
+            withAnimation {
+                sleepTimerToast = "Sleep Timer Reset"
+            }
+            Task {
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                withAnimation {
+                    sleepTimerToast = nil
+                }
+            }
         }
     }
 

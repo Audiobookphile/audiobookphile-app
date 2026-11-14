@@ -114,6 +114,35 @@ public struct BookCard: View {
                 }
             }
             .padding(8)
+
+            // Metadata Badges (Abridged / Explicit)
+            if book.media.metadata.abridged == true || book.media.metadata.explicit {
+                VStack {
+                    Spacer()
+                    HStack(spacing: 4) {
+                        if book.media.metadata.abridged == true {
+                            Text("ABRIDGED")
+                                .font(.system(size: 8, weight: .bold))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 2.5)
+                                .background(.black.opacity(0.75))
+                                .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+                        }
+                        if book.media.metadata.explicit {
+                            Text("E")
+                                .font(.system(size: 8, weight: .heavy))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 4)
+                                .padding(.vertical, 2.5)
+                                .background(Color.red.opacity(0.85))
+                                .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
+                        }
+                        Spacer()
+                    }
+                    .padding(6)
+                }
+            }
         }
         .aspectRatio(aspectRatio, contentMode: .fit)
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.step1, style: .continuous))

@@ -412,6 +412,20 @@ public struct SettingsView: View {
                 title: "Auto Resume",
                 isOn: $viewModel.autoResume
             )
+
+            // Smart Rewind on Resume
+            SettingsToggleRow(
+                icon: "arrow.counterclockwise.circle.fill",
+                title: "Smart Rewind on Resume",
+                isOn: $viewModel.smartRewindEnabled
+            )
+
+            // Shake to Reset Sleep Timer
+            SettingsToggleRow(
+                icon: "iphone.radiowaves.left.and.right",
+                title: "Shake to Reset Sleep Timer",
+                isOn: $viewModel.shakeToResetSleepTimer
+            )
         }
     }
 
@@ -763,6 +777,24 @@ public class SettingsViewModel {
         set { 
             var s = AppState.shared.settings
             s.autoResume = newValue
+            AppState.shared.updateSettings(s)
+        }
+    }
+
+    public var smartRewindEnabled: Bool {
+        get { AppState.shared.settings.smartRewindEnabled }
+        set {
+            var s = AppState.shared.settings
+            s.smartRewindEnabled = newValue
+            AppState.shared.updateSettings(s)
+        }
+    }
+
+    public var shakeToResetSleepTimer: Bool {
+        get { AppState.shared.settings.shakeToResetSleepTimer }
+        set {
+            var s = AppState.shared.settings
+            s.shakeToResetSleepTimer = newValue
             AppState.shared.updateSettings(s)
         }
     }

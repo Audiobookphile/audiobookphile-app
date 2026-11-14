@@ -63,6 +63,11 @@ public class AudioPlayerViewModel {
         AudioPlayerService.shared.sleepTimerRemaining != nil
     }
 
+    @discardableResult
+    public func resetSleepTimer() -> Bool {
+        AudioPlayerService.shared.resetSleepTimer()
+    }
+
     public var sleepTimerRemainingPretty: String {
         guard let remaining = AudioPlayerService.shared.sleepTimerRemaining, !remaining.isNaN, !remaining.isInfinite, remaining > 0 else { return "" }
         let total = Int(remaining)
@@ -150,6 +155,14 @@ public class AudioPlayerViewModel {
 
     public func jumpBackward() {
         AudioPlayerService.shared.skipBackward(jumpBackwardTime)
+    }
+
+    public func skipForward(_ seconds: Int) {
+        AudioPlayerService.shared.skipForward(seconds)
+    }
+
+    public func skipBackward(_ seconds: Int) {
+        AudioPlayerService.shared.skipBackward(seconds)
     }
 
     public func jumpToChapterStart() {

@@ -72,6 +72,8 @@ public class AudioPlayerService: AudioPlayerServiceProtocol {
     private var pendingSeekTimeWithinTrack: TimeInterval?
     /// Dedupe key for the last WidgetKit timeline reload (budget protection).
     private var lastWidgetReloadKey: String?
+    /// Timestamp when playback was paused, used for smart rewind calculation.
+    private var lastPausedAt: Date?
 
     // Sub-Managers
     public let bookmarkManager = AudioPlayerBookmarkManager()
@@ -230,6 +232,7 @@ public class AudioPlayerService: AudioPlayerServiceProtocol {
         // the newly opened one.
         self.playbackError = nil
         self.retryCount = 0
+        self.lastPausedAt = nil
 
         Task {
             let fetched = await bookmarkManager.fetchBookmarks(libraryItemId: session.libraryItemId)
@@ -282,6 +285,7 @@ public class AudioPlayerService: AudioPlayerServiceProtocol {
 
     public func play() {
         guard session != nil else { return }
+        applySmartRewindIfNeeded()
         isPlayRequested = true
         isExplicitlyPaused = false
         isPlaying = true
@@ -291,6 +295,33 @@ public class AudioPlayerService: AudioPlayerServiceProtocol {
         nowPlayingManager.updateNowPlaying(rate: playbackRate, elapsedTime: currentTime)
         #endif
         syncWidgetState()
+    }
+
+    /// Rewinds audio progressively on resume if enabled and elapsed pause time warrants it:
+    /// - >= 2 hours: 30s
+    /// - >= 30 mins: user-configured smartRewindSeconds (default 20s)
+    /// - >= 2 mins: 10s
+    private func applySmartRewindIfNeeded() {
+        guard let pausedAt = lastPausedAt else { return }
+        lastPausedAt = nil
+
+        guard AppState.shared.settings.smartRewindEnabled else { return }
+
+        let elapsed = Date().timeIntervalSince(pausedAt)
+        var rewindSeconds: TimeInterval = 0
+        if elapsed >= 7200 { // >= 2 hours
+            rewindSeconds = 30
+        } else if elapsed >= 1800 { // >= 30 mins
+            rewindSeconds = TimeInterval(AppState.shared.settings.smartRewindSeconds)
+        } else if elapsed >= 120 { // >= 2 mins
+            rewindSeconds = 10
+        }
+
+        if rewindSeconds > 0 && currentTime > 0 {
+            let target = max(0, currentTime - rewindSeconds)
+            logger.info("Smart rewind: rewound \(rewindSeconds)s to \(target)s (paused for \(Int(elapsed))s)")
+            seek(to: target)
+        }
     }
 
     /// Manual retry after a surfaced playback failure (error overlay button).
@@ -329,6 +360,7 @@ public class AudioPlayerService: AudioPlayerServiceProtocol {
     }
 
     public func pause() {
+        lastPausedAt = Date()
         isPlayRequested = false
         isExplicitlyPaused = true
         isPlaying = false
@@ -807,12 +839,27 @@ public class AudioPlayerService: AudioPlayerServiceProtocol {
 
     // MARK: - Sleep Timer
 
+    public var isSleepTimerActive: Bool {
+        sleepTimer.isActive
+    }
+
     public func startSleepTimer(duration: TimeInterval) {
         // Seconds are passed through untouched. Rounding to whole minutes here
         // made "End of Chapter" stop playback early -- see setSleepTimer(seconds:).
         sleepTimer.setSleepTimer(seconds: duration) { [weak self] in
             self?.pause()
         }
+    }
+
+    /// Resets the sleep timer back to its initial countdown.
+    /// Resumes playback if playback had been paused when the timer finished.
+    @discardableResult
+    public func resetSleepTimer() -> Bool {
+        let didReset = sleepTimer.resetSleepTimer()
+        if didReset && !isPlaying {
+            play()
+        }
+        return didReset
     }
 
     public func stopSleepTimer() {

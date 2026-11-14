@@ -20,3 +20,4 @@ name: Capture Collections and Downloads
       - tapOn: "Downloads"
 
 - takeScreenshot: shot_06_downloads
+

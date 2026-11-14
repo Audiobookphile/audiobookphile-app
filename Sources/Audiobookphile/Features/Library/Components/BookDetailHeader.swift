@@ -43,6 +43,34 @@ public struct BookDetailHeader: View {
                         .foregroundStyle(DesignTokens.Color.foreground.opacity(0.65))
                         .multilineTextAlignment(.center)
                 }
+
+                if detailed.media.metadata.abridged == true || detailed.media.metadata.explicit {
+                    HStack(spacing: 8) {
+                        if detailed.media.metadata.abridged == true {
+                            Text("ABRIDGED")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundStyle(DesignTokens.Color.foreground.opacity(0.85))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background(DesignTokens.Color.surface.opacity(0.18))
+                                .clipShape(Capsule())
+                        }
+                        if detailed.media.metadata.explicit {
+                            HStack(spacing: 4) {
+                                Image(systemName: "e.square.fill")
+                                    .font(.system(size: 13, weight: .bold))
+                                Text("EXPLICIT")
+                                    .font(.system(size: 11, weight: .bold))
+                            }
+                            .foregroundStyle(Color.red.opacity(0.9))
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(Color.red.opacity(0.12))
+                            .clipShape(Capsule())
+                        }
+                    }
+                    .padding(.top, 4)
+                }
             }
         }
     }

@@ -93,6 +93,11 @@ public struct AppSettings: Codable, Sendable {
     public var lockOrientation: Bool = false
     public var defaultPlaybackSpeed: Double = 1.0
 
+    // Upstream Parity: Smart Rewind & Motion Sleep Controls
+    public var smartRewindEnabled: Bool = true
+    public var smartRewindSeconds: Int = 20
+    public var shakeToResetSleepTimer: Bool = true
+
     // Audio & Hardware Accessibility Settings
     public var spokenAudioModeEnabled: Bool = true
     public var vocalBoostEnabled: Bool = false
@@ -130,6 +135,9 @@ public struct AppSettings: Codable, Sendable {
         lowCutFilterEnabled = try container.decodeIfPresent(Bool.self, forKey: .lowCutFilterEnabled) ?? true
         binauralReverbEnabled = try container.decodeIfPresent(Bool.self, forKey: .binauralReverbEnabled) ?? false
         binauralReverbPresetRaw = try container.decodeIfPresent(Int.self, forKey: .binauralReverbPresetRaw) ?? 0
+        smartRewindEnabled = try container.decodeIfPresent(Bool.self, forKey: .smartRewindEnabled) ?? true
+        smartRewindSeconds = try container.decodeIfPresent(Int.self, forKey: .smartRewindSeconds) ?? 20
+        shakeToResetSleepTimer = try container.decodeIfPresent(Bool.self, forKey: .shakeToResetSleepTimer) ?? true
     }
 
     public enum CodingKeys: String, CodingKey {
@@ -155,6 +163,9 @@ public struct AppSettings: Codable, Sendable {
         case lowCutFilterEnabled
         case binauralReverbEnabled
         case binauralReverbPresetRaw
+        case smartRewindEnabled
+        case smartRewindSeconds
+        case shakeToResetSleepTimer
     }
 }
 

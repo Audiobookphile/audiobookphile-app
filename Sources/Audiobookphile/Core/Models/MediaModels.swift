@@ -204,15 +204,16 @@ public struct BookMetadata: Codable, Hashable, Sendable {
     public let asin: String?
     public let language: String?
     public let explicit: Bool
+    public let abridged: Bool?
 
     public enum CodingKeys: String, CodingKey {
         case title, subtitle
         case authorName, narratorName, seriesName
         case genres, publishedYear, publishedDate, publisher
-        case description, isbn, asin, language, explicit
+        case description, isbn, asin, language, explicit, abridged
     }
 
-    public init(title: String, subtitle: String? = nil, authorName: String? = nil, narratorName: String? = nil, seriesName: String? = nil, genres: [String] = [], publishedYear: String? = nil, publishedDate: String? = nil, publisher: String? = nil, description: String? = nil, isbn: String? = nil, asin: String? = nil, language: String? = nil, explicit: Bool = false) {
+    public init(title: String, subtitle: String? = nil, authorName: String? = nil, narratorName: String? = nil, seriesName: String? = nil, genres: [String] = [], publishedYear: String? = nil, publishedDate: String? = nil, publisher: String? = nil, description: String? = nil, isbn: String? = nil, asin: String? = nil, language: String? = nil, explicit: Bool = false, abridged: Bool? = nil) {
         self.rawTitle = title
         self.title = Book.sanitizeDisplayTitle(title)
         self.subtitle = subtitle
@@ -228,6 +229,7 @@ public struct BookMetadata: Codable, Hashable, Sendable {
         self.asin = asin
         self.language = language
         self.explicit = explicit
+        self.abridged = abridged
     }
 
     public init(from decoder: Decoder) throws {
@@ -248,6 +250,7 @@ public struct BookMetadata: Codable, Hashable, Sendable {
         asin = try container.decodeIfPresent(String.self, forKey: .asin)
         language = try container.decodeIfPresent(String.self, forKey: .language)
         explicit = (try container.decodeIfPresent(Bool.self, forKey: .explicit)) ?? false
+        abridged = try container.decodeIfPresent(Bool.self, forKey: .abridged)
     }
 }
 
@@ -268,6 +271,7 @@ extension BookMetadata {
         self.asin = nil
         self.language = nil
         self.explicit = false
+        self.abridged = nil
     }
 }
 
