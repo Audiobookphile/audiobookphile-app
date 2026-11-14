@@ -99,8 +99,8 @@ public struct PlayerQuickActionsView: View {
                     icon: "sparkles",
                     text: "AI Insights",
                     isActive: true,
-                    activeColor: .cyan,
-                    textColor: .cyan,
+                    activeColor: Color.appPrimary,
+                    textColor: coverIsLight ? DesignTokens.Color.background : DesignTokens.Color.foreground,
                     action: { showAIInsights = true }
                 )
             }

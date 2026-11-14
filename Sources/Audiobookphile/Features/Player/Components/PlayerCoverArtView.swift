@@ -82,7 +82,7 @@ public struct PlayerCoverArtView: View {
                 y: 18
             )
         }
-        .frame(height: 300)
+        .frame(height: 280)
     }
 
     private func audiobookphileBadge(icon: String? = nil, text: String) -> some View {
