@@ -741,7 +741,10 @@ def main():
         distribute_production(app_id, build_id, version_string=args.version_string, whats_new=args.whats_new, submit_review=args.submit_review)
 
     elif args.command == "screenshots":
+        default_app_shots = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "build", "screenshots")
         shots_dir = os.path.abspath(args.dir)
+        if not os.path.isdir(shots_dir) and os.path.isdir(default_app_shots):
+            shots_dir = default_app_shots
         sync_screenshots(app_id, shots_dir)
 
 
