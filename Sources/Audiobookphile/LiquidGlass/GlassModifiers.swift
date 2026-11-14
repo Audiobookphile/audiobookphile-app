@@ -226,8 +226,27 @@ extension ButtonStyle where Self == LiquidButtonStyle {
 }
 
 struct LiquidPressableModifier: ViewModifier {
+    @State private var isPressed = false
+
     func body(content: Content) -> some View {
         content
+            .scaleEffect(isPressed ? 0.96 : 1.0)
+            .animation(.spring(response: 0.25, dampingFraction: 0.65), value: isPressed)
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { _ in
+                        if !isPressed {
+                            isPressed = true
+                            #if os(iOS) && !SKIP
+                            let generator = UIImpactFeedbackGenerator(style: .light)
+                            generator.impactOccurred()
+                            #endif
+                        }
+                    }
+                    .onEnded { _ in
+                        isPressed = false
+                    }
+            )
     }
 }
 

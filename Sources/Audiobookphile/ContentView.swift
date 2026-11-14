@@ -234,7 +234,7 @@ public struct MainTabView: View {
                     }
                 )
                 .transition(.move(edge: .bottom).combined(with: .opacity))
-                .padding(.bottom, 49) // Tab bar height
+                .padding(.bottom, 54) // Floating margin above TabBar
             }
         }
         #if os(iOS) || SKIP

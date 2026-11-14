@@ -625,6 +625,13 @@ public struct DownloadsView: View {
                     .foregroundStyle(.secondary)
             }
             .listRowBackground(DesignTokens.Color.surface.opacity(0.5))
+
+            // Bottom clearance for floating MiniPlayer
+            Section {
+                Color.clear
+                    .frame(height: 80)
+                    .listRowBackground(Color.clear)
+            }
         }
         .scrollContentBackground(.hidden)
     }

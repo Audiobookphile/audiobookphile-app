@@ -95,7 +95,6 @@ public struct AudioPlayerView: View {
             handleShake()
         }
         .applyToolbarAdapters(isLight: colorLoader.isLight, isHidden: isUiLocked)
-        .ignoresSafeArea()
         .optimizedForProMotion()
         .alert("Add Bookmark", isPresented: $showAddBookmark) {
             TextField("Bookmark Title (Optional)", text: $newBookmarkTitle)
@@ -264,7 +263,7 @@ public struct AudioPlayerView: View {
         VStack(spacing: 0) {
             // Top bar
             topBar
-                .padding(.top, 50)
+                .padding(.top, 12)
 
             Spacer()
 
@@ -327,7 +326,7 @@ public struct AudioPlayerView: View {
                     isUiLocked: isUiLocked
                 )
                     .padding(.horizontal, 24)
-                    .padding(.bottom, 40)
+                    .padding(.bottom, 20)
             }
         }
     }

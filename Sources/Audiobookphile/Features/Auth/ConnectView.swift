@@ -222,7 +222,7 @@ public struct ConnectView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "sparkles")
                         .foregroundStyle(Color.orange)
-                    Text("🚀 Try Live Demo (1-Click)")
+                    Text("Try Live Demo (1-Click)")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Color.primary)
                     Spacer()

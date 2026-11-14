@@ -43,6 +43,8 @@ public struct CollectionListView: View {
                         }
                     }
                 }
+
+                Spacer().frame(height: 100) // Bottom clearance for floating MiniPlayer
             }
             .padding(16)
         }

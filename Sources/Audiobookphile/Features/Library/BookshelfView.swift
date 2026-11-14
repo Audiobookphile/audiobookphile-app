@@ -45,6 +45,8 @@ public struct BookshelfView: View {
                     } else {
                         narratorsTabSection
                     }
+
+                    Spacer().frame(height: 100) // Bottom clearance for floating MiniPlayer
                 }
                 .background(GeometryReader { proxy in
                     Color.clear.preference(key: ScrollOffsetPreferenceKey.self, value: proxy.frame(in: .named("scroll")).minY)
