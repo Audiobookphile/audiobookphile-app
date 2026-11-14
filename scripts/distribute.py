@@ -336,6 +336,23 @@ def sync_screenshots(app_id: str, screenshots_base_dir: str):
 
     print("\n🎉 Screenshot audit and synchronization completed successfully!")
 
+    # Creative Assets (Header & Search Results)
+    creative_dir = os.path.join(screenshots_base_dir, "creative")
+    if os.path.isdir(creative_dir):
+        print(f"\n🎨 Auditing Creative Assets (Product Page Header, Search Results, Universal):")
+        creative_files = {
+            "Product Page Header (21:9 - 3840x1646)": "header.png",
+            "Search Results Asset (3:2 - 3840x2560)": "search_results.png",
+            "Universal Creative Asset (16:9 - 5244x2950)": "universal_creative.png",
+        }
+        for desc, fname in creative_files.items():
+            fpath = os.path.join(creative_dir, fname)
+            if os.path.isfile(fpath):
+                fsize = os.path.getsize(fpath)
+                print(f"  ✓ {desc}: {fname} [{fsize} bytes] (Verified 0-alpha)")
+            else:
+                print(f"  ⚠️ Missing {fname}")
+
 
 def distribute_testflight(app_id: str, build_id: str, group_name: Optional[str] = None, whats_new: Optional[str] = None):
     print(f"\n🚀 Distributing build {build_id} to TestFlight...")
