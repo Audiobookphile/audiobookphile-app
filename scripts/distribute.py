@@ -228,6 +228,52 @@ def upload_screenshot_file(set_id: str, file_path: str):
     return shot_id
 
 
+def upload_app_preview_file(set_id: str, file_path: str):
+    """Uploads a single app preview video file to an appPreviewSet via App Store Connect S3 ingestion."""
+    import hashlib
+    file_size = os.path.getsize(file_path)
+    file_name = os.path.basename(file_path)
+    with open(file_path, "rb") as f:
+        file_bytes = f.read()
+    checksum = hashlib.md5(file_bytes).hexdigest()
+
+    # 1. Reserve upload
+    payload = {
+        "data": {
+            "type": "appPreviews",
+            "attributes": {"fileName": file_name, "fileSize": file_size},
+            "relationships": {"appPreviewSet": {"data": {"type": "appPreviewSets", "id": set_id}}}
+        }
+    }
+    res = api_request("POST", "/appPreviews", payload)
+    preview_id = res["data"]["id"]
+    ops = res["data"]["attributes"]["uploadOperations"]
+
+    # 2. Upload chunks to Apple S3
+    for op in ops:
+        url = op["url"]
+        offset = op["offset"]
+        length = op["length"]
+        chunk = file_bytes[offset:offset + length]
+        req = urllib.request.Request(url, data=chunk, method="PUT")
+        for h in op.get("requestHeaders", []):
+            req.add_header(h["name"], h["value"])
+        with urllib.request.urlopen(req) as put_resp:
+            pass
+
+    # 3. Commit upload
+    commit_payload = {
+        "data": {
+            "type": "appPreviews",
+            "id": preview_id,
+            "attributes": {"uploaded": True, "sourceFileChecksum": checksum}
+        }
+    }
+    api_request("PATCH", f"/appPreviews/{preview_id}", commit_payload)
+    print(f"  ✓ Uploaded app preview video {file_name} (ID: {preview_id}).")
+    return preview_id
+
+
 def upload_creative_asset(app_id: str, file_path: str) -> str:
     """Uploads a creative asset (Header, Search Results, Universal) to the App Asset Library."""
     file_name = os.path.basename(file_path)
@@ -453,6 +499,69 @@ def sync_screenshots(app_id: str, screenshots_base_dir: str):
                         print(f"    ✓ Linked {p_type_name} successfully!")
                     except Exception as e:
                         print(f"    ⚠️ Could not link {p_type_name}: {e}")
+
+        # App Previews (under "App Previews and Screenshots")
+        previews_dir = os.path.join(screenshots_base_dir, "previews")
+        print(f"\n🎬 Auditing & Synchronizing App Previews (source: {previews_dir}):")
+
+        try:
+            preview_sets_res = api_request("GET", f"/appStoreVersionLocalizations/{loc_id}/appPreviewSets")
+            existing_preview_sets = {s.get("attributes", {}).get("previewType"): s for s in preview_sets_res.get("data", [])}
+        except Exception as e:
+            print(f"  ⚠️ Could not fetch appPreviewSets: {e}")
+            existing_preview_sets = {}
+
+        preview_mapping = {
+            "IPHONE_67": os.path.join(previews_dir, "iphone_67_preview.mp4"),
+            "IPAD_PRO_3GEN_129": os.path.join(previews_dir, "ipad_129_preview.mp4"),
+        }
+
+        for p_type, video_path in preview_mapping.items():
+            print(f"\n  Checking Preview Type: {p_type} (source: {video_path})")
+            p_set = existing_preview_sets.get(p_type)
+            p_set_id = p_set["id"] if p_set else None
+
+            if p_set_id:
+                previews_res = api_request("GET", f"/appPreviewSets/{p_set_id}/appPreviews")
+                p_items = previews_res.get("data", [])
+                print(f"    Existing preview set ID: {p_set_id} ({len(p_items)} previews registered)")
+                for item in p_items:
+                    item_name = item.get("attributes", {}).get("fileName")
+                    item_state = item.get("attributes", {}).get("assetDeliveryState", {}).get("state")
+                    item_size = item.get("attributes", {}).get("fileSize")
+                    print(f"      - {item_name} [{item_size} bytes] -> State: {item_state}")
+            else:
+                print(f"    No existing preview set on App Store Connect for {p_type}.")
+
+            if not os.path.isfile(video_path):
+                print(f"    ℹ️ No local preview video at {video_path}.")
+                continue
+
+            v_size = os.path.getsize(video_path)
+            print(f"    ✓ Found local preview video: {os.path.basename(video_path)} ({v_size} bytes, Apple H.264)")
+
+            if not is_editable:
+                print(f"    ℹ️ Version {v_str} is currently '{v_state}' (Apple freezes preview set creation during review).")
+                continue
+
+            if not p_set_id:
+                print(f"    Creating appPreviewSet for {p_type}...")
+                create_p_payload = {
+                    "data": {
+                        "type": "appPreviewSets",
+                        "attributes": {"previewType": p_type},
+                        "relationships": {
+                            "appStoreVersionLocalization": {
+                                "data": {"type": "appStoreVersionLocalizations", "id": loc_id}
+                            }
+                        }
+                    }
+                }
+                new_p_set = api_request("POST", "/appPreviewSets", create_p_payload)
+                p_set_id = new_p_set["data"]["id"]
+                print(f"    ✓ Created preview set ID: {p_set_id}")
+
+            upload_app_preview_file(p_set_id, video_path)
 
 
 def distribute_testflight(app_id: str, build_id: str, group_name: Optional[str] = None, whats_new: Optional[str] = None):
