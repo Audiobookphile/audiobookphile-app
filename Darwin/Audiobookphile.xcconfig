@@ -4,6 +4,8 @@
 // These will be overridden by Skip.env once ci_post_clone.sh executes.
 PRODUCT_NAME = Audiobookphile
 PRODUCT_BUNDLE_IDENTIFIER = club.foodshare.audiobookphile
+MARKETING_VERSION = 1.0
+CURRENT_PROJECT_VERSION = 1
 
 #include? "../Skip.env"
 

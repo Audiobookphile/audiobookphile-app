@@ -122,6 +122,7 @@ cmd_archive() {
     -authenticationKeyID "$ASC_KEY_ID" \
     -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
     DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM:-DCKVD6LKYV}" \
+    MARKETING_VERSION="${MARKETING_VERSION:-1.0}" \
     CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
     SKIP_ZERO=true \
     -skipPackagePluginValidation \
@@ -161,18 +162,19 @@ cmd_upload() {
     exit 1
   fi
 
+  export API_PRIVATE_KEYS_DIR="${API_PRIVATE_KEYS_DIR:-$HOME/.appstoreconnect/private_keys}"
+
   xcrun altool --validate-app \
     -f "$IPA_PATH" \
     -t ios \
-    --apiKey "$ASC_KEY_ID" \
-    --apiIssuer "$ASC_ISSUER_ID" \
-    --p8-file-path "$ASC_KEY_PATH"
+    --api-key "$ASC_KEY_ID" \
+    --api-issuer "$ASC_ISSUER_ID"
 
   echo "  Validation succeeded. Uploading package..."
   xcrun altool --upload-package "$IPA_PATH" \
-    --apiKey "$ASC_KEY_ID" \
-    --apiIssuer "$ASC_ISSUER_ID" \
-    --p8-file-path "$ASC_KEY_PATH"
+    -t ios \
+    --api-key "$ASC_KEY_ID" \
+    --api-issuer "$ASC_ISSUER_ID"
   echo "✅ IPA uploaded to App Store Connect!"
 }
 

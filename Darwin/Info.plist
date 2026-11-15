@@ -8,6 +8,10 @@
     <string>Audiobookphile</string>
     <key>CFBundleDisplayName</key>
     <string>Audiobookphile</string>
+    <key>CFBundleShortVersionString</key>
+    <string>$(MARKETING_VERSION)</string>
+    <key>CFBundleVersion</key>
+    <string>$(CURRENT_PROJECT_VERSION)</string>
     <key>CFBundleURLTypes</key>
     <array>
         <dict>
