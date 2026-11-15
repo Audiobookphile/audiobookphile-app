@@ -8,6 +8,8 @@ on:
       - 'Package.swift'
       - 'Package.resolved'
       - 'Project.xcworkspace/**'
+      - 'scripts/**'
+      - 'exportOptions*.plist'
       - '.github/workflows/ci-mobile.yml'
   pull_request:
     branches: [ main ]
@@ -15,6 +17,7 @@ on:
       - 'Sources/**'
       - 'Package.swift'
       - 'Package.resolved'
+      - 'scripts/**'
   workflow_dispatch:
 concurrency:
   group: ci-mobile-${{ github.ref }}
