@@ -273,25 +273,6 @@ jobs:
           if [ ! -f exportOptions-appstore.plist ]; then
             if [ -n "$EXPORT_OPTIONS_PLIST" ]; then
               echo "$EXPORT_OPTIONS_PLIST" | base64 --decode > exportOptions-appstore.plist 2>/dev/null || echo "$EXPORT_OPTIONS_PLIST" > exportOptions-appstore.plist
-            else
-              cat << 'EOF' > exportOptions-appstore.plist
-              <?xml version="1.0" encoding="UTF-8"?>
-              <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-              <plist version="1.0">
-              <dict>
-                  <key>method</key>
-                  <string>app-store-connect</string>
-                  <key>teamID</key>
-                  <string>DCKVD6LKYV</string>
-                  <key>signingStyle</key>
-                  <string>automatic</string>
-                  <key>uploadSymbols</key>
-                  <true/>
-                  <key>manageAppVersionAndBuildNumber</key>
-                  <true/>
-              </dict>
-              </plist>
-          EOF
             fi
           fi
 
@@ -315,7 +296,11 @@ jobs:
             if [ -n "$BUILD_PROVISION_PROFILE_BASE64" ]; then
               echo "📱 Installing provisioning profile..."
               mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-              echo "$BUILD_PROVISION_PROFILE_BASE64" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/build_pp.mobileprovision
+              PP_TMP="$RUNNER_TEMP/temp.mobileprovision"
+              echo "$BUILD_PROVISION_PROFILE_BASE64" | base64 --decode > "$PP_TMP"
+              PP_UUID=$(security cms -D -i "$PP_TMP" 2>/dev/null | plutil -extract UUID raw - 2>/dev/null || echo "app_distribution")
+              cp "$PP_TMP" "$HOME/Library/MobileDevice/Provisioning Profiles/${PP_UUID}.mobileprovision"
+              cp "$PP_TMP" "$HOME/Library/MobileDevice/Provisioning Profiles/build_pp.mobileprovision"
             fi
           fi
 

@@ -122,6 +122,7 @@ cmd_archive() {
     -authenticationKeyID "$ASC_KEY_ID" \
     -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
     DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM:-DCKVD6LKYV}" \
+    CODE_SIGN_IDENTITY="${CODE_SIGN_IDENTITY:-Apple Distribution}" \
     CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
     SKIP_ZERO=true \
     -skipPackagePluginValidation \
