@@ -94,8 +94,10 @@ public protocol AudioPlayerServiceProtocol: AnyObject {
     // MARK: - Bookmarks
 
     /// Adds a bookmark at the current playback position.
-    /// - Parameter title: Title for the bookmark (empty defaults to timestamp).
-    func addBookmark(title: String)
+    /// - Parameters:
+    ///   - title: Title for the bookmark (empty defaults to timestamp).
+    ///   - note: Optional multi-line notes or commentary.
+    func addBookmark(title: String, note: String?)
 
     /// Deletes the given bookmark from the current session.
     /// - Parameter bookmark: The bookmark to delete.
@@ -120,4 +122,10 @@ public protocol AudioPlayerServiceProtocol: AnyObject {
 
     /// Reconfigures the audio session (e.g. when route changes).
     func reconfigureAudioSession()
+}
+
+extension AudioPlayerServiceProtocol {
+    public func addBookmark(title: String) {
+        addBookmark(title: title, note: nil)
+    }
 }

@@ -29,6 +29,7 @@ public struct AudioPlayerView: View {
     @State var showAudioAccessibilitySheet = false
     @State var showAIInsights = false
     @State var newBookmarkTitle = ""
+    @State var newBookmarkNote = ""
     @State var isAnimatingBackground = false
     @State var isRetrying = false
     @State var sleepTimerToast: String?
@@ -99,12 +100,16 @@ public struct AudioPlayerView: View {
         .optimizedForProMotion()
         .alert("Add Bookmark", isPresented: $showAddBookmark) {
             TextField("Bookmark Title (Optional)", text: $newBookmarkTitle)
+            TextField("Notes & Commentary (Optional)", text: $newBookmarkNote)
             Button("Cancel", role: .cancel) {
                 newBookmarkTitle = ""
+                newBookmarkNote = ""
             }
             Button("Save") {
-                viewModel.addBookmark(title: newBookmarkTitle)
+                let note = newBookmarkNote.trimmingCharacters(in: .whitespacesAndNewlines)
+                viewModel.addBookmark(title: newBookmarkTitle, note: note.isEmpty ? nil : note)
                 newBookmarkTitle = ""
+                newBookmarkNote = ""
             }
         }
         .sheet(isPresented: $showBookmarksList) {

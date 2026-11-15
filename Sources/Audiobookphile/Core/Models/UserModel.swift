@@ -48,7 +48,18 @@ public struct Bookmark: Identifiable, Codable, Hashable, Sendable {
     public let libraryItemId: String
     public let timePos: Double
     public let title: String?
+    public let note: String?
     public let createdAt: Date?
+
+    public init(id: String, userId: String, libraryItemId: String, timePos: Double, title: String?, note: String? = nil, createdAt: Date? = nil) {
+        self.id = id
+        self.userId = userId
+        self.libraryItemId = libraryItemId
+        self.timePos = timePos
+        self.title = title
+        self.note = note
+        self.createdAt = createdAt
+    }
 
     public enum CodingKeys: String, CodingKey {
         case id
@@ -56,6 +67,7 @@ public struct Bookmark: Identifiable, Codable, Hashable, Sendable {
         case libraryItemId = "library_item_id"
         case timePos = "time_pos"
         case title
+        case note
         case createdAt = "created_at"
     }
 }

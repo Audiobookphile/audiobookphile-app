@@ -185,8 +185,8 @@ public class AudioPlayerViewModel {
         !bookmarks.isEmpty
     }
 
-    public func addBookmark(title: String) {
-        AudioPlayerService.shared.addBookmark(title: title)
+    public func addBookmark(title: String, note: String? = nil) {
+        AudioPlayerService.shared.addBookmark(title: title, note: note)
     }
 
     public func deleteBookmark(_ bookmark: Bookmark) {

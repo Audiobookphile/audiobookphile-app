@@ -823,17 +823,17 @@ public class AudioPlayerService: AudioPlayerServiceProtocol {
 
     // MARK: - Bookmarks
 
-    public func addBookmark(title: String) {
+    public func addBookmark(title: String, note: String? = nil) {
         guard let session = session else { return }
         let timePos = currentTime
         let bookmarkTitle = title.isEmpty ? "Bookmark at \(currentTime)" : title
 
-        let temp = Bookmark(id: UUID().uuidString, userId: AppState.shared.currentUser?.id ?? "", libraryItemId: session.libraryItemId, timePos: timePos, title: bookmarkTitle, createdAt: Date())
+        let temp = Bookmark(id: UUID().uuidString, userId: AppState.shared.currentUser?.id ?? "", libraryItemId: session.libraryItemId, timePos: timePos, title: bookmarkTitle, note: note, createdAt: Date())
         self.bookmarks.append(temp)
         self.bookmarks.sort(by: { $0.timePos < $1.timePos })
 
         Task {
-            if let saved = await bookmarkManager.addBookmark(title: title, currentTime: timePos, libraryItemId: session.libraryItemId) {
+            if let saved = await bookmarkManager.addBookmark(title: title, note: note, currentTime: timePos, libraryItemId: session.libraryItemId) {
                 if let idx = self.bookmarks.firstIndex(where: { $0.id == temp.id }) {
                     self.bookmarks[idx] = saved
                 } else {

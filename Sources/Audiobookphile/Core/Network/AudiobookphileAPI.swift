@@ -878,13 +878,21 @@ public actor AudiobookphileAPI {
         let library_item_id: String
         let time_pos: Double
         let title: String?
+        let note: String?
+
+        public init(library_item_id: String, time_pos: Double, title: String? = nil, note: String? = nil) {
+            self.library_item_id = library_item_id
+            self.time_pos = time_pos
+            self.title = title
+            self.note = note
+        }
     }
 
     public struct SingleBookmarkResponse: Codable {
         let bookmark: Bookmark
     }
 
-    public func createBookmark(libraryItemId: String, timePos: Double, title: String? = nil) async throws -> Bookmark {
+    public func createBookmark(libraryItemId: String, timePos: Double, title: String? = nil, note: String? = nil) async throws -> Bookmark {
         guard let url = URL(string: APIEndpoint.createBookmark.urlString(baseURL: self.baseURL)) else {
             throw APIError.invalidResponse
         }
@@ -892,7 +900,7 @@ public actor AudiobookphileAPI {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        let payload = BookmarkCreateRequest(library_item_id: libraryItemId, time_pos: timePos, title: title)
+        let payload = BookmarkCreateRequest(library_item_id: libraryItemId, time_pos: timePos, title: title, note: note)
         request.httpBody = try JSONEncoder().encode(payload)
 
         let response = try await executeRequest(request, responseType: SingleBookmarkResponse.self)

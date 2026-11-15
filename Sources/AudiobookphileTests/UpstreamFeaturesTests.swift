@@ -96,5 +96,28 @@ final class UpstreamFeaturesTests: XCTestCase {
         XCTAssertFalse(unabridgedMetadata.explicit)
         XCTAssertNil(unabridgedMetadata.abridged)
     }
+
+    func testBookmarkWithMultiLineNoteDecodingAndEncoding() throws {
+        let json = """
+        {
+            "id": "bm-123",
+            "user_id": "usr-456",
+            "library_item_id": "item-789",
+            "time_pos": 345.5,
+            "title": "Favorite quote",
+            "note": "Line 1: Key revelation\\nLine 2: Deep dialogue"
+        }
+        """.data(using: .utf8)!
+
+        let bookmark = try JSONDecoder().decode(Bookmark.self, from: json)
+        XCTAssertEqual(bookmark.id, "bm-123")
+        XCTAssertEqual(bookmark.timePos, 345.5)
+        XCTAssertEqual(bookmark.title, "Favorite quote")
+        XCTAssertEqual(bookmark.note, "Line 1: Key revelation\nLine 2: Deep dialogue")
+
+        let encoded = try JSONEncoder().encode(bookmark)
+        let roundtrip = try JSONDecoder().decode(Bookmark.self, from: encoded)
+        XCTAssertEqual(roundtrip.note, bookmark.note)
+    }
 }
 

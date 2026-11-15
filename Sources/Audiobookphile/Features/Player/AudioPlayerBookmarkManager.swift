@@ -18,13 +18,14 @@ public class AudioPlayerBookmarkManager {
         }
     }
 
-    public func addBookmark(title: String, currentTime: TimeInterval, libraryItemId: String) async -> Bookmark? {
+    public func addBookmark(title: String, note: String? = nil, currentTime: TimeInterval, libraryItemId: String) async -> Bookmark? {
         let newTitle = title.isEmpty ? "Bookmark at \(formatTime(currentTime))" : title
         do {
             return try await AudiobookphileAPI.shared.createBookmark(
                 libraryItemId: libraryItemId,
                 timePos: currentTime,
-                title: newTitle
+                title: newTitle,
+                note: note
             )
         } catch {
             logger.error("Failed to add bookmark: \(error)")

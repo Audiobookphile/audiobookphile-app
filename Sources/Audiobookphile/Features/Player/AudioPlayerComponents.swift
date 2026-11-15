@@ -231,6 +231,12 @@ public struct BookmarksListView: View {
                                     Text(bookmark.title ?? "Bookmark")
                                         .font(.headline)
                                         .foregroundStyle(.primary)
+                                    if let note = bookmark.note, !note.isEmpty {
+                                        Text(note)
+                                            .font(.subheadline)
+                                            .foregroundStyle(.secondary)
+                                            .lineLimit(3)
+                                    }
                                     Text(viewModel.formatTime(bookmark.timePos))
                                         .font(.caption.monospaced())
                                         .foregroundStyle(.secondary)
