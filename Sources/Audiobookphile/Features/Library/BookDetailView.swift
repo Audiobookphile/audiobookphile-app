@@ -65,29 +65,7 @@ public struct BookDetailView: View {
     // MARK: - Background Layer
 
     private var backgroundLayer: some View {
-        ZStack {
-            if viewModel.colorLoader.isLoaded {
-                viewModel.colorLoader.backgroundColor
-                    .ignoresSafeArea()
-
-                LinearGradient(
-                    colors: [
-                        viewModel.colorLoader.backgroundColor.opacity(0.6),
-                        viewModel.colorLoader.backgroundColor.opacity(0.2),
-                        Color.appBackground
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea()
-            } else {
-                Color.appBackground
-                    .ignoresSafeArea()
-            }
-
-            Color.appBackground.opacity(0.75)
-                .ignoresSafeArea()
-        }
+        FluidAuraBackground(baseColor: viewModel.colorLoader.isLoaded ? viewModel.colorLoader.backgroundColor.opacity(0.3) : nil)
     }
 
     private var dragHandle: some View {

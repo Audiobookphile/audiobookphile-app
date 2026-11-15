@@ -17,6 +17,7 @@ public struct AudioPlayerView: View {
     var proMotion = ProMotionManager.shared
     @Environment(AppState.self) private var appState
     @Environment(\.dismiss) var dismiss
+    @Environment(\.colorScheme) private var colorScheme
 
     @State var showChapters = false
     @State var showSleepTimer = false
@@ -35,7 +36,7 @@ public struct AudioPlayerView: View {
     @State var colorLoader = DynamicColorLoader()
 
     private var coverIsLight: Bool {
-        colorLoader.isLight
+        colorScheme != .dark || colorLoader.isLight
     }
 
     private var coverURL: URL? {
@@ -219,7 +220,10 @@ public struct AudioPlayerView: View {
 
     private var backgroundLayer: some View {
         ZStack {
-            // Apple Music-style dynamic cover art background with rich fallback
+            // Radiant Liquid Glass base
+            FluidAuraBackground(baseColor: colorLoader.isLoaded ? colorLoader.backgroundColor.opacity(0.35) : nil)
+
+            // Dynamic cover art glow
             if let url = coverURL {
                 GeometryReader { proxy in
                     SmartAsyncImage(url: url, maxPixelSize: CoverDecodeBudget.standard) { image in
@@ -227,25 +231,24 @@ public struct AudioPlayerView: View {
                             .resizable()
                             .scaledToFill()
                             .frame(width: proxy.size.width * 1.5, height: proxy.size.height * 1.5)
-                            .blur(radius: 100, opaque: true)
+                            .blur(radius: 100, opaque: false)
+                            .opacity(colorScheme == .dark ? 0.75 : 0.35)
                             .scaleEffect(isAnimatingBackground ? 1.1 : 1.0)
                             .rotationEffect(.degrees(isAnimatingBackground ? 10 : -10))
                             .offset(x: isAnimatingBackground ? -20 : 20, y: isAnimatingBackground ? -20 : 20)
                     } placeholder: {
-                        FluidAuraBackground(baseColor: colorLoader.backgroundColor)
+                        EmptyView()
                     }
                     .frame(width: proxy.size.width, height: proxy.size.height)
                     .clipped()
                 }
-            } else {
-                FluidAuraBackground(baseColor: colorLoader.backgroundColor)
             }
 
-            // Darken/Blend overlay to ensure text is readable
+            // Blend overlay to ensure text is readable while honoring theme
             LinearGradient(
                 colors: [
-                    DesignTokens.Color.surface.opacity(0.25),
-                    DesignTokens.Color.background.opacity(0.55)
+                    colorScheme == .dark ? DesignTokens.Color.surface.opacity(0.25) : Color.white.opacity(0.6),
+                    colorScheme == .dark ? DesignTokens.Color.background.opacity(0.55) : Color(red: 250/255, green: 249/255, blue: 246/255).opacity(0.7)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
