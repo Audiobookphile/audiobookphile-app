@@ -24,8 +24,8 @@ public class ColorExtractor {
     private let context = CIContext(options: [.workingColorSpace: kCFNull as Any])
     private var colorCache = NSCache<NSString, UIColor>()
 
-    /// Extract average color from a UIImage on a background thread to prevent frame drops
-    nonisolated public func extractColor(from image: UIImage) async -> UIColor? {
+    /// Extract average color from a UIImage
+    public func extractColor(from image: UIImage) -> UIColor? {
         guard let inputImage = CIImage(image: image) else { return nil }
 
         let extentVector = CIVector(
@@ -45,19 +45,15 @@ public class ColorExtractor {
 
         guard let outputImage = filter.outputImage else { return nil }
 
-        // Render on background thread to avoid blocking MainActor
-        let bitmap = await Task.detached(priority: .userInitiated) { [context = self.context] () -> [UInt8] in
-            var localBitmap = [UInt8](repeating: 0, count: 4)
-            context.render(
-                outputImage,
-                toBitmap: &localBitmap,
-                rowBytes: 4,
-                bounds: CGRect(x: 0, y: 0, width: 1, height: 1),
-                format: .RGBA8,
-                colorSpace: nil
-            )
-            return localBitmap
-        }.value
+        var bitmap = [UInt8](repeating: 0, count: 4)
+        context.render(
+            outputImage,
+            toBitmap: &bitmap,
+            rowBytes: 4,
+            bounds: CGRect(x: 0, y: 0, width: 1, height: 1),
+            format: .RGBA8,
+            colorSpace: nil
+        )
 
         return UIColor(
             red: CGFloat(bitmap[0]) / 255,
@@ -87,14 +83,14 @@ public class ColorExtractor {
                 downsampledImage(data: data, maxPixelSize: 64) ?? UIImage(data: data)
             }.value
         }
-        if let uiImage, let color = await extractColor(from: uiImage) {
+        if let uiImage, let color = extractColor(from: uiImage) {
             colorCache.setObject(color, forKey: cacheKey)
             return color
         }
         #else
         if let (data, _) = try? await URLSession.shared.data(from: url),
            let image = UIImage(data: data),
-           let color = await extractColor(from: image) {
+           let color = extractColor(from: image) {
             colorCache.setObject(color, forKey: cacheKey)
             return color
         }
@@ -179,15 +175,13 @@ public class DynamicColorLoader {
     }
 
     public func loadColor(from image: UIImage) {
-        Task {
-            guard let uiColor = await extractor.extractColor(from: image) else { return }
+        guard let uiColor = extractor.extractColor(from: image) else { return }
 
-            backgroundColor = Color(uiColor)
-            textColor = extractor.contrastingTextColor(for: uiColor)
-            gradientColors = extractor.generateGradient(from: uiColor)
-            isLight = extractor.isLight(uiColor)
-            isLoaded = true
-        }
+        backgroundColor = Color(uiColor)
+        textColor = extractor.contrastingTextColor(for: uiColor)
+        gradientColors = extractor.generateGradient(from: uiColor)
+        isLight = extractor.isLight(uiColor)
+        isLoaded = true
     }
 
     /// Map AI-detected mood strings to atmospheric dynamic ambient lighting palettes
