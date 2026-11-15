@@ -261,6 +261,15 @@ jobs:
             exit 0
           fi
 
+          # Ensure Xcode toolchain is active
+          if [ -d "/Applications/Xcode-beta.app/Contents/Developer" ]; then
+            export DEVELOPER_DIR="/Applications/Xcode-beta.app/Contents/Developer"
+          elif [ -d "/Applications/Xcode.app/Contents/Developer" ]; then
+            export DEVELOPER_DIR="/Applications/Xcode.app/Contents/Developer"
+          fi
+          echo "Using DEVELOPER_DIR=$DEVELOPER_DIR"
+          xcodebuild -version
+
           echo "🔐 App Store Connect API key detected. Setting up credentials..."
           export ASC_KEY_ID="$APP_STORE_CONNECT_API_KEY_ID"
           export ASC_ISSUER_ID="$APP_STORE_CONNECT_API_ISSUER_ID"
@@ -316,6 +325,8 @@ jobs:
           rm -f "$HOME/.appstoreconnect/private_keys/AuthKey_"*.p8 || true
           if [ -f "$RUNNER_TEMP/app-signing.keychain-db" ]; then
             security delete-keychain "$RUNNER_TEMP/app-signing.keychain-db" 2>/dev/null || true
+            security default-keychain -d user -s "$HOME/Library/Keychains/login.keychain-db" 2>/dev/null || true
+            security list-keychains -d user -s "$HOME/Library/Keychains/login.keychain-db" "/Library/Keychains/System.keychain" 2>/dev/null || true
           fi
 
   sentry-release:
