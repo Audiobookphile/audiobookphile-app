@@ -167,14 +167,15 @@ cmd_upload() {
   xcrun altool --validate-app \
     -f "$IPA_PATH" \
     -t ios \
-    --api-key "$ASC_KEY_ID" \
-    --api-issuer "$ASC_ISSUER_ID"
+    --apiKey "$ASC_KEY_ID" \
+    --apiIssuer "$ASC_ISSUER_ID"
 
   echo "  Validation succeeded. Uploading package..."
-  xcrun altool --upload-package "$IPA_PATH" \
+  xcrun altool --upload-app \
+    -f "$IPA_PATH" \
     -t ios \
-    --api-key "$ASC_KEY_ID" \
-    --api-issuer "$ASC_ISSUER_ID"
+    --apiKey "$ASC_KEY_ID" \
+    --apiIssuer "$ASC_ISSUER_ID"
   echo "✅ IPA uploaded to App Store Connect!"
 }
 
