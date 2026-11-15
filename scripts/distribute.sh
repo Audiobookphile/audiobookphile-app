@@ -124,6 +124,7 @@ cmd_archive() {
     DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM:-DCKVD6LKYV}" \
     MARKETING_VERSION="${MARKETING_VERSION:-1.0}" \
     CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
+    CODE_SIGNING_ALLOWED=NO \
     SKIP_ZERO=true \
     -skipPackagePluginValidation \
     -skipMacroValidation
