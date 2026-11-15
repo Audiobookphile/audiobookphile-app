@@ -66,6 +66,9 @@ public struct SettingsView: View {
                         diagnosticsSection
                         #endif
 
+                        // Open Syndication & Feeds
+                        syndicationSection
+
                         // About
                         aboutSection
 
@@ -618,6 +621,24 @@ public struct SettingsView: View {
         }
     }
     #endif
+
+    // MARK: - Open Syndication & Feeds (OPDS)
+
+    private var syndicationSection: some View {
+        SettingsSection(title: "Open Syndication & Feeds") {
+            SettingsRow(
+                icon: "dot.radiowaves.up.forward",
+                title: "OPDS 1.2 Catalog",
+                value: "\(viewModel.serverURL.isEmpty ? "https://audiobookphile.app" : viewModel.serverURL)/api/opds"
+            ) {
+                let opdsUrl = "\(viewModel.serverURL.isEmpty ? "https://audiobookphile.app" : viewModel.serverURL)/api/opds"
+                #if !SKIP && os(iOS)
+                UIPasteboard.general.string = opdsUrl
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                #endif
+            }
+        }
+    }
 
     // MARK: - About Section
 

@@ -119,5 +119,15 @@ final class UpstreamFeaturesTests: XCTestCase {
         let roundtrip = try JSONDecoder().decode(Bookmark.self, from: encoded)
         XCTAssertEqual(roundtrip.note, bookmark.note)
     }
+
+    func testPodcastRssFeedAndOpdsUrlConstruction() throws {
+        let serverUrl = "https://audiobookphile.app"
+        let bookId = "b0000000-0000-4000-8000-000000000001"
+        let expectedFeedUrl = "\(serverUrl)/feed/\(bookId)"
+        let expectedOpdsUrl = "\(serverUrl)/api/opds"
+
+        XCTAssertEqual(expectedFeedUrl, "https://audiobookphile.app/feed/b0000000-0000-4000-8000-000000000001")
+        XCTAssertEqual(expectedOpdsUrl, "https://audiobookphile.app/api/opds")
+    }
 }
 

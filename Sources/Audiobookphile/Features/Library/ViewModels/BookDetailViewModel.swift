@@ -18,6 +18,7 @@ public class BookDetailViewModel {
     public var showRemoveDownloadConfirmation = false
     public var isDescriptionExpanded = false
     public var similarBooks: [Book] = []
+    public var hasCopiedRssFeed = false
 
     public var colorLoader = DynamicColorLoader()
     private var downloadService = DownloadService.shared
@@ -89,6 +90,20 @@ public class BookDetailViewModel {
             return "\(hours)h \(minutes)m"
         } else {
             return "\(minutes)m"
+        }
+    }
+
+    public func copyRssFeed(for book: Book) {
+        let serverUrl = AppState.shared.serverURL.isEmpty ? "https://audiobookphile.app" : AppState.shared.serverURL
+        let cleanServer = serverUrl.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        let feedUrl = "\(cleanServer)/feed/\(book.id)"
+        #if !SKIP && os(iOS)
+        UIPasteboard.general.string = feedUrl
+        #endif
+        hasCopiedRssFeed = true
+        Task {
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            hasCopiedRssFeed = false
         }
     }
 }

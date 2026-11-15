@@ -159,6 +159,24 @@ public struct BookActionRow: View {
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
             }
+
+            // Podcast RSS Feed Button
+            Button {
+                #if os(iOS) && !SKIP
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                #endif
+                viewModel.copyRssFeed(for: detailed)
+            } label: {
+                Image(systemName: viewModel.hasCopiedRssFeed ? "checkmark" : "dot.radiowaves.up.forward")
+                    .font(.title3)
+                    .foregroundStyle(viewModel.hasCopiedRssFeed ? DesignTokens.Color.success : DesignTokens.Color.foreground)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .background(DesignTokens.Color.surface.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+            .accessibilityLabel("Podcast RSS Feed")
+            .accessibilityHint("Copies private podcast feed link to clipboard")
         }
     }
     
