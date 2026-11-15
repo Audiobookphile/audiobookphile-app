@@ -79,7 +79,7 @@ jobs:
 
       - name: Setup Java
         id: java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
           java-version: '17'
@@ -303,7 +303,7 @@ jobs:
 
             security import "$CERT_PATH" -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
             security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PWD" "$KEYCHAIN_PATH"
-            security list-keychain -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
+            security list-keychains -d user -s "$KEYCHAIN_PATH" "$HOME/Library/Keychains/login.keychain-db" "/Library/Keychains/System.keychain"
 
             if [ -n "$BUILD_PROVISION_PROFILE_BASE64" ]; then
               echo "📱 Installing provisioning profile..."
