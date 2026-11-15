@@ -96,4 +96,3 @@ final class ConnectDeepLinkTests: XCTestCase {
         XCTAssertNil(link)
     }
 }
-

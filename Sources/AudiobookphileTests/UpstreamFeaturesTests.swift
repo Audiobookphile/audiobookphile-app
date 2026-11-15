@@ -130,4 +130,3 @@ final class UpstreamFeaturesTests: XCTestCase {
         XCTAssertEqual(expectedOpdsUrl, "https://audiobookphile.app/api/opds")
     }
 }
-

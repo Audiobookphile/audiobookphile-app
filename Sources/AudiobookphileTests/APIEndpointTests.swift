@@ -48,4 +48,3 @@ final class APIEndpointTests: XCTestCase {
         XCTAssertEqual(url, "https://books.example.com/api/users/user-123")
     }
 }
-
