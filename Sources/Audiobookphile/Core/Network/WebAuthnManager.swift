@@ -121,7 +121,7 @@ public enum WebAuthnManager {
         allowCredentials: [WebAuthnAllowedCredential],
         userVerification: String = "preferred"
     ) async throws -> PasskeyAssertion {
-#if compiler(>=6.2)
+#if compiler(>=6.0)
         let provider = ASAuthorizationPlatformPublicKeyCredentialProvider(relyingPartyIdentifier: rpId)
 #else
         let provider = ASAuthorizationPlatformPublicKeyCredentialProvider(rpID: rpId)
@@ -129,7 +129,7 @@ public enum WebAuthnManager {
 
         let request = provider.createCredentialAssertionRequest(challenge: challenge)
 
-#if compiler(>=6.2)
+#if compiler(>=6.0)
         let verification: ASAuthorizationPublicKeyCredentialUserVerificationPreference
         switch userVerification {
         case "required": verification = .required
@@ -148,7 +148,7 @@ public enum WebAuthnManager {
 #endif
 
         if !allowCredentials.isEmpty {
-#if compiler(>=6.2)
+#if compiler(>=6.0)
             request.allowedCredentials = allowCredentials.map { credential in
                 guard let idData = WebAuthnCodec.base64urlDecode(credential.id) else {
                     return nil
@@ -180,7 +180,7 @@ public enum WebAuthnManager {
     public static func requestRegistration(
         request: PasskeyRegistrationRequest
     ) async throws -> PasskeyRegistration {
-#if compiler(>=6.2)
+#if compiler(>=6.0)
         let provider = ASAuthorizationPlatformPublicKeyCredentialProvider(relyingPartyIdentifier: request.rpId)
 #else
         let provider = ASAuthorizationPlatformPublicKeyCredentialProvider(rpID: request.rpId)
@@ -192,7 +192,7 @@ public enum WebAuthnManager {
             userID: request.userID
         )
         registrationRequest.displayName = request.displayName
-#if compiler(>=6.2)
+#if compiler(>=6.0)
         registrationRequest.attestationPreference = ASAuthorizationPublicKeyCredentialAttestationKind.none
 
         let verification: ASAuthorizationPublicKeyCredentialUserVerificationPreference
@@ -215,7 +215,7 @@ public enum WebAuthnManager {
 #endif
 
         if !request.excludeCredentialIds.isEmpty {
-#if compiler(>=6.2)
+#if compiler(>=6.0)
             if #available(iOS 17.4, *) {
                 registrationRequest.excludedCredentials = request.excludeCredentialIds.map {
                     ASAuthorizationPlatformPublicKeyCredentialDescriptor(credentialID: $0)
@@ -348,7 +348,7 @@ private func keyWindow() -> UIWindow? {
     return nil
 }
 
-#if compiler(>=6.2)
+#if compiler(>=6.0)
 // The iOS 26.4+ SDK removed ASCredentialTransport and platform credential
 // descriptors no longer carry transport lists (platform passkeys are fixed).
 #else
