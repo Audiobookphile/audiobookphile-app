@@ -163,4 +163,38 @@ final class UpstreamFeaturesTests: XCTestCase {
         XCTAssertTrue(exported.contains("Green Light"))
         XCTAssertTrue(exported.contains("> Resilience and hope."))
     }
+
+    func testChapterFilterByTitleAndNumber() throws {
+        let chapters = [
+            Chapter(id: 0, title: "Prologue: Arrival", start: 0, end: 180),
+            Chapter(id: 1, title: "Chapter 1: The Dark Forest", start: 180, end: 540),
+            Chapter(id: 2, title: "Chapter 2: The Whispering Stream", start: 540, end: 900),
+            Chapter(id: 3, title: "Epilogue", start: 900, end: 1200)
+        ]
+
+        // Empty query returns all chapters
+        XCTAssertEqual(Chapter.filter(chapters: chapters, query: "").count, 4)
+        XCTAssertEqual(Chapter.filter(chapters: chapters, query: "   ").count, 4)
+
+        // Title search case-insensitively
+        let prologueMatch = Chapter.filter(chapters: chapters, query: "arrival")
+        XCTAssertEqual(prologueMatch.count, 1)
+        XCTAssertEqual(prologueMatch.first?.title, "Prologue: Arrival")
+
+        let forestMatch = Chapter.filter(chapters: chapters, query: "DARK FOREST")
+        XCTAssertEqual(forestMatch.count, 1)
+        XCTAssertEqual(forestMatch.first?.id, 1)
+
+        // Chapter 1-based number query
+        let numberMatch = Chapter.filter(chapters: chapters, query: "2")
+        XCTAssertTrue(numberMatch.contains(where: { $0.id == 1 }))
+
+        // "chapter 2" format
+        let chapterTwoMatch = Chapter.filter(chapters: chapters, query: "chapter 2")
+        XCTAssertTrue(chapterTwoMatch.contains(where: { $0.id == 1 }))
+
+        // Nonexistent query returns empty
+        let noneMatch = Chapter.filter(chapters: chapters, query: "Atlantis")
+        XCTAssertTrue(noneMatch.isEmpty)
+    }
 }

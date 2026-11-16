@@ -9,6 +9,11 @@ public struct ChapterSelectionView: View {
 
     @Environment(\.dismiss) var dismiss
     @State private var selectedChapterForAI: Chapter?
+    @State private var searchText = ""
+
+    private var filteredChapters: [Chapter] {
+        Chapter.filter(chapters: chapters, query: searchText)
+    }
 
     private var trailingPlacement: ToolbarItemPlacement {
         #if os(iOS) || SKIP
@@ -39,59 +44,74 @@ public struct ChapterSelectionView: View {
 
                 ScrollViewReader { proxy in
                     List {
-                    ForEach(chapters) { chapter in
-                        HStack {
-                            Button {
-                                onSelect(chapter)
-                            } label: {
-                                HStack(spacing: 12) {
-                                    if chapter.id == currentChapter?.id {
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .fill(Color.appPrimary)
-                                            .frame(width: 4, height: 28)
-                                    }
+                        if filteredChapters.isEmpty && !chapters.isEmpty {
+                            VStack(spacing: 12) {
+                                Image(systemName: "magnifyingglass")
+                                    .font(.system(size: 32))
+                                    .foregroundStyle(.secondary)
+                                Text("No chapters matching \"\(searchText)\"")
+                                    .font(.subheadline.weight(.medium))
+                                    .foregroundStyle(.secondary)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 40)
+                            .listRowBackground(Color.clear)
+                        } else {
+                            ForEach(filteredChapters) { chapter in
+                                HStack {
+                                    Button {
+                                        onSelect(chapter)
+                                    } label: {
+                                        HStack(spacing: 12) {
+                                            if chapter.id == currentChapter?.id {
+                                                RoundedRectangle(cornerRadius: 8)
+                                                    .fill(Color.appPrimary)
+                                                .frame(width: 4, height: 28)
+                                        }
 
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text(chapter.title)
-                                            .font(.headline)
-                                            .fontWeight(chapter.id == currentChapter?.id ? .bold : .regular)
-                                            .foregroundStyle(chapter.id == currentChapter?.id ? Color.appPrimary : .primary)
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text(chapter.title)
+                                                .font(.headline)
+                                                .fontWeight(chapter.id == currentChapter?.id ? .bold : .regular)
+                                                .foregroundStyle(chapter.id == currentChapter?.id ? Color.appPrimary : .primary)
 
-                                        Text(formatDuration(chapter.end - chapter.start))
-                                            .font(.caption)
-                                            .fontWeight(chapter.id == currentChapter?.id ? .bold : .regular)
-                                            .foregroundStyle(.secondary)
-                                    }
+                                            Text(formatDuration(chapter.end - chapter.start))
+                                                .font(.caption)
+                                                .fontWeight(chapter.id == currentChapter?.id ? .bold : .regular)
+                                                .foregroundStyle(.secondary)
+                                        }
 
-                                    Spacer()
+                                        Spacer()
 
-                                    if chapter.id == currentChapter?.id {
-                                        Image(systemName: "speaker.wave.2.fill")
-                                            .foregroundStyle(Color.appPrimary)
+                                        if chapter.id == currentChapter?.id {
+                                            Image(systemName: "speaker.wave.2.fill")
+                                                .foregroundStyle(Color.appPrimary)
+                                        }
                                     }
                                 }
-                            }
 
-                            // AI Insights Button
-                            Button {
-                                selectedChapterForAI = chapter
-                            } label: {
-                                Image(systemName: "sparkles")
-                                    .font(.body)
-                                    .foregroundStyle(Color.appPrimary)
-                                    .padding(8)
-                                    .background(Color.appPrimary.opacity(0.15), in: Circle())
+                                // AI Insights Button
+                                Button {
+                                    selectedChapterForAI = chapter
+                                } label: {
+                                    Image(systemName: "sparkles")
+                                        .font(.body)
+                                        .foregroundStyle(Color.appPrimary)
+                                        .padding(8)
+                                        .background(Color.appPrimary.opacity(0.15), in: Circle())
+                                }
+                                .buttonStyle(.plain)
                             }
-                            .buttonStyle(.plain)
+                            .applyBookshelfScrollTransition()
+                            .id(chapter.id)
+                            .listRowBackground(Color.clear)
                         }
-                        .applyBookshelfScrollTransition()
-                        .id(chapter.id)
-                        .listRowBackground(Color.clear)
                     }
                 }
                 .scrollContentBackground(.hidden)
+                .searchable(text: $searchText, prompt: "Search chapters...")
                 .onAppear {
-                    if let current = currentChapter {
+                    if let current = currentChapter, searchText.isEmpty {
                         withAnimation {
                             proxy.scrollTo(current.id, anchor: .center)
                         }

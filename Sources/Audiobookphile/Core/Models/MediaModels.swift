@@ -285,6 +285,17 @@ public struct Chapter: Identifiable, Codable, Hashable, Sendable {
     public var duration: TimeInterval {
         end - start
     }
+
+    /// Pure filtering helper matching chapter title or chapter number.
+    public static func filter(chapters: [Chapter], query: String) -> [Chapter] {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !trimmed.isEmpty else { return chapters }
+        return chapters.filter { chapter in
+            chapter.title.lowercased().contains(trimmed) ||
+            "\(chapter.id + 1)" == trimmed ||
+            "chapter \(chapter.id + 1)".lowercased().contains(trimmed)
+        }
+    }
 }
 
 // MARK: - Audio File
