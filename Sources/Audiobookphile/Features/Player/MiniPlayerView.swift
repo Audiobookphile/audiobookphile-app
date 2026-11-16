@@ -40,25 +40,17 @@ public struct MiniPlayerView: View {
                 .shadow(color: DesignTokens.Color.surface.opacity(0.3), radius: 4, x: 0, y: 2)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(audioPlayer.session?.displayTitle ?? "Sample Book Title")
-                    .font(.footnote.weight(.medium))
+                Text(audioPlayer.session?.displayTitle ?? "Audiobook")
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
-                Text(audioPlayer.session?.displayAuthor ?? "Sample Author")
-                    .font(.caption2)
+                Text(audioPlayer.session?.displayAuthor ?? "")
+                    .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
 
-            Spacer()
-
-            GlassIconButton(
-                icon: "chevron.up",
-                size: .small,
-                color: .secondary,
-                label: "Open full player",
-                action: onTap
-            )
+            Spacer(minLength: 8)
 
             GlassIconButton(
                 icon: audioPlayer.isPlaying ? "pause.fill" : "play.fill",
@@ -70,7 +62,7 @@ public struct MiniPlayerView: View {
                     audioPlayer.togglePlayPause()
                 }
             )
-            .padding(.trailing, 4)
+            .padding(.trailing, 2)
 
             GlassIconButton(
                 icon: [5, 10, 15, 30, 45, 60, 75, 90].contains(AppState.shared.settings.jumpForwardTime)
