@@ -493,4 +493,42 @@ final class UpstreamFeaturesTests: XCTestCase {
         XCTAssertNotNil(bg)
         XCTAssertEqual(bg.accentColors?.count, 2)
     }
+
+    func testAudioTracksInspectionAndFormatting() {
+        let metadata = AudioMetadata(
+            filename: "Chapter_01_The_Beginning.m4b",
+            ext: "m4b",
+            path: "/library/audiobooks/Dune/Chapter_01_The_Beginning.m4b",
+            relPath: "Dune/Chapter_01_The_Beginning.m4b",
+            size: 48_500_000,
+            mtimeMs: 1699900000,
+            ctimeMs: 1699900000,
+            birthtimeMs: 1699900000
+        )
+        let track = AudioFile(
+            index: 0,
+            ino: "file-ino-42",
+            metadata: metadata,
+            duration: 2715,
+            bitRate: 128000,
+            language: "en",
+            codec: "aac",
+            mimeType: "audio/mp4"
+        )
+
+        XCTAssertEqual(track.filename, "Chapter_01_The_Beginning.m4b")
+        XCTAssertEqual(track.displayCodec, "AAC")
+        XCTAssertEqual(track.formattedBitRate, "128 kbps")
+        XCTAssertEqual(track.formattedDuration, "45:15")
+        XCTAssertTrue(track.formattedSize.contains("MB") || track.formattedSize.contains("48"))
+
+        let book = Book(
+            id: "book-audiophile-1",
+            title: "Dune",
+            author: "Frank Herbert",
+            duration: 2715
+        )
+        // With default nil audioFiles, book.audioFiles returns empty array safely
+        XCTAssertTrue(book.audioFiles.isEmpty)
+    }
 }

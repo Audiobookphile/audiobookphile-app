@@ -130,6 +130,10 @@ public struct Book: Identifiable, Codable, Hashable, Sendable {
         media.chapters ?? []
     }
 
+    public var audioFiles: [AudioFile] {
+        media.audioFiles ?? []
+    }
+
     // Progress
     public let userMediaProgress: MediaProgress?
 
@@ -314,7 +318,61 @@ public struct AudioFile: Identifiable, Codable, Hashable, Sendable {
     public let bitRate: Int?
     public let language: String?
     public let codec: String?
-    public let mimeType: String
+    public let mimeType: String?
+
+    public init(
+        index: Int,
+        ino: String,
+        metadata: AudioMetadata,
+        duration: TimeInterval,
+        bitRate: Int? = nil,
+        language: String? = nil,
+        codec: String? = nil,
+        mimeType: String? = nil
+    ) {
+        self.index = index
+        self.ino = ino
+        self.metadata = metadata
+        self.duration = duration
+        self.bitRate = bitRate
+        self.language = language
+        self.codec = codec
+        self.mimeType = mimeType
+    }
+
+    public var filename: String {
+        metadata.filename ?? "Track \(index + 1)"
+    }
+
+    public var displayCodec: String {
+        codec?.uppercased() ?? metadata.ext?.uppercased() ?? "AUDIO"
+    }
+
+    public var formattedSize: String {
+        guard let size = metadata.size, size > 0 else { return "—" }
+        return ByteCountFormatter.string(fromByteCount: size, countStyle: .file)
+    }
+
+    public var formattedBitRate: String {
+        guard let bitRate = bitRate, bitRate > 0 else { return "—" }
+        if bitRate >= 1000 {
+            return "\(bitRate / 1000) kbps"
+        }
+        return "\(bitRate) bps"
+    }
+
+    public var formattedDuration: String {
+        guard duration > 0 else { return "00:00" }
+        let totalSeconds = Int(duration)
+        let hours = totalSeconds / 3600
+        let minutes = (totalSeconds % 3600) / 60
+        let seconds = totalSeconds % 60
+        if hours > 0 {
+            return String(format: "%d:%02d:%02d", hours, minutes, seconds)
+        } else {
+            return String(format: "%02d:%02d", minutes, seconds)
+        }
+    }
 }
 
 public struct AudioMetadata: Codable, Hashable, Sendable {

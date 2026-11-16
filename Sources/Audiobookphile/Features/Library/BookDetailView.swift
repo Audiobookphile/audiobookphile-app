@@ -168,6 +168,11 @@ public struct BookDetailView: View {
             // AudioBooth Metadata Section
             BookDetailMetadataSection(detailed: detailed, viewModel: viewModel)
 
+            // Audio Tracks & Files (Expandable inspection table)
+            if !detailed.audioFiles.isEmpty {
+                BookDetailAudioTracksSection(detailed: detailed)
+            }
+
             // Chapters List
             if !detailed.chapters.isEmpty {
                 ChapterListView(detailed: detailed, viewModel: viewModel)
