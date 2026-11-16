@@ -42,6 +42,13 @@ public protocol AudioPlayerServiceProtocol: AnyObject {
     /// The user's bookmarks for the current session.
     var bookmarks: [Bookmark] { get set }
 
+    /// Up Next queue of audiobooks/podcasts to play sequentially.
+    var playbackQueue: [PlaybackSession] { get set }
+
+    func addToPlaybackQueue(session: PlaybackSession)
+    func removeFromPlaybackQueue(at index: Int)
+    func clearPlaybackQueue()
+
     // MARK: - Seek Epoch (Architectural Invariant)
 
     /// The active seek epoch — increments on each seek start.

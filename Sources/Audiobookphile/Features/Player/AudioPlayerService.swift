@@ -83,6 +83,20 @@ public class AudioPlayerService: AudioPlayerServiceProtocol {
     public let engine = AudioPlayerEngine()
 
     public var bookmarks: [Bookmark] = []
+    public var playbackQueue: [PlaybackSession] = []
+
+    public func addToPlaybackQueue(session: PlaybackSession) {
+        playbackQueue.append(session)
+    }
+
+    public func removeFromPlaybackQueue(at index: Int) {
+        guard index >= 0 && index < playbackQueue.count else { return }
+        playbackQueue.remove(at: index)
+    }
+
+    public func clearPlaybackQueue() {
+        playbackQueue.removeAll()
+    }
     
     public var sleepTimerRemaining: TimeInterval? {
         sleepTimer.remaining
@@ -817,6 +831,13 @@ public class AudioPlayerService: AudioPlayerServiceProtocol {
                     try? DownloadService.shared.deleteDownload(bookId: session.libraryItemId)
                     self.logger.info("Auto-deleted finished download for \(session.libraryItemId)")
                 }
+            }
+
+            // Auto-advance to next queued session if present
+            if !self.playbackQueue.isEmpty {
+                let nextSession = self.playbackQueue.removeFirst()
+                logger.info("Auto-advancing to next queued session: \(nextSession.displayTitle)")
+                self.startPlayback(session: nextSession)
             }
         }
     }

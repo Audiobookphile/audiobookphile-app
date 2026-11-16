@@ -23,6 +23,7 @@ public struct AudioPlayerView: View {
     @State var showSleepTimer = false
     @State var showCarMode = false
     @State var showMoreMenu = false
+    @State var showPlaybackQueue = false
     @State var isUiLocked = false
     @State var showBookmarksList = false
     @State var showAddBookmark = false
@@ -163,10 +164,14 @@ public struct AudioPlayerView: View {
             )
             .presentationDetents([.medium, .large])
         }
+        .sheet(isPresented: $showPlaybackQueue) {
+            PlaybackQueueSheet(viewModel: viewModel)
+        }
         .confirmationDialog("Player Options", isPresented: $showMoreMenu, titleVisibility: .visible) {
             Button("Car Mode") { showCarMode = true }
             Button("Go to Sleep Timer") { showSleepTimer = true }
             Button("View Chapters") { showChapters = true }
+            Button("Playback Queue (\(AudioPlayerService.shared.playbackQueue.count))") { showPlaybackQueue = true }
             Button("Add Bookmark") { showAddBookmark = true }
             Button("View Bookmarks") { showBookmarksList = true }
             Button("Audio & Accessibility") { showAudioAccessibilitySheet = true }

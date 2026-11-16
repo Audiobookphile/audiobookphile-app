@@ -81,6 +81,22 @@ public class AudioPlayerViewModel {
         return String(format: "%d:%02d", minutes, seconds)
     }
 
+    public var playbackQueue: [PlaybackSession] {
+        AudioPlayerService.shared.playbackQueue
+    }
+
+    public func addToPlaybackQueue(_ session: PlaybackSession) {
+        AudioPlayerService.shared.addToPlaybackQueue(session: session)
+    }
+
+    public func removeFromPlaybackQueue(at index: Int) {
+        AudioPlayerService.shared.removeFromPlaybackQueue(at: index)
+    }
+
+    public func clearPlaybackQueue() {
+        AudioPlayerService.shared.clearPlaybackQueue()
+    }
+
     public var currentChapter: Chapter? {
         chapters.first { $0.start <= currentTime && $0.end > currentTime }
     }
@@ -101,6 +117,10 @@ public class AudioPlayerViewModel {
 
     public var currentTimePretty: String {
         formatTime(currentTime)
+    }
+
+    public var durationPretty: String {
+        formatTime(duration)
     }
 
     public var totalTimeRemainingPretty: String {

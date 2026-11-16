@@ -228,4 +228,69 @@ final class UpstreamFeaturesTests: XCTestCase {
         XCTAssertTrue(vm.continueSeries.allSatisfy { $0.seriesName != nil })
         XCTAssertEqual(vm.continueSeries.first?.seriesName, "The Midnight Collection")
     }
+
+    func testPlaybackQueueManagement() throws {
+        let playerService = AudioPlayerService.shared
+        playerService.clearPlaybackQueue()
+        XCTAssertTrue(playerService.playbackQueue.isEmpty)
+
+        let session1 = PlaybackSession(
+            id: "q-1",
+            userId: "u-1",
+            libraryId: "lib-1",
+            libraryItemId: "item-1",
+            episodeId: nil,
+            displayTitle: "Book One",
+            displayAuthor: "Author One",
+            coverPath: nil,
+            duration: 1000,
+            playMethod: 0,
+            mediaPlayer: "AVQueuePlayer",
+            mediaType: "book",
+            audioTracks: [],
+            chapters: [],
+            manifestUrl: nil,
+            missingTrackCount: 0,
+            currentTime: 0,
+            playbackRate: 1.0,
+            startedAt: Date(),
+            updatedAt: Date()
+        )
+
+        let session2 = PlaybackSession(
+            id: "q-2",
+            userId: "u-1",
+            libraryId: "lib-1",
+            libraryItemId: "item-2",
+            episodeId: nil,
+            displayTitle: "Book Two",
+            displayAuthor: "Author Two",
+            coverPath: nil,
+            duration: 2000,
+            playMethod: 0,
+            mediaPlayer: "AVQueuePlayer",
+            mediaType: "book",
+            audioTracks: [],
+            chapters: [],
+            manifestUrl: nil,
+            missingTrackCount: 0,
+            currentTime: 0,
+            playbackRate: 1.0,
+            startedAt: Date(),
+            updatedAt: Date()
+        )
+
+        playerService.addToPlaybackQueue(session: session1)
+        playerService.addToPlaybackQueue(session: session2)
+        XCTAssertEqual(playerService.playbackQueue.count, 2)
+        XCTAssertEqual(playerService.playbackQueue[0].displayTitle, "Book One")
+        XCTAssertEqual(playerService.playbackQueue[1].displayTitle, "Book Two")
+
+        playerService.removeFromPlaybackQueue(at: 0)
+        XCTAssertEqual(playerService.playbackQueue.count, 1)
+        XCTAssertEqual(playerService.playbackQueue[0].displayTitle, "Book Two")
+
+        playerService.clearPlaybackQueue()
+        XCTAssertTrue(playerService.playbackQueue.isEmpty)
+    }
 }
