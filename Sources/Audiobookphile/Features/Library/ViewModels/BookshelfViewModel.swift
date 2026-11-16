@@ -12,6 +12,7 @@ public class BookshelfViewModel {
     public var books: [Book] = []
     public var filteredBooks: [Book] = []
     public var continueListening: [Book] = []
+    public var continueSeries: [Book] = []
     public var currentLibrary: Library?
     public var selectedBook: Book?
     public var isLoading = true
@@ -106,6 +107,13 @@ public class BookshelfViewModel {
             self.continueListening = try await service.fetchContinueListening(libraryId: libraryId)
         } catch {
             print("[BookshelfViewModel] Failed to fetch continue listening: \(error)")
+        }
+
+        // Fetch continue series independently so failures do not discard library items
+        do {
+            self.continueSeries = try await service.fetchContinueSeries(libraryId: libraryId)
+        } catch {
+            print("[BookshelfViewModel] Failed to fetch continue series: \(error)")
         }
 
         isLoading = false

@@ -34,8 +34,10 @@ public struct HomeView: View {
                         recentlyAddedSection
                             .padding(.top, viewModel.continueListening.isEmpty ? 16 : 0)
 
-                        // Continue Series (Hidden until API supports it)
-                        // continueSeriesSection
+                        // Continue Series
+                        if !viewModel.continueSeries.isEmpty {
+                            continueSeriesSection
+                        }
                         
                         Spacer().frame(height: 100) // Bottom padding
                     }
@@ -114,32 +116,41 @@ public struct HomeView: View {
 
     private var continueSeriesSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Continue Series")
-                .font(.title3)
-                .fontWeight(.bold)
-                .foregroundStyle(Color.textPrimary)
-                .padding(.horizontal)
+            HStack(spacing: 6) {
+                Image(systemName: "books.vertical.fill")
+                    .font(.caption)
+                    .foregroundStyle(Color.accentColor)
+                Text("Continue Series")
+                    .font(.title3)
+                    .fontWeight(.bold)
+                    .foregroundStyle(Color.textPrimary)
+            }
+            .padding(.horizontal)
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 16) {
-                    // Dummy placeholders for series
-                    ForEach(0..<3, id: \.self) { _ in
-                        VStack(alignment: .leading, spacing: 8) {
-                            Color.clear
-                                .frame(width: 200, height: 100)
-                                .overlay(
-                                    Image(systemName: "books.vertical.fill")
-                                        .font(.largeTitle)
-                                        .foregroundStyle(.secondary)
+                LazyHStack(spacing: 16) {
+                    ForEach(viewModel.continueSeries) { book in
+                        VStack(alignment: .leading, spacing: 6) {
+                            if let series = book.seriesName, !series.isEmpty {
+                                HStack(spacing: 4) {
+                                    Text(series.uppercased())
+                                        .font(.system(size: 10, weight: .bold))
+                                        .foregroundStyle(Color.accentColor)
+                                        .lineLimit(1)
+                                }
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(
+                                    Capsule()
+                                        .fill(Color.accentColor.opacity(0.12))
                                 )
-                                .glassCard(cornerRadius: 14)
-                            Text("Series Title")
-                                .font(.subheadline)
-                                .fontWeight(.semibold)
-                                .foregroundStyle(Color.textPrimary)
-                            Text("Book 2 of 4")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .frame(maxWidth: 140, alignment: .leading)
+                            }
+
+                            BookCard(book: book, aspectRatio: 1.0) {
+                                selectedBookForDetails = book
+                            }
+                            .frame(width: 140)
                         }
                     }
                 }

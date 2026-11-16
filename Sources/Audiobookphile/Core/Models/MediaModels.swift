@@ -110,6 +110,10 @@ public struct Book: Identifiable, Codable, Hashable, Sendable {
         media.metadata.narratorName
     }
 
+    public var seriesName: String? {
+        media.metadata.seriesName
+    }
+
     public var description: String? {
         media.metadata.description
     }

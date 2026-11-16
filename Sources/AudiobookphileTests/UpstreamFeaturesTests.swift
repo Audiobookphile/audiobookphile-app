@@ -209,4 +209,16 @@ final class UpstreamFeaturesTests: XCTestCase {
         let noneMatch = Chapter.filter(chapters: chapters, query: "Atlantis")
         XCTAssertTrue(noneMatch.isEmpty)
     }
+
+    func testContinueSeriesShelfPopulation() async throws {
+        let mockService = MockLibraryService()
+        let vm = BookshelfViewModel(service: mockService)
+
+        XCTAssertTrue(vm.continueSeries.isEmpty)
+        await vm.loadLibrary(libraryId: "mock-lib", isAuthenticated: false)
+
+        XCTAssertFalse(vm.continueSeries.isEmpty)
+        XCTAssertTrue(vm.continueSeries.allSatisfy { $0.seriesName != nil })
+        XCTAssertEqual(vm.continueSeries.first?.seriesName, "The Midnight Collection")
+    }
 }

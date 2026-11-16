@@ -7,6 +7,7 @@ public protocol LibraryServiceProtocol {
     func smartSortLibrary(libraryId: String?, criteria: String) async throws -> [String]
     func deduplicateLibrary(libraryId: String?) async throws -> Int
     func fetchContinueListening(libraryId: String?) async throws -> [Book]
+    func fetchContinueSeries(libraryId: String?) async throws -> [Book]
     func fetchLibraryStats(libraryId: String?) async throws -> LibraryStats
     func fetchAuthors(libraryId: String?, page: Int, sort: String) async throws -> AuthorsResponse
     func fetchSeries(libraryId: String?, page: Int, sort: String) async throws -> SeriesResponse
@@ -51,6 +52,14 @@ public class LiveLibraryService: LibraryServiceProtocol {
         }
         let shelves = try await AudiobookphileAPI.shared.getLibraryPersonalized(libraryId: libId)
         return shelves.first { $0.id == "continue-listening" }?.entities ?? []
+    }
+
+    public func fetchContinueSeries(libraryId: String?) async throws -> [Book] {
+        guard let libId = libraryId else {
+            return []
+        }
+        let shelves = try await AudiobookphileAPI.shared.getLibraryPersonalized(libraryId: libId)
+        return shelves.first { $0.id == "continue-series" }?.entities ?? []
     }
 
     public func fetchLibraryStats(libraryId: String?) async throws -> LibraryStats {
@@ -109,6 +118,16 @@ public class MockLibraryService: LibraryServiceProtocol {
         "J.R.R. Tolkien"
     ]
 
+    private let seriesList = [
+        "The Midnight Collection",
+        "The Hail Mary Odyssey",
+        "Thursday Murder Club Mysteries",
+        "Habits Series",
+        "Dune Chronicles",
+        "Orwell Classics",
+        "Middle-earth Legendarium"
+    ]
+
     public func fetchPaginatedLibraryItems(libraryId: String?, page: Int = 0, limit: Int? = nil, sort: String = "addedAt", desc: Bool = true) async throws -> LibraryItemsResponse {
         let allBooks = try await fetchLibraryItems(libraryId: libraryId)
         let effectiveLimit = limit ?? 0
@@ -159,7 +178,7 @@ public class MockLibraryService: LibraryServiceProtocol {
                         subtitle: nil,
                         authorName: authors[titleIndex],
                         narratorName: "Narrator \(idx)",
-                        seriesName: nil,
+                        seriesName: idx % 2 == 0 ? seriesList[titleIndex] : nil,
                         genres: ["Fiction", "Audiobookphile Mock"],
                         publishedYear: "2024",
                         publishedDate: nil,
@@ -201,6 +220,12 @@ public class MockLibraryService: LibraryServiceProtocol {
         // Return only mock books that have progress (every 3rd book),
         // mimicking the server-driven continue-listening shelf.
         return try await fetchLibraryItems(libraryId: libraryId).filter { $0.userMediaProgress != nil }
+    }
+
+    public func fetchContinueSeries(libraryId: String?) async throws -> [Book] {
+        try await Task.sleep(nanoseconds: 200_000_000)
+        let items = try await fetchLibraryItems(libraryId: libraryId)
+        return Array(items.filter { $0.seriesName != nil }.prefix(6))
     }
 
     public func fetchLibraryStats(libraryId: String?) async throws -> LibraryStats {
