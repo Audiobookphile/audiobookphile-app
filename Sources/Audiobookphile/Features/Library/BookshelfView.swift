@@ -18,6 +18,8 @@ public struct BookshelfView: View {
     @State var searchText = ""
     @State var scrollOffset: CGFloat = 0
     @State var selectedBookForDetails: Book?
+    @State var selectedAuthorName: String?
+    @State var selectedNarratorInfo: SelectedNarratorInfo?
 
     @State var selectedPill: LibraryPill = .library
     
@@ -36,9 +38,10 @@ public struct BookshelfView: View {
 
             // Main content
             ScrollView {
-                VStack(spacing: 24) {
+                VStack(spacing: 20) {
                     // Main library grid
                     if selectedPill == .library {
+                        filterChipsBar
                         libraryGridSection
                     } else if selectedPill == .authors {
                         authorsTabSection
@@ -53,6 +56,7 @@ public struct BookshelfView: View {
                 })
             }
             .coordinateSpace(name: "scroll")
+            .searchable(text: $viewModel.filterSearchText, prompt: "Search audiobooks...")
             .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
                 scrollOffset = value
             }
@@ -70,6 +74,19 @@ public struct BookshelfView: View {
         }
         .navigationDestination(item: $selectedBookForDetails) { book in
             BookDetailView(book: book)
+        }
+        .navigationDestination(isPresented: Binding(
+            get: { selectedAuthorName != nil },
+            set: { if !$0 { selectedAuthorName = nil } }
+        )) {
+            if let author = selectedAuthorName {
+                AuthorDetailView(authorName: author, libraryId: appState.currentLibraryId)
+            }
+        }
+        .sheet(item: $selectedNarratorInfo) { info in
+            NarratorDetailSheet(narratorName: info.name, books: info.books) { book in
+                selectedBookForDetails = book
+            }
         }
         .audiobookphileNavigationToolbar(title: "Library")
         #if os(iOS) || SKIP
@@ -89,81 +106,13 @@ public struct BookshelfView: View {
             #if os(iOS) || SKIP
             ToolbarItem(placement: .topBarTrailing) {
                 if selectedPill == .library {
-                    Menu {
-                        Section("Sort By") {
-                            Button(action: {
-                                Task {
-                                    await viewModel.changeSort(sort: "addedAt", desc: true, libraryId: appState.currentLibraryId, isAuthenticated: appState.isAuthenticated)
-                                }
-                            }) {
-                                Label("Recently Added", systemImage: viewModel.currentSort == "addedAt" && viewModel.currentDesc ? "checkmark" : "")
-                            }
-                            Button(action: {
-                                Task {
-                                    await viewModel.changeSort(sort: "title", desc: false, libraryId: appState.currentLibraryId, isAuthenticated: appState.isAuthenticated)
-                                }
-                            }) {
-                                Label("Title (A-Z)", systemImage: viewModel.currentSort == "title" && !viewModel.currentDesc ? "checkmark" : "")
-                            }
-                            Button(action: {
-                                Task {
-                                    await viewModel.changeSort(sort: "author", desc: false, libraryId: appState.currentLibraryId, isAuthenticated: appState.isAuthenticated)
-                                }
-                            }) {
-                                Label("Author (A-Z)", systemImage: viewModel.currentSort == "author" && !viewModel.currentDesc ? "checkmark" : "")
-                            }
-                            Button(action: {
-                                Task {
-                                    await viewModel.changeSort(sort: "duration", desc: true, libraryId: appState.currentLibraryId, isAuthenticated: appState.isAuthenticated)
-                                }
-                            }) {
-                                Label("Longest Duration", systemImage: viewModel.currentSort == "duration" && viewModel.currentDesc ? "checkmark" : "")
-                            }
-                        }
-                    } label: {
-                        Image(systemName: "line.3.horizontal.decrease.circle")
-                    }
-                    .tint(.primary)
+                    sortMenuView
                 }
             }
             #else
             ToolbarItem(placement: .primaryAction) {
                 if selectedPill == .library {
-                    Menu {
-                        Section("Sort By") {
-                            Button(action: {
-                                Task {
-                                    await viewModel.changeSort(sort: "addedAt", desc: true, libraryId: appState.currentLibraryId, isAuthenticated: appState.isAuthenticated)
-                                }
-                            }) {
-                                Label("Recently Added", systemImage: viewModel.currentSort == "addedAt" && viewModel.currentDesc ? "checkmark" : "")
-                            }
-                            Button(action: {
-                                Task {
-                                    await viewModel.changeSort(sort: "title", desc: false, libraryId: appState.currentLibraryId, isAuthenticated: appState.isAuthenticated)
-                                }
-                            }) {
-                                Label("Title (A-Z)", systemImage: viewModel.currentSort == "title" && !viewModel.currentDesc ? "checkmark" : "")
-                            }
-                            Button(action: {
-                                Task {
-                                    await viewModel.changeSort(sort: "author", desc: false, libraryId: appState.currentLibraryId, isAuthenticated: appState.isAuthenticated)
-                                }
-                            }) {
-                                Label("Author (A-Z)", systemImage: viewModel.currentSort == "author" && !viewModel.currentDesc ? "checkmark" : "")
-                            }
-                            Button(action: {
-                                Task {
-                                    await viewModel.changeSort(sort: "duration", desc: true, libraryId: appState.currentLibraryId, isAuthenticated: appState.isAuthenticated)
-                                }
-                            }) {
-                                Label("Longest Duration", systemImage: viewModel.currentSort == "duration" && viewModel.currentDesc ? "checkmark" : "")
-                            }
-                        }
-                    } label: {
-                        Image(systemName: "line.3.horizontal.decrease.circle")
-                    }
-                    .tint(.primary)
+                    sortMenuView
                 }
             }
             #endif
@@ -172,6 +121,116 @@ public struct BookshelfView: View {
             await viewModel.loadLibrary(libraryId: appState.currentLibraryId, isAuthenticated: appState.isAuthenticated)
         }
         .applySensoryFeedback(trigger: selectedBookForDetails != nil)
+    }
+
+    // MARK: - Filter Chips Bar
+
+    private var filterChipsBar: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(BookshelfFilter.allCases) { filter in
+                    let isSelected = viewModel.selectedFilter == filter
+                    let count = viewModel.count(for: filter)
+
+                    Button(action: {
+                        #if !SKIP && os(iOS)
+                        UISelectionFeedbackGenerator().selectionChanged()
+                        #endif
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
+                            viewModel.setFilter(filter)
+                        }
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: filter.iconName)
+                                .font(.system(size: 13, weight: isSelected ? .bold : .medium))
+                            Text(filter.rawValue)
+                                .font(.system(size: 13, weight: isSelected ? .bold : .medium))
+                            if count > 0 {
+                                Text("\(count)")
+                                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(
+                                        Capsule()
+                                            .fill(isSelected ? Color.white.opacity(0.25) : Color.primary.opacity(0.08))
+                                    )
+                            }
+                        }
+                        .foregroundStyle(isSelected ? Color.white : Color.primary)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
+                        .background {
+                            if isSelected {
+                                Capsule()
+                                    .fill(Color.appPrimary)
+                                    .shadow(color: Color.appPrimary.opacity(0.35), radius: 8, x: 0, y: 3)
+                            } else {
+                                Capsule()
+                                    .fill(DesignTokens.Color.surface.opacity(0.55))
+                                    .overlay(
+                                        Capsule()
+                                            .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.8)
+                                    )
+                            }
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 4)
+        }
+    }
+
+    // MARK: - Sort Menu
+
+    private var sortMenuView: some View {
+        Menu {
+            Section("Recently Added") {
+                Button(action: { changeSort(to: .recentlyAdded) }) {
+                    Label("Recently Added", systemImage: viewModel.selectedSort == .recentlyAdded ? "checkmark" : "")
+                }
+                Button(action: { changeSort(to: .oldestAdded) }) {
+                    Label("Oldest Added", systemImage: viewModel.selectedSort == .oldestAdded ? "checkmark" : "")
+                }
+            }
+
+            Section("Title") {
+                Button(action: { changeSort(to: .titleAZ) }) {
+                    Label("Title (A-Z)", systemImage: viewModel.selectedSort == .titleAZ ? "checkmark" : "")
+                }
+                Button(action: { changeSort(to: .titleZA) }) {
+                    Label("Title (Z-A)", systemImage: viewModel.selectedSort == .titleZA ? "checkmark" : "")
+                }
+            }
+
+            Section("Author") {
+                Button(action: { changeSort(to: .authorAZ) }) {
+                    Label("Author (A-Z)", systemImage: viewModel.selectedSort == .authorAZ ? "checkmark" : "")
+                }
+                Button(action: { changeSort(to: .authorZA) }) {
+                    Label("Author (Z-A)", systemImage: viewModel.selectedSort == .authorZA ? "checkmark" : "")
+                }
+            }
+
+            Section("Duration") {
+                Button(action: { changeSort(to: .longestDuration) }) {
+                    Label("Longest Duration", systemImage: viewModel.selectedSort == .longestDuration ? "checkmark" : "")
+                }
+                Button(action: { changeSort(to: .shortestDuration) }) {
+                    Label("Shortest Duration", systemImage: viewModel.selectedSort == .shortestDuration ? "checkmark" : "")
+                }
+            }
+        } label: {
+            Image(systemName: "line.3.horizontal.decrease.circle")
+        }
+        .tint(.primary)
+    }
+
+    private func changeSort(to option: BookshelfSortOption) {
+        Task {
+            await viewModel.changeSort(option: option, libraryId: appState.currentLibraryId, isAuthenticated: appState.isAuthenticated)
+        }
     }
 
     // MARK: - Background Layer
@@ -238,9 +297,7 @@ public struct BookshelfView: View {
                         .padding(.vertical, 4)
                     }
                     .onTapGesture {
-                        if let firstBook = books.first {
-                            selectedBookForDetails = firstBook
-                        }
+                        selectedAuthorName = author
                     }
                 }
             }
@@ -295,9 +352,7 @@ public struct BookshelfView: View {
                         .padding(.vertical, 4)
                     }
                     .onTapGesture {
-                        if let firstBook = books.first {
-                            selectedBookForDetails = firstBook
-                        }
+                        selectedNarratorInfo = SelectedNarratorInfo(name: narrator, books: books)
                     }
                 }
             }
@@ -311,6 +366,16 @@ public struct BookshelfView: View {
     private var searchOverlay: some View {
         BookshelfSearchOverlay(searchText: $searchText, showSearch: $showSearch, viewModel: viewModel, selectedBookForDetails: $selectedBookForDetails)
     }
+}
 
-    // MARK: - End BookshelfView
+public struct SelectedNarratorInfo: Identifiable, Sendable {
+    public let id: String
+    public let name: String
+    public let books: [Book]
+
+    public init(name: String, books: [Book]) {
+        self.id = name
+        self.name = name
+        self.books = books
+    }
 }

@@ -360,4 +360,48 @@ final class UpstreamFeaturesTests: XCTestCase {
         XCTAssertFalse(vm.playlists.isEmpty)
         XCTAssertEqual(vm.playlists.first?.name, "Favorites")
     }
+
+    func testBookshelfFilterAndMultiCriteriaSorting() async throws {
+        let mockService = MockLibraryService()
+        let vm = BookshelfViewModel(service: mockService)
+
+        await vm.loadLibrary(libraryId: "mock-lib", isAuthenticated: false)
+
+        XCTAssertFalse(vm.books.isEmpty)
+        XCTAssertEqual(vm.filteredBooks.count, vm.books.count)
+
+        // 1. Filter by Series
+        vm.setFilter(.series)
+        XCTAssertEqual(vm.selectedFilter, .series)
+        XCTAssertTrue(vm.filteredBooks.allSatisfy {
+            !($0.seriesName?.isEmpty ?? true)
+        })
+
+        // 2. Search text within filtered set
+        vm.setFilter(.all)
+        vm.setSearchText("Dune")
+        XCTAssertEqual(vm.filterSearchText, "Dune")
+        XCTAssertTrue(vm.filteredBooks.allSatisfy {
+            $0.title.localizedCaseInsensitiveContains("Dune") ||
+            ($0.author?.localizedCaseInsensitiveContains("Dune") ?? false) ||
+            ($0.seriesName?.localizedCaseInsensitiveContains("Dune") ?? false)
+        })
+
+        // 3. Reset filters
+        vm.resetFilters()
+        XCTAssertEqual(vm.selectedFilter, .all)
+        XCTAssertEqual(vm.filterSearchText, "")
+        XCTAssertEqual(vm.filteredBooks.count, vm.books.count)
+
+        // 4. Multi-criteria sort switching
+        await vm.changeSort(option: .titleAZ, libraryId: "mock-lib", isAuthenticated: false)
+        XCTAssertEqual(vm.selectedSort, .titleAZ)
+        XCTAssertEqual(vm.currentSort, "title")
+        XCTAssertFalse(vm.currentDesc)
+
+        await vm.changeSort(option: .longestDuration, libraryId: "mock-lib", isAuthenticated: false)
+        XCTAssertEqual(vm.selectedSort, .longestDuration)
+        XCTAssertEqual(vm.currentSort, "duration")
+        XCTAssertTrue(vm.currentDesc)
+    }
 }
