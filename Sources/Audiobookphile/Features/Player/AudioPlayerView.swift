@@ -405,8 +405,8 @@ public struct AudioPlayerView: View {
 
 
     private var titleSection: some View {
-        VStack(spacing: 8) {
-            Text(viewModel.currentChapterTitle.isEmpty ? viewModel.title : viewModel.currentChapterTitle)
+        VStack(spacing: 6) {
+            Text(viewModel.title)
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundStyle(coverIsLight ? DesignTokens.Color.background : DesignTokens.Color.foreground)
@@ -414,10 +414,39 @@ public struct AudioPlayerView: View {
                 .lineLimit(2)
 
             Text(viewModel.author)
-                .font(.headline)
-                .foregroundStyle((coverIsLight ? DesignTokens.Color.background : DesignTokens.Color.foreground).opacity(0.7))
+                .font(.subheadline)
+                .foregroundStyle((coverIsLight ? DesignTokens.Color.background : DesignTokens.Color.foreground).opacity(0.75))
                 .multilineTextAlignment(.center)
                 .lineLimit(1)
+
+            if !viewModel.chapters.isEmpty {
+                Button {
+                    #if !SKIP && os(iOS)
+                    UISelectionFeedbackGenerator().selectionChanged()
+                    #endif
+                    showChapters = true
+                } label: {
+                    HStack(spacing: 5) {
+                        Image(systemName: "list.bullet")
+                            .font(.system(size: 10, weight: .bold))
+                        Text(viewModel.currentChapterTitle.isEmpty ? "Chapters" : viewModel.currentChapterTitle)
+                            .font(.system(size: 12, weight: .medium))
+                            .lineLimit(1)
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 8, weight: .bold))
+                            .opacity(0.6)
+                    }
+                    .foregroundStyle(coverIsLight ? DesignTokens.Color.background.opacity(0.85) : Color.white.opacity(0.9))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 4)
+                    .background(
+                        Capsule()
+                            .fill(coverIsLight ? Color.black.opacity(0.06) : Color.white.opacity(0.12))
+                    )
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 2)
+            }
         }
     }
 
