@@ -174,3 +174,4 @@ public struct NarratorDetailSheet: View {
         return "\(minutes)m"
     }
 }
+

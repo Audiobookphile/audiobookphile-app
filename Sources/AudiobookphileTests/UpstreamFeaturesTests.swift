@@ -432,4 +432,45 @@ final class UpstreamFeaturesTests: XCTestCase {
         XCTAssertEqual(activeDates.count, 5)
         XCTAssertTrue(activeDates.contains(formatter.string(from: today)))
     }
+
+    func testDownloadStorageManagement() throws {
+        let service = DownloadService.shared
+        let originalDownloads = service.downloads
+
+        let downloadCompleted1 = Download(
+            libraryItemId: "dl-test-1",
+            title: "Test Book 1",
+            author: "Author",
+            progress: 1.0,
+            totalSize: 50_000_000,
+            status: .completed
+        )
+        let downloadCompleted2 = Download(
+            libraryItemId: "dl-test-2",
+            title: "Test Book 2",
+            author: "Author",
+            progress: 1.0,
+            totalSize: 75_000_000,
+            status: .completed
+        )
+        let downloadPending = Download(
+            libraryItemId: "dl-test-3",
+            title: "Test Book 3",
+            author: "Author",
+            progress: 0.5,
+            totalSize: 100_000_000,
+            status: .downloading
+        )
+
+        service.downloads = [downloadCompleted1, downloadCompleted2, downloadPending]
+        XCTAssertEqual(service.totalDownloadedBytes, 125_000_000)
+
+        service.deleteAllCompletedDownloads()
+        XCTAssertEqual(service.downloads.count, 1)
+        XCTAssertEqual(service.downloads.first?.libraryItemId, "dl-test-3")
+        XCTAssertEqual(service.totalDownloadedBytes, 0)
+
+        // Restore original downloads
+        service.downloads = originalDownloads
+    }
 }

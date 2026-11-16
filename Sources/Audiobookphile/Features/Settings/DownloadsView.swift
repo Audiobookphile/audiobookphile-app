@@ -208,6 +208,19 @@ public class DownloadService: NSObject, URLSessionDownloadDelegate {
         saveDownloadsIndex()
     }
 
+    public var totalDownloadedBytes: Int64 {
+        downloads
+            .filter { $0.status == .completed }
+            .reduce(0) { $0 + $1.totalSize }
+    }
+
+    public func deleteAllCompletedDownloads() {
+        let completed = downloads.filter { $0.status == .completed }
+        for download in completed {
+            try? deleteDownload(bookId: download.libraryItemId)
+        }
+    }
+
     private func processQueue() {
         guard activeBookId == nil, !downloadQueue.isEmpty else { return }
 
@@ -526,6 +539,7 @@ public class DownloadService: NSObject, URLSessionDownloadDelegate {
 public struct DownloadsView: View {
     var downloadService = DownloadService.shared
     @State var selectedBook: Book?
+    @State var showClearConfirmation = false
 
     public init() {}
 
@@ -542,6 +556,18 @@ public struct DownloadsView: View {
         .audiobookphileNavigationToolbar(title: "Downloads")
         .sheet(item: $selectedBook) { book in
             BookDetailView(book: book)
+        }
+        .confirmationDialog(
+            "Clear Completed Downloads?",
+            isPresented: $showClearConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Delete All Completed Downloads", role: .destructive) {
+                downloadService.deleteAllCompletedDownloads()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will remove all downloaded audio files from this device to free up storage space. Your listening progress will remain saved.")
         }
     }
 
@@ -586,6 +612,51 @@ public struct DownloadsView: View {
 
     private var downloadsList: some View {
         List {
+            // Offline Storage Overview
+            Section {
+                HStack(spacing: 14) {
+                    Circle()
+                        .fill(Color.appPrimary.opacity(0.15))
+                        .frame(width: 44, height: 44)
+                        .overlay {
+                            Image(systemName: "internaldrive.fill")
+                                .font(.title3)
+                                .foregroundStyle(Color.appPrimary)
+                        }
+
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Offline Storage")
+                            .font(.headline)
+                            .foregroundStyle(.primary)
+                        Text("\(ByteCountFormatter.string(fromByteCount: downloadService.totalDownloadedBytes, countStyle: .file)) • \(completedDownloads.count) \(completedDownloads.count == 1 ? "Audiobook" : "Audiobooks")")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Spacer()
+
+                    if !completedDownloads.isEmpty {
+                        Button(role: .destructive) {
+                            showClearConfirmation = true
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "trash")
+                                Text("Clear")
+                            }
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.red)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(Color.red.opacity(0.12))
+                            .clipShape(Capsule())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+            .listRowBackground(DesignTokens.Color.surface.opacity(0.5))
+
             // Active Downloads
             if !pendingDownloads.isEmpty {
                 Section {
