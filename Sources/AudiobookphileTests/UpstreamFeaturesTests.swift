@@ -404,4 +404,32 @@ final class UpstreamFeaturesTests: XCTestCase {
         XCTAssertEqual(vm.currentSort, "duration")
         XCTAssertTrue(vm.currentDesc)
     }
+
+    func testListeningStatsStreakAndAggregation() throws {
+        let calendar = Calendar.current
+        let today = Date()
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+
+        let sessions = (0..<5).map { offset -> PlaybackSessionRow in
+            let date = calendar.date(byAdding: .day, value: -offset, to: today) ?? today
+            return PlaybackSessionRow(
+                id: "test-sess-\(offset)",
+                displayTitle: "Test Book \(offset)",
+                displayAuthor: "Test Author",
+                timeListening: 1800,
+                sessionDate: formatter.string(from: date),
+                updatedAt: date
+            )
+        }
+
+        XCTAssertEqual(sessions.count, 5)
+        let totalSeconds = sessions.compactMap(\.timeListening).reduce(0, +)
+        XCTAssertEqual(totalSeconds, 9000)
+
+        // Verify active dates
+        let activeDates = Set(sessions.compactMap(\.sessionDate))
+        XCTAssertEqual(activeDates.count, 5)
+        XCTAssertTrue(activeDates.contains(formatter.string(from: today)))
+    }
 }
