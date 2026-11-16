@@ -887,6 +887,12 @@ public class AudioPlayerService: AudioPlayerServiceProtocol {
         sleepTimer.stopSleepTimer()
     }
 
+    /// Extends the sleep timer by a given number of seconds if active.
+    @discardableResult
+    public func extendSleepTimer(by seconds: TimeInterval) -> Bool {
+        sleepTimer.extendSleepTimer(by: seconds)
+    }
+
     // MARK: - Sync Passthroughs
     
     public func flushOfflineProgressQueue() async {

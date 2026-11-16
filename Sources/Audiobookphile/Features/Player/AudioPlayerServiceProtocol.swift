@@ -109,6 +109,10 @@ public protocol AudioPlayerServiceProtocol: AnyObject {
     /// - Parameter duration: The duration in seconds.
     func startSleepTimer(duration: TimeInterval)
 
+    /// Extends the sleep timer by a given number of seconds if active.
+    @discardableResult
+    func extendSleepTimer(by seconds: TimeInterval) -> Bool
+
     /// Stops the sleep timer if active.
     func stopSleepTimer()
 

@@ -68,6 +68,11 @@ public class AudioPlayerViewModel {
         AudioPlayerService.shared.resetSleepTimer()
     }
 
+    @discardableResult
+    public func extendSleepTimer(by seconds: TimeInterval) -> Bool {
+        AudioPlayerService.shared.extendSleepTimer(by: seconds)
+    }
+
     public var sleepTimerRemainingPretty: String {
         guard let remaining = AudioPlayerService.shared.sleepTimerRemaining, !remaining.isNaN, !remaining.isInfinite, remaining > 0 else { return "" }
         let total = Int(remaining)

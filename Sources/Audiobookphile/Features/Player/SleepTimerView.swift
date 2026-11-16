@@ -2,6 +2,7 @@ import SwiftUI
 
 public struct SleepTimerView: View {
     @Environment(\.dismiss) var dismiss
+    @State private var customMinutes: Int = 20
 
     public let onSetTimer: (TimeInterval?) -> Void
     public let onSetEndOfChapter: () -> Void
@@ -17,120 +18,181 @@ public struct SleepTimerView: View {
         self.onSetEndOfTrack = onSetEndOfTrack
     }
 
+    private var isTimerActive: Bool {
+        AudioPlayerService.shared.isSleepTimerActive
+    }
+
+    private var activeRemainingText: String {
+        AudioPlayerService.shared.sleepTimer.format()
+    }
+
     public var body: some View {
         NavigationStack {
             ZStack {
                 FluidAuraBackground()
 
                 List {
-                Section {
-                    Button {
-                        onSetTimer(nil)
-                        dismiss()
-                    } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: "xmark.circle.fill")
-                                .foregroundStyle(.red)
-                                .font(.body)
-                            Text("Off")
-                                .foregroundStyle(.primary)
-                            Spacer()
-                        }
-                    }
-                }
+                    // Active Timer Hero Card
+                    if isTimerActive {
+                        Section {
+                            VStack(spacing: 12) {
+                                HStack {
+                                    Image(systemName: "moon.zzz.fill")
+                                        .font(.title2)
+                                        .foregroundStyle(Color.accentColor)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("Active Sleep Timer")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                        Text(activeRemainingText.isEmpty ? "Counting down..." : activeRemainingText)
+                                            .font(.system(size: 24, weight: .bold, design: .monospaced))
+                                            .foregroundStyle(DesignTokens.Color.foreground)
+                                    }
+                                    Spacer()
+                                    Button {
+                                        onSetTimer(nil)
+                                        dismiss()
+                                    } label: {
+                                        Text("Turn Off")
+                                            .font(.caption.bold())
+                                            .foregroundStyle(.red)
+                                            .padding(.horizontal, 10)
+                                            .padding(.vertical, 6)
+                                            .background(Color.red.opacity(0.12))
+                                            .clipShape(Capsule())
+                                    }
+                                }
 
-                Section {
-                    Button {
-                        onSetTimer(15 * 60)
-                        dismiss()
-                    } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: "clock.fill")
-                                .foregroundStyle(Color.appPrimary)
-                                .font(.body)
-                            Text("15 Minutes")
-                                .foregroundStyle(.primary)
-                            Spacer()
-                        }
-                    }
+                                HStack(spacing: 10) {
+                                    Button {
+                                        AudioPlayerService.shared.extendSleepTimer(by: 5 * 60)
+                                    } label: {
+                                        Label("+5 Min", systemImage: "plus.circle.fill")
+                                            .font(.caption.bold())
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.vertical, 8)
+                                    }
+                                    .buttonStyle(.bordered)
+                                    .tint(Color.accentColor)
 
-                    Button {
-                        onSetTimer(30 * 60)
-                        dismiss()
-                    } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: "clock.fill")
-                                .foregroundStyle(Color.appPrimary)
-                                .font(.body)
-                            Text("30 Minutes")
-                                .foregroundStyle(.primary)
-                            Spacer()
-                        }
-                    }
-
-                    Button {
-                        onSetTimer(60 * 60)
-                        dismiss()
-                    } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: "clock.fill")
-                                .foregroundStyle(Color.appPrimary)
-                                .font(.body)
-                            Text("60 Minutes")
-                                .foregroundStyle(.primary)
-                            Spacer()
-                        }
-                    }
-                } header: {
-                    Text("Time")
-                }
-
-                Section {
-                    Button {
-                        onSetEndOfChapter()
-                        dismiss()
-                    } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: "moon.zzz.fill")
-                                .foregroundStyle(.indigo)
-                                .font(.body)
-                            Text("End of Chapter")
-                                .foregroundStyle(.primary)
-                            Spacer()
+                                    Button {
+                                        AudioPlayerService.shared.extendSleepTimer(by: 15 * 60)
+                                    } label: {
+                                        Label("+15 Min", systemImage: "plus.circle.fill")
+                                            .font(.caption.bold())
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.vertical, 8)
+                                    }
+                                    .buttonStyle(.bordered)
+                                    .tint(Color.accentColor)
+                                }
+                            }
+                            .padding(.vertical, 4)
                         }
                     }
 
-                    if let onSetEndOfTrack = onSetEndOfTrack {
+                    // Preset Durations
+                    Section("Preset Durations") {
+                        ForEach([5, 10, 15, 30, 45, 60, 90], id: \.self) { minutes in
+                            Button {
+                                onSetTimer(TimeInterval(minutes * 60))
+                                dismiss()
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "clock.fill")
+                                        .foregroundStyle(Color.appPrimary)
+                                        .font(.body)
+                                    Text("\(minutes) Minutes")
+                                        .foregroundStyle(.primary)
+                                    Spacer()
+                                }
+                            }
+                        }
+                    }
+
+                    // Custom Minutes
+                    Section("Custom Duration") {
+                        Stepper(value: $customMinutes, in: 1...180, step: 5) {
+                            HStack {
+                                Image(systemName: "slider.horizontal.3")
+                                    .foregroundStyle(Color.accentColor)
+                                Text("\(customMinutes) Minutes")
+                                    .fontWeight(.medium)
+                            }
+                        }
+
                         Button {
-                            onSetEndOfTrack()
+                            onSetTimer(TimeInterval(customMinutes * 60))
                             dismiss()
                         } label: {
-                            HStack(spacing: 12) {
-                                Image(systemName: "forward.end.alt.fill")
-                                    .foregroundStyle(.purple)
-                                    .font(.body)
-                                Text("End of Track")
-                                    .foregroundStyle(.primary)
+                            HStack {
+                                Spacer()
+                                Text("Set \(customMinutes) Minute Timer")
+                                    .font(.subheadline.bold())
+                                    .foregroundStyle(Color.accentColor)
                                 Spacer()
                             }
                         }
                     }
-                }
-            }
-            .scrollContentBackground(.hidden)
-            .navigationTitle("Sleep Timer")
-            #if os(iOS) || SKIP
-            .navigationBarTitleDisplayMode(.inline)
-            #endif
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
+
+                    // Contextual Triggers
+                    Section("Smart Triggers") {
+                        Button {
+                            onSetEndOfChapter()
+                            dismiss()
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: "moon.stars.fill")
+                                    .foregroundStyle(.indigo)
+                                    .font(.body)
+                                Text("End of Chapter")
+                                    .foregroundStyle(.primary)
+                                Spacer()
+                            }
+                        }
+
+                        if let onSetEndOfTrack = onSetEndOfTrack {
+                            Button {
+                                onSetEndOfTrack()
+                                dismiss()
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "forward.end.alt.fill")
+                                        .foregroundStyle(.purple)
+                                        .font(.body)
+                                    Text("End of Track")
+                                        .foregroundStyle(.primary)
+                                    Spacer()
+                                }
+                            }
+                        }
+                    }
+
+                    // Shake Gestures Footer Tip
+                    Section {
+                        HStack(spacing: 10) {
+                            Image(systemName: "iphone.radiowaves.left.and.right")
+                                .foregroundStyle(Color.accentColor)
+                            Text("Shake your phone anytime during playback to reset or extend the timer without looking at the screen.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.vertical, 4)
                     }
                 }
-            }
-            // iOS 27 Toolbar Styling
-            .applyToolbarAdapters(isLight: false, isHidden: false)
+                .scrollContentBackground(.hidden)
+                .navigationTitle("Sleep Timer")
+                #if os(iOS) || SKIP
+                .navigationBarTitleDisplayMode(.inline)
+                #endif
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") {
+                            dismiss()
+                        }
+                    }
+                }
+                .applyToolbarAdapters(isLight: false, isHidden: false)
             }
         }
     }

@@ -59,6 +59,17 @@ public class AudioPlayerSleepTimer {
         return true
     }
 
+    /// Extends the active sleep timer by a given number of seconds.
+    @discardableResult
+    public func extendSleepTimer(by seconds: TimeInterval) -> Bool {
+        guard let r = remaining else { return false }
+        let newDuration = r + seconds
+        remaining = newDuration
+        initialDuration = max(initialDuration ?? 0, newDuration)
+        AudioPlayerService.shared.setVolume(1.0)
+        return true
+    }
+
     private func stopTimerInternal() {
         timer?.invalidate()
         timer = nil

@@ -30,6 +30,13 @@ final class UpstreamFeaturesTests: XCTestCase {
         XCTAssertEqual(timer.remaining, 120)
         XCTAssertEqual(timer.initialDuration, 120)
 
+        // Test extending sleep timer
+        let extended = timer.extendSleepTimer(by: 180)
+        XCTAssertTrue(extended)
+        XCTAssertEqual(timer.remaining, 300)
+        XCTAssertEqual(timer.initialDuration, 300)
+        XCTAssertEqual(timer.format(), "05:00")
+
         // Stop timer
         timer.stopSleepTimer()
         XCTAssertFalse(timer.isActive)
