@@ -15,6 +15,7 @@ public struct PlaybackScrubberView: View {
     var viewModel: AudioPlayerViewModel
     var coverIsLight: Bool
     var isUiLocked: Bool
+    var tintColor: Color?
 
     @State private var isDragging = false
     @State private var draggedProgress: Double = 0
@@ -22,10 +23,11 @@ public struct PlaybackScrubberView: View {
     @State private var lastNotchedChapterStart: TimeInterval?
     @State private var lastNotchedDecile: Int = -1
 
-    public init(viewModel: AudioPlayerViewModel, coverIsLight: Bool, isUiLocked: Bool) {
+    public init(viewModel: AudioPlayerViewModel, coverIsLight: Bool, isUiLocked: Bool, tintColor: Color? = nil) {
         self.viewModel = viewModel
         self.coverIsLight = coverIsLight
         self.isUiLocked = isUiLocked
+        self.tintColor = tintColor
     }
 
     // Safe duration calculation ensuring no division by zero or NaN
@@ -162,7 +164,7 @@ public struct PlaybackScrubberView: View {
                     pendingSeekTarget = nil
                 }
             }
-            .tint(.appPrimary)
+            .tint(tintColor ?? .appPrimary)
             .disabled(isUiLocked)
             .opacity(isUiLocked ? 0.4 : 1.0)
             .frame(height: 44)

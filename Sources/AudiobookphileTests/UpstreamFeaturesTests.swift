@@ -473,4 +473,24 @@ final class UpstreamFeaturesTests: XCTestCase {
         // Restore original downloads
         service.downloads = originalDownloads
     }
+
+    @MainActor
+    func testDynamicCoverArtAuraExtractionAndTinting() {
+        let loader = DynamicColorLoader()
+        XCTAssertFalse(loader.isLoaded)
+
+        // Test atmospheric mood palette extraction
+        loader.loadColor(fromMood: "Sci-Fi & Cyberpunk Mystery")
+        XCTAssertTrue(loader.isLoaded)
+        XCTAssertFalse(loader.isLight)
+        XCTAssertEqual(loader.gradientColors.count, 2)
+
+        // Verify FluidAuraBackground accepts custom accentColors array
+        let bg = FluidAuraBackground(
+            baseColor: loader.backgroundColor.opacity(0.35),
+            accentColors: loader.gradientColors
+        )
+        XCTAssertNotNil(bg)
+        XCTAssertEqual(bg.accentColors?.count, 2)
+    }
 }

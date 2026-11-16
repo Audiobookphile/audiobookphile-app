@@ -182,7 +182,7 @@ public struct AudioPlayerView: View {
             Button("Audio & Accessibility") { showAudioAccessibilitySheet = true }
             Button("Cancel", role: .cancel) {}
         }
-        .task {
+        .task(id: coverURL) {
             if let url = coverURL {
                 await colorLoader.loadColor(from: url)
             }
@@ -241,8 +241,12 @@ public struct AudioPlayerView: View {
 
     private var backgroundLayer: some View {
         ZStack {
-            // Radiant Liquid Glass base
-            FluidAuraBackground(baseColor: colorLoader.isLoaded ? colorLoader.backgroundColor.opacity(0.35) : nil)
+            // Radiant Liquid Glass base with dynamic artwork-extracted aura
+            FluidAuraBackground(
+                baseColor: colorLoader.isLoaded ? colorLoader.backgroundColor.opacity(0.35) : nil,
+                accentColors: colorLoader.isLoaded ? colorLoader.gradientColors : nil
+            )
+            .animation(.easeInOut(duration: 0.8), value: colorLoader.backgroundColor)
 
             // Dynamic cover art glow
             if let url = coverURL {
@@ -300,7 +304,10 @@ public struct AudioPlayerView: View {
                 .padding(.vertical, 20)
 
             // Hardware vDSP Audio Spectrum Visualizer
-            VDSPAudioVisualizer(isPlaying: viewModel.isPlaying, color: coverIsLight ? DesignTokens.Color.background : Color.appPrimary)
+            VDSPAudioVisualizer(
+                isPlaying: viewModel.isPlaying,
+                color: coverIsLight ? DesignTokens.Color.background : (colorLoader.isLoaded ? colorLoader.backgroundColor : Color.appPrimary)
+            )
                 .padding(.bottom, 12)
 
             // Title and author
@@ -341,7 +348,8 @@ public struct AudioPlayerView: View {
                 PlaybackScrubberView(
                     viewModel: viewModel,
                     coverIsLight: coverIsLight,
-                    isUiLocked: isUiLocked
+                    isUiLocked: isUiLocked,
+                    tintColor: colorLoader.isLoaded ? colorLoader.backgroundColor : nil
                 )
                     .padding(.horizontal, 24)
 

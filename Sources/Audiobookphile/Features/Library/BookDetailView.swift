@@ -79,7 +79,11 @@ public struct BookDetailView: View {
     // MARK: - Background Layer
 
     private var backgroundLayer: some View {
-        FluidAuraBackground(baseColor: viewModel.colorLoader.isLoaded ? viewModel.colorLoader.backgroundColor.opacity(0.3) : nil)
+        FluidAuraBackground(
+            baseColor: viewModel.colorLoader.isLoaded ? viewModel.colorLoader.backgroundColor.opacity(0.3) : nil,
+            accentColors: viewModel.colorLoader.isLoaded ? viewModel.colorLoader.gradientColors : nil
+        )
+        .animation(.easeInOut(duration: 0.8), value: viewModel.colorLoader.backgroundColor)
     }
 
     private var dragHandle: some View {
