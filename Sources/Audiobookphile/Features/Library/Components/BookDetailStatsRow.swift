@@ -10,30 +10,38 @@ public struct BookDetailStatsRow: View {
     }
 
     public var body: some View {
-        HStack(spacing: 12) {
-            statBadge(icon: "clock", value: viewModel.formatDuration(detailed.duration), label: "Duration")
-            if let year = detailed.media.metadata.publishedYear {
+        HStack(spacing: 10) {
+            statBadge(icon: "clock.fill", value: viewModel.formatDuration(detailed.duration), label: "Duration")
+            if let year = detailed.media.metadata.publishedYear, !year.isEmpty {
                 statBadge(icon: "calendar", value: year, label: "Published")
             }
-            statBadge(icon: "list.bullet", value: "\(detailed.chapters.count)", label: "Chapters")
+            if !detailed.chapters.isEmpty {
+                statBadge(icon: "list.bullet", value: "\(detailed.chapters.count)", label: "Chapters")
+            }
+            if let series = detailed.seriesName, !series.isEmpty {
+                statBadge(icon: "books.vertical.fill", value: series, label: "Series")
+            }
         }
     }
 
     private func statBadge(icon: String, value: String, label: String) -> some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 3) {
             Image(systemName: icon)
-                .font(.subheadline)
-                .foregroundStyle(Color.appPrimary)
+                .font(.caption)
+                .foregroundStyle(Color.accentColor)
             Text(value)
-                .font(.subheadline)
-                .fontWeight(.bold)
+                .font(.system(size: 13, weight: .bold))
                 .foregroundStyle(DesignTokens.Color.foreground)
-            Text(label)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+            Text(label.uppercased())
+                .font(.system(size: 8, weight: .semibold))
+                .foregroundStyle(DesignTokens.Color.foreground.opacity(0.55))
+                .tracking(0.5)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 8)
-        .glassCard()
+        .padding(.vertical, 10)
+        .padding(.horizontal, 6)
+        .glassCard(cornerRadius: 14)
     }
 }
