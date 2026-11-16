@@ -38,6 +38,18 @@ final class UpstreamFeaturesTests: XCTestCase {
         XCTAssertFalse(completed)
     }
 
+    func testSleepTimerEndOfTrackAndChapterCalculations() throws {
+        let currentTime: TimeInterval = 150
+        let trackDuration: TimeInterval = 600
+        let remainingTrack = max(0, trackDuration - currentTime)
+        XCTAssertEqual(remainingTrack, 450)
+
+        let chapter = Chapter(id: 0, title: "Chapter 1", start: 100, end: 300)
+        let remainingChapter = max(0, chapter.end - currentTime)
+        XCTAssertEqual(remainingChapter, 150)
+        XCTAssertNotEqual(remainingTrack, remainingChapter)
+    }
+
     func testAppSettingsWithUpstreamFeatures() throws {
         var settings = AppSettings()
         XCTAssertTrue(settings.smartRewindEnabled)

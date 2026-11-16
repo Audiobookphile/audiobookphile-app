@@ -3,13 +3,18 @@ import SwiftUI
 public struct SleepTimerView: View {
     @Environment(\.dismiss) var dismiss
 
-    // Using simple options for now, this can integrate with AudioPlayerViewModel
     public let onSetTimer: (TimeInterval?) -> Void
     public let onSetEndOfChapter: () -> Void
+    public var onSetEndOfTrack: (() -> Void)? = nil
 
-    public init(onSetTimer: @escaping (TimeInterval?) -> Void, onSetEndOfChapter: @escaping () -> Void) {
+    public init(
+        onSetTimer: @escaping (TimeInterval?) -> Void,
+        onSetEndOfChapter: @escaping () -> Void,
+        onSetEndOfTrack: (() -> Void)? = nil
+    ) {
         self.onSetTimer = onSetTimer
         self.onSetEndOfChapter = onSetEndOfChapter
+        self.onSetEndOfTrack = onSetEndOfTrack
     }
 
     public var body: some View {
@@ -92,6 +97,22 @@ public struct SleepTimerView: View {
                             Text("End of Chapter")
                                 .foregroundStyle(.primary)
                             Spacer()
+                        }
+                    }
+
+                    if let onSetEndOfTrack = onSetEndOfTrack {
+                        Button {
+                            onSetEndOfTrack()
+                            dismiss()
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: "forward.end.alt.fill")
+                                    .foregroundStyle(.purple)
+                                    .font(.body)
+                                Text("End of Track")
+                                    .foregroundStyle(.primary)
+                                Spacer()
+                            }
                         }
                     }
                 }

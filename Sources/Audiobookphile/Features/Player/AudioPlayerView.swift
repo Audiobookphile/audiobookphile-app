@@ -143,6 +143,12 @@ public struct AudioPlayerView: View {
                             AudioPlayerService.shared.startSleepTimer(duration: remaining)
                         }
                     }
+                },
+                onSetEndOfTrack: {
+                    let remaining = viewModel.duration - viewModel.currentTime
+                    if remaining > 0 {
+                        AudioPlayerService.shared.startSleepTimer(duration: remaining)
+                    }
                 }
             )
         }
