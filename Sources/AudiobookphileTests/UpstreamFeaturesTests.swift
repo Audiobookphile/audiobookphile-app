@@ -328,4 +328,36 @@ final class UpstreamFeaturesTests: XCTestCase {
         XCTAssertFalse(vm.totalDurationFormatted.isEmpty)
         XCTAssertTrue(vm.bookCountText.contains("Book"))
     }
+
+    func testPlaybackSpeedFineAdjustment() throws {
+        let playerService = AudioPlayerService.shared
+        playerService.setPlaybackRate(1.25)
+        XCTAssertEqual(playerService.playbackRate, 1.25, accuracy: 0.01)
+
+        playerService.setPlaybackRate(0.85)
+        XCTAssertEqual(playerService.playbackRate, 0.85, accuracy: 0.01)
+
+        playerService.setPlaybackRate(1.0)
+        XCTAssertEqual(playerService.playbackRate, 1.0, accuracy: 0.01)
+
+        var settings = AppSettings()
+        settings.perBookPlaybackSpeedEnabled = true
+        XCTAssertTrue(settings.perBookPlaybackSpeedEnabled)
+    }
+
+    func testCollectionsViewModelLoading() async throws {
+        let vm = CollectionsViewModel()
+
+        XCTAssertTrue(vm.collections.isEmpty)
+        XCTAssertTrue(vm.playlists.isEmpty)
+
+        await vm.loadData(libraryId: "mock-lib", isAuthenticated: false, type: .collections)
+        XCTAssertFalse(vm.collections.isEmpty)
+        XCTAssertEqual(vm.collections.first?.name, "Award Winners")
+        XCTAssertEqual(vm.collections.first?.books?.count, 3)
+
+        await vm.loadData(libraryId: "mock-lib", isAuthenticated: false, type: .playlists)
+        XCTAssertFalse(vm.playlists.isEmpty)
+        XCTAssertEqual(vm.playlists.first?.name, "Favorites")
+    }
 }

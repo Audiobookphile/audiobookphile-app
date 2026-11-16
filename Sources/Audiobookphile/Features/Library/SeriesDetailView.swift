@@ -325,3 +325,4 @@ public struct SeriesSheetWrapper: Identifiable {
         self.name = name
     }
 }
+

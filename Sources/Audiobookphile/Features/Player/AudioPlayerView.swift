@@ -21,6 +21,7 @@ public struct AudioPlayerView: View {
 
     @State var showChapters = false
     @State var showSleepTimer = false
+    @State var showPlaybackSpeedSheet = false
     @State var showCarMode = false
     @State var showMoreMenu = false
     @State var showPlaybackQueue = false
@@ -167,9 +168,13 @@ public struct AudioPlayerView: View {
         .sheet(isPresented: $showPlaybackQueue) {
             PlaybackQueueSheet(viewModel: viewModel)
         }
+        .sheet(isPresented: $showPlaybackSpeedSheet) {
+            PlaybackSpeedSheet(viewModel: viewModel)
+        }
         .confirmationDialog("Player Options", isPresented: $showMoreMenu, titleVisibility: .visible) {
             Button("Car Mode") { showCarMode = true }
             Button("Go to Sleep Timer") { showSleepTimer = true }
+            Button("Playback Speed (\(String(format: "%.2f×", viewModel.playbackRate)))") { showPlaybackSpeedSheet = true }
             Button("View Chapters") { showChapters = true }
             Button("Playback Queue (\(AudioPlayerService.shared.playbackQueue.count))") { showPlaybackQueue = true }
             Button("Add Bookmark") { showAddBookmark = true }
@@ -326,6 +331,7 @@ public struct AudioPlayerView: View {
                     showAddBookmark: $showAddBookmark,
                     showBookmarksList: $showBookmarksList,
                     showSleepTimer: $showSleepTimer,
+                    showPlaybackSpeedSheet: $showPlaybackSpeedSheet,
                     showAudioAccessibilitySheet: $showAudioAccessibilitySheet,
                     showChapters: $showChapters,
                     showAIInsights: $showAIInsights

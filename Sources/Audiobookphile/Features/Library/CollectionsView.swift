@@ -26,7 +26,8 @@ public struct CollectionsView: View {
                     type: selectedType,
                     series: viewModel.series,
                     collections: viewModel.collections,
-                    playlists: viewModel.playlists
+                    playlists: viewModel.playlists,
+                    libraryId: appState.currentLibraryId
                 )
             }
         }

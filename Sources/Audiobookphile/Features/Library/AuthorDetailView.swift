@@ -320,3 +320,4 @@ public struct AuthorDetailView: View {
         }
     }
 }
+
