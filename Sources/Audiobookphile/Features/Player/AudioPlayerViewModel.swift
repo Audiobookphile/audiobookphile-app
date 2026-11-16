@@ -212,4 +212,23 @@ public class AudioPlayerViewModel {
             return String(format: "%d:%02d", minutes, seconds)
         }
     }
+
+    public func exportBookmarksMarkdown() -> String {
+        let bookTitle = title.isEmpty ? "Audiobook" : title
+        let bookAuthor = author.isEmpty ? "Unknown Author" : author
+        var md = "# Bookmarks for \(bookTitle)\n"
+        md += "Author: \(bookAuthor)\n"
+        md += "Exported from Audiobookphile\n\n"
+
+        for bookmark in bookmarks {
+            let timestamp = formatTime(bookmark.timePos)
+            let bTitle = bookmark.title ?? "Bookmark at \(timestamp)"
+            md += "### [\(timestamp)] \(bTitle)\n"
+            if let note = bookmark.note, !note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                md += "> \(note.replacingOccurrences(of: "\n", with: "\n> "))\n"
+            }
+            md += "\n"
+        }
+        return md
+    }
 }

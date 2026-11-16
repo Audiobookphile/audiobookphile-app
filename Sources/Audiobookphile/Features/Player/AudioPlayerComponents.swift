@@ -264,6 +264,19 @@ public struct BookmarksListView: View {
                 .navigationBarTitleDisplayMode(.inline)
                 #endif
                 .toolbar {
+                    #if !SKIP
+                    if !viewModel.bookmarks.isEmpty {
+                        ToolbarItem(placement: .cancellationAction) {
+                            ShareLink(
+                                item: viewModel.exportBookmarksMarkdown(),
+                                subject: Text("Bookmarks Export"),
+                                message: Text("Exported Bookmarks & Notes")
+                            ) {
+                                Label("Export", systemImage: "square.and.arrow.up")
+                            }
+                        }
+                    }
+                    #endif
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Done") {
                             dismiss()

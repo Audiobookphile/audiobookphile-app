@@ -129,4 +129,38 @@ final class UpstreamFeaturesTests: XCTestCase {
         XCTAssertEqual(expectedFeedUrl, "https://audiobookphile.app/feed/b0000000-0000-4000-8000-000000000001")
         XCTAssertEqual(expectedOpdsUrl, "https://audiobookphile.app/api/opds")
     }
+
+    func testBookmarksMarkdownExport() throws {
+        let session = PlaybackSession(
+            id: "sess-1",
+            userId: "usr-1",
+            libraryId: "lib-1",
+            libraryItemId: "item-1",
+            episodeId: nil,
+            displayTitle: "The Great Gatsby",
+            displayAuthor: "F. Scott Fitzgerald",
+            coverPath: nil,
+            duration: 1800,
+            playMethod: 0,
+            mediaPlayer: "AVQueuePlayer",
+            mediaType: "book",
+            audioTracks: [],
+            chapters: [],
+            manifestUrl: nil,
+            missingTrackCount: 0,
+            currentTime: 0,
+            playbackRate: 1.0,
+            startedAt: Date(),
+            updatedAt: Date()
+        )
+        let vm = AudioPlayerViewModel(session: session)
+        let bookmark = Bookmark(id: "bm-1", userId: "usr-1", libraryItemId: "item-1", timePos: 125, title: "Green Light", note: "Resilience and hope.")
+        AudioPlayerService.shared.bookmarks = [bookmark]
+
+        let exported = vm.exportBookmarksMarkdown()
+        XCTAssertTrue(exported.contains("# Bookmarks for The Great Gatsby"))
+        XCTAssertTrue(exported.contains("Author: F. Scott Fitzgerald"))
+        XCTAssertTrue(exported.contains("Green Light"))
+        XCTAssertTrue(exported.contains("> Resilience and hope."))
+    }
 }
