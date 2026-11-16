@@ -3,10 +3,12 @@ import SwiftUI
 public struct BookDetailStatsRow: View {
     public let detailed: Book
     public let viewModel: BookDetailViewModel
+    public var onSeriesTap: ((String) -> Void)?
 
-    public init(detailed: Book, viewModel: BookDetailViewModel) {
+    public init(detailed: Book, viewModel: BookDetailViewModel, onSeriesTap: ((String) -> Void)? = nil) {
         self.detailed = detailed
         self.viewModel = viewModel
+        self.onSeriesTap = onSeriesTap
     }
 
     public var body: some View {
@@ -19,7 +21,13 @@ public struct BookDetailStatsRow: View {
                 statBadge(icon: "list.bullet", value: "\(detailed.chapters.count)", label: "Chapters")
             }
             if let series = detailed.seriesName, !series.isEmpty {
-                statBadge(icon: "books.vertical.fill", value: series, label: "Series")
+                Button {
+                    onSeriesTap?(series)
+                } label: {
+                    statBadge(icon: "books.vertical.fill", value: series, label: "Series")
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("View series \(series)")
             }
         }
     }

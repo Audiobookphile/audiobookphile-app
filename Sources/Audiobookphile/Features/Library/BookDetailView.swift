@@ -9,6 +9,8 @@ import SwiftUI
 
 public struct BookDetailView: View {
     @State var viewModel: BookDetailViewModel
+    @State private var selectedAuthorName: String?
+    @State private var selectedSeriesName: String?
     @Environment(\.dismiss) var dismiss
     @Environment(AppState.self) private var appState
 
@@ -56,6 +58,18 @@ public struct BookDetailView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Are you sure you want to remove this downloaded audiobook from your device?")
+        }
+        .sheet(item: Binding(
+            get: { selectedAuthorName.map { AuthorSheetWrapper(name: $0) } },
+            set: { selectedAuthorName = $0?.name }
+        )) { wrapper in
+            AuthorDetailView(authorName: wrapper.name, libraryId: viewModel.detailedBook?.libraryId)
+        }
+        .sheet(item: Binding(
+            get: { selectedSeriesName.map { SeriesSheetWrapper(name: $0) } },
+            set: { selectedSeriesName = $0?.name }
+        )) { wrapper in
+            SeriesDetailView(seriesName: wrapper.name, libraryId: viewModel.detailedBook?.libraryId)
         }
         .task {
             await viewModel.fetchDetails(appState: appState)
@@ -125,7 +139,9 @@ public struct BookDetailView: View {
     private func bookDetailsContent(_ detailed: Book) -> some View {
         VStack(spacing: 24) {
             // Header: Large Cover Art, Title & Authors
-            BookDetailHeader(detailed: detailed, appState: appState, viewModel: viewModel)
+            BookDetailHeader(detailed: detailed, appState: appState, viewModel: viewModel) { author in
+                selectedAuthorName = author
+            }
 
             // Play & Download Actions
             BookActionRow(detailed: detailed, viewModel: viewModel)
@@ -136,7 +152,9 @@ public struct BookDetailView: View {
             }
 
             // Metadata Stats Row
-            BookDetailStatsRow(detailed: detailed, viewModel: viewModel)
+            BookDetailStatsRow(detailed: detailed, viewModel: viewModel) { series in
+                selectedSeriesName = series
+            }
 
             // Description (Expandable)
             if let description = detailed.description, !description.isEmpty {

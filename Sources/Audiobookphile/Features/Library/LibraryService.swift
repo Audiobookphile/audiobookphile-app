@@ -11,6 +11,9 @@ public protocol LibraryServiceProtocol {
     func fetchLibraryStats(libraryId: String?) async throws -> LibraryStats
     func fetchAuthors(libraryId: String?, page: Int, sort: String) async throws -> AuthorsResponse
     func fetchSeries(libraryId: String?, page: Int, sort: String) async throws -> SeriesResponse
+    func fetchBooksByAuthor(authorName: String, libraryId: String?) async throws -> [Book]
+    func fetchBooksBySeries(seriesName: String, libraryId: String?) async throws -> [Book]
+    func fetchAuthorDetail(authorId: String) async throws -> AuthorSummary
 }
 
 @MainActor
@@ -81,6 +84,28 @@ public class LiveLibraryService: LibraryServiceProtocol {
             throw APIError.invalidResponse
         }
         return try await AudiobookphileAPI.shared.getLibrarySeries(libraryId: libId, page: page, sort: sort)
+    }
+
+    public func fetchBooksByAuthor(authorName: String, libraryId: String?) async throws -> [Book] {
+        guard let libId = libraryId else { return [] }
+        let allBooks = try await fetchLibraryItems(libraryId: libId)
+        return allBooks.filter { book in
+            guard let name = book.author else { return false }
+            return name.localizedCaseInsensitiveCompare(authorName) == .orderedSame || name.localizedCaseInsensitiveContains(authorName)
+        }
+    }
+
+    public func fetchBooksBySeries(seriesName: String, libraryId: String?) async throws -> [Book] {
+        guard let libId = libraryId else { return [] }
+        let allBooks = try await fetchLibraryItems(libraryId: libId)
+        return allBooks.filter { book in
+            guard let name = book.seriesName else { return false }
+            return name.localizedCaseInsensitiveCompare(seriesName) == .orderedSame || name.localizedCaseInsensitiveContains(seriesName)
+        }
+    }
+
+    public func fetchAuthorDetail(authorId: String) async throws -> AuthorSummary {
+        return try await AudiobookphileAPI.shared.getAuthorDetail(authorId: authorId)
     }
 }
 
@@ -281,6 +306,39 @@ public class MockLibraryService: LibraryServiceProtocol {
             total: 2,
             limit: 24,
             page: 0
+        )
+    }
+
+    public func fetchBooksByAuthor(authorName: String, libraryId: String?) async throws -> [Book] {
+        let allBooks = try await fetchLibraryItems(libraryId: libraryId)
+        let filtered = allBooks.filter { book in
+            guard let name = book.author else { return false }
+            return name.localizedCaseInsensitiveCompare(authorName) == .orderedSame || name.localizedCaseInsensitiveContains(authorName)
+        }
+        return filtered.isEmpty ? Array(allBooks.prefix(3)) : filtered
+    }
+
+    public func fetchBooksBySeries(seriesName: String, libraryId: String?) async throws -> [Book] {
+        let allBooks = try await fetchLibraryItems(libraryId: libraryId)
+        let filtered = allBooks.filter { book in
+            guard let name = book.seriesName else { return false }
+            return name.localizedCaseInsensitiveCompare(seriesName) == .orderedSame || name.localizedCaseInsensitiveContains(seriesName)
+        }
+        return filtered.isEmpty ? Array(allBooks.prefix(3)) : filtered
+    }
+
+    public func fetchAuthorDetail(authorId: String) async throws -> AuthorSummary {
+        let matched = authors.first ?? "Andy Weir"
+        return AuthorSummary(
+            id: authorId,
+            name: matched,
+            asin: "B00EXAMPLE",
+            description: "Celebrated author known for intricate world-building, compelling storytelling, and timeless literary mastery.",
+            imagePath: mockCovers.first,
+            libraryId: nil,
+            addedAt: Date().timeIntervalSince1970,
+            updatedAt: Date().timeIntervalSince1970,
+            numBooks: 5
         )
     }
 }

@@ -293,4 +293,39 @@ final class UpstreamFeaturesTests: XCTestCase {
         playerService.clearPlaybackQueue()
         XCTAssertTrue(playerService.playbackQueue.isEmpty)
     }
+
+    func testAuthorDetailViewModelLoading() async throws {
+        let mockService = MockLibraryService()
+        let vm = AuthorDetailViewModel(authorName: "Andy Weir", libraryId: "mock-lib", service: mockService)
+
+        XCTAssertTrue(vm.isLoading)
+        XCTAssertTrue(vm.books.isEmpty)
+        XCTAssertEqual(vm.initials, "AW")
+
+        await vm.loadAuthor()
+
+        XCTAssertFalse(vm.isLoading)
+        XCTAssertFalse(vm.books.isEmpty)
+        XCTAssertNotNil(vm.authorSummary)
+        XCTAssertTrue(vm.totalDuration > 0)
+        XCTAssertFalse(vm.totalDurationFormatted.isEmpty)
+        XCTAssertTrue(vm.bookCountText.contains("Audiobook"))
+    }
+
+    func testSeriesDetailViewModelLoading() async throws {
+        let mockService = MockLibraryService()
+        let vm = SeriesDetailViewModel(seriesName: "Dune Chronicles", libraryId: "mock-lib", service: mockService)
+
+        XCTAssertTrue(vm.isLoading)
+        XCTAssertTrue(vm.books.isEmpty)
+
+        await vm.loadSeries()
+
+        XCTAssertFalse(vm.isLoading)
+        XCTAssertFalse(vm.books.isEmpty)
+        XCTAssertNotNil(vm.primaryAuthor)
+        XCTAssertTrue(vm.totalDuration > 0)
+        XCTAssertFalse(vm.totalDurationFormatted.isEmpty)
+        XCTAssertTrue(vm.bookCountText.contains("Book"))
+    }
 }

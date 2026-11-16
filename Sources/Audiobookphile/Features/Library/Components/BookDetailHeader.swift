@@ -10,11 +10,13 @@ public struct BookDetailHeader: View {
     public let appState: AppState
     // Read-only access — no property mutation, so @Bindable is not needed
     public let viewModel: BookDetailViewModel
+    public var onAuthorTap: ((String) -> Void)?
 
-    public init(detailed: Book, appState: AppState, viewModel: BookDetailViewModel) {
+    public init(detailed: Book, appState: AppState, viewModel: BookDetailViewModel, onAuthorTap: ((String) -> Void)? = nil) {
         self.detailed = detailed
         self.appState = appState
         self.viewModel = viewModel
+        self.onAuthorTap = onAuthorTap
     }
 
     public var body: some View {
@@ -31,10 +33,20 @@ public struct BookDetailHeader: View {
                     .foregroundStyle(DesignTokens.Color.foreground)
 
                 if let author = detailed.author, !author.isEmpty, author != "Unknown Author" {
-                    Text("by \(author)")
-                        .font(.headline)
-                        .foregroundStyle(Color.appPrimary)
-                        .multilineTextAlignment(.center)
+                    Button {
+                        onAuthorTap?(author)
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text("by \(author)")
+                                .font(.headline)
+                                .foregroundStyle(Color.appPrimary)
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundStyle(Color.appPrimary.opacity(0.7))
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("View author \(author)")
                 }
 
                 if let narrator = detailed.media.metadata.narratorName, !narrator.isEmpty {
