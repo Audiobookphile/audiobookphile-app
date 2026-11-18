@@ -1,11 +1,16 @@
 import Foundation
 import Observation
+#if !SKIP && os(iOS)
+import AudioToolbox
+import UIKit
+#endif
 
 @Observable
 @MainActor
 public class AudioPlayerSleepTimer {
     public var remaining: TimeInterval?
     public private(set) var initialDuration: TimeInterval?
+    public var chimeEnabled: Bool = true
     private var onCompleteCallback: (@MainActor () -> Void)?
     private var timer: Timer?
 
@@ -38,6 +43,10 @@ public class AudioPlayerSleepTimer {
                         onComplete()
                     } else {
                         self.remaining = r - 1
+                        // Play subtle chime when fade-out starts at 15s remaining
+                        if r == 16 && self.chimeEnabled {
+                            self.playSleepTimerChime()
+                        }
                         // Graceful volume fade-out in final 15 seconds
                         if r <= 16 {
                             let fadeFactor = max(0.05, Float(r - 1) / 15.0)
@@ -90,5 +99,12 @@ public class AudioPlayerSleepTimer {
         let minutes = Int(r) / 60
         let seconds = Int(r) % 60
         return String(format: "%02d:%02d", minutes, seconds)
+    }
+
+    public func playSleepTimerChime() {
+        #if !SKIP && os(iOS)
+        AudioServicesPlaySystemSound(1057)
+        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+        #endif
     }
 }

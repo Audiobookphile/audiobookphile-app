@@ -531,4 +531,30 @@ final class UpstreamFeaturesTests: XCTestCase {
         // With default nil audioFiles, book.audioFiles returns empty array safely
         XCTAssertTrue(book.audioFiles.isEmpty)
     }
+
+    // MARK: - Feature 42: Sleep Timer Nightstand Chime & OLED Night Dimming
+
+    func testSleepTimerChimeAndNightstandSettings() async throws {
+        // Verify new AppSettings fields decode with correct defaults
+        let json = Data("{}".utf8)
+        let settings = try JSONDecoder().decode(AppSettings.self, from: json)
+        XCTAssertTrue(settings.sleepTimerChimeEnabled, "Chime should default to enabled")
+        XCTAssertFalse(settings.sleepTimerDimScreenEnabled, "OLED dim should default to disabled")
+
+        // Verify explicit values round-trip correctly
+        let explicitJSON = Data("""
+        {"sleepTimerChimeEnabled": false, "sleepTimerDimScreenEnabled": true}
+        """.utf8)
+        let explicitSettings = try JSONDecoder().decode(AppSettings.self, from: explicitJSON)
+        XCTAssertFalse(explicitSettings.sleepTimerChimeEnabled)
+        XCTAssertTrue(explicitSettings.sleepTimerDimScreenEnabled)
+
+        // Verify AudioPlayerSleepTimer.chimeEnabled property works
+        let timer = AudioPlayerSleepTimer()
+        XCTAssertTrue(timer.chimeEnabled, "Chime should default to true")
+        timer.chimeEnabled = false
+        XCTAssertFalse(timer.chimeEnabled)
+        timer.chimeEnabled = true
+        XCTAssertTrue(timer.chimeEnabled)
+    }
 }

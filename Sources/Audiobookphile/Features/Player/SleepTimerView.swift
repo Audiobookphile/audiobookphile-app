@@ -168,6 +168,38 @@ public struct SleepTimerView: View {
                         }
                     }
 
+                    // Sleep Experience & Nightstand
+                    Section("Nightstand & Ambiance") {
+                        Toggle(isOn: Binding(
+                            get: { AppState.shared.settings.sleepTimerChimeEnabled },
+                            set: {
+                                AppState.shared.settings.sleepTimerChimeEnabled = $0
+                                AudioPlayerService.shared.sleepTimer.chimeEnabled = $0
+                            }
+                        )) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Chime Before Sleep")
+                                    .font(.subheadline)
+                                Text("Gently plays a soft chime 15s before timeout to prompt shake-to-extend.")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+
+                        Toggle(isOn: Binding(
+                            get: { AppState.shared.settings.sleepTimerDimScreenEnabled },
+                            set: { AppState.shared.settings.sleepTimerDimScreenEnabled = $0 }
+                        )) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("OLED Night Dimming")
+                                    .font(.subheadline)
+                                Text("Dims player display to serene black while timer is running.")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+
                     // Shake Gestures Footer Tip
                     Section {
                         HStack(spacing: 10) {

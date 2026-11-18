@@ -65,6 +65,16 @@ public struct AudioPlayerView: View {
                 playbackFailureView(playbackError)
             }
 
+            // OLED Night Dimming overlay — subtly darkens the player when
+            // the sleep timer is active and the user has enabled dimming.
+            if appState.settings.sleepTimerDimScreenEnabled && AudioPlayerService.shared.isSleepTimerActive {
+                Color.black
+                    .opacity(0.55)
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+                    .animation(.easeInOut(duration: 1.2), value: AudioPlayerService.shared.isSleepTimerActive)
+            }
+
             // Sleep timer shake reset toast
             if let toast = sleepTimerToast {
                 VStack {

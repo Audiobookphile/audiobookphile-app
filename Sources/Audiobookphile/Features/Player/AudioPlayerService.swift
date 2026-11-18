@@ -886,6 +886,7 @@ public class AudioPlayerService: AudioPlayerServiceProtocol {
     }
 
     public func startSleepTimer(duration: TimeInterval) {
+        sleepTimer.chimeEnabled = AppState.shared.settings.sleepTimerChimeEnabled
         // Seconds are passed through untouched. Rounding to whole minutes here
         // made "End of Chapter" stop playback early -- see setSleepTimer(seconds:).
         sleepTimer.setSleepTimer(seconds: duration) { [weak self] in

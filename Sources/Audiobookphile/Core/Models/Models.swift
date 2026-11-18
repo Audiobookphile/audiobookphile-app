@@ -101,6 +101,8 @@ public struct AppSettings: Codable, Sendable {
     public var autoDeleteFinishedDownloads: Bool = false
     public var streamingPolicy: StreamingPolicy = .always
     public var downloadPolicy: DownloadPolicy = .wifiOnly
+    public var sleepTimerChimeEnabled: Bool = true
+    public var sleepTimerDimScreenEnabled: Bool = false
 
     // Audio & Hardware Accessibility Settings
     public var spokenAudioModeEnabled: Bool = true
@@ -146,6 +148,8 @@ public struct AppSettings: Codable, Sendable {
         autoDeleteFinishedDownloads = try container.decodeIfPresent(Bool.self, forKey: .autoDeleteFinishedDownloads) ?? false
         streamingPolicy = try container.decodeIfPresent(StreamingPolicy.self, forKey: .streamingPolicy) ?? .always
         downloadPolicy = try container.decodeIfPresent(DownloadPolicy.self, forKey: .downloadPolicy) ?? .wifiOnly
+        sleepTimerChimeEnabled = try container.decodeIfPresent(Bool.self, forKey: .sleepTimerChimeEnabled) ?? true
+        sleepTimerDimScreenEnabled = try container.decodeIfPresent(Bool.self, forKey: .sleepTimerDimScreenEnabled) ?? false
     }
 
     public enum CodingKeys: String, CodingKey {
@@ -178,6 +182,8 @@ public struct AppSettings: Codable, Sendable {
         case autoDeleteFinishedDownloads
         case streamingPolicy
         case downloadPolicy
+        case sleepTimerChimeEnabled
+        case sleepTimerDimScreenEnabled
     }
 }
 
