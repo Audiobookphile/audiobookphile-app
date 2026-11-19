@@ -5,6 +5,7 @@ public struct HomeView: View {
     @Environment(AppState.self) private var appState
     @State var scrollOffset: CGFloat = 0
     @State var selectedBookForDetails: Book?
+    @State private var showStatsSheet = false
 
     public init() {}
 
@@ -23,11 +24,20 @@ public struct HomeView: View {
                 EmptyLibraryView()
             } else {
                 ScrollView {
-                    VStack(spacing: 32) {
+                    VStack(spacing: 28) {
+                        // Daily Listening Streak Milestone Banner
+                        if viewModel.listeningStreak > 0 {
+                            ListeningStreakBanner(streak: viewModel.listeningStreak) {
+                                showStatsSheet = true
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.top, 12)
+                        }
+
                         // Continue Listening
                         if !viewModel.continueListening.isEmpty {
                             continueListeningSection
-                                .padding(.top, 16)
+                                .padding(.top, viewModel.listeningStreak > 0 ? 0 : 16)
                         }
 
                         // Recently Added
@@ -52,6 +62,11 @@ public struct HomeView: View {
         .audiobookphileNavigationToolbar(title: "Home")
         .navigationDestination(item: $selectedBookForDetails) { book in
             BookDetailView(book: book)
+        }
+        .sheet(isPresented: $showStatsSheet) {
+            NavigationStack {
+                StatsView()
+            }
         }
         .task(id: LibraryLoadTrigger(libraryId: appState.currentLibraryId, isAuthenticated: appState.isAuthenticated)) {
             await viewModel.loadLibrary(libraryId: appState.currentLibraryId, isAuthenticated: appState.isAuthenticated)

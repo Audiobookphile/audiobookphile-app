@@ -557,4 +557,61 @@ final class UpstreamFeaturesTests: XCTestCase {
         timer.chimeEnabled = true
         XCTAssertTrue(timer.chimeEnabled)
     }
+
+    // MARK: - Feature 45: Daily Listening Streak Calculator & Milestone Celebrations
+
+    func testListeningStreakCalculatorAndMilestones() async throws {
+        var calendar = Calendar.current
+        calendar.timeZone = TimeZone.current
+        let today = Date()
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone.current
+
+        // 1. Continuous 4-day streak ending today
+        let consecutiveSessions = (0..<4).map { offset -> PlaybackSessionRow in
+            let date = calendar.date(byAdding: .day, value: -offset, to: today) ?? today
+            return PlaybackSessionRow(
+                id: "sess-\(offset)",
+                displayTitle: "Book \(offset)",
+                displayAuthor: "Author",
+                timeListening: 1200,
+                sessionDate: formatter.string(from: date),
+                updatedAt: date
+            )
+        }
+        let streak = ListeningStreakCalculator.calculateStreak(sessions: consecutiveSessions, referenceDate: today)
+        XCTAssertEqual(streak, 4)
+
+        // 2. Empty sessions -> 0 streak
+        let emptyStreak = ListeningStreakCalculator.calculateStreak(sessions: [], referenceDate: today)
+        XCTAssertEqual(emptyStreak, 0)
+
+        // 3. Broken streak (listened 4 days ago only)
+        let oldDate = calendar.date(byAdding: .day, value: -4, to: today) ?? today
+        let brokenSessions = [
+            PlaybackSessionRow(
+                id: "sess-old",
+                displayTitle: "Old Book",
+                displayAuthor: "Author",
+                timeListening: 1200,
+                sessionDate: formatter.string(from: oldDate),
+                updatedAt: oldDate
+            )
+        ]
+        let brokenStreak = ListeningStreakCalculator.calculateStreak(sessions: brokenSessions, referenceDate: today)
+        XCTAssertEqual(brokenStreak, 0)
+
+        // 4. Milestone headlines
+        XCTAssertEqual(ListeningStreakCalculator.milestoneHeadline(streak: 0), "Start Your Streak Today")
+        XCTAssertEqual(ListeningStreakCalculator.milestoneHeadline(streak: 1), "1 Day Streak")
+        XCTAssertEqual(ListeningStreakCalculator.milestoneHeadline(streak: 4), "4 Days Streak")
+        XCTAssertEqual(ListeningStreakCalculator.milestoneHeadline(streak: 7), "1 Week of Listening!")
+        XCTAssertEqual(ListeningStreakCalculator.milestoneHeadline(streak: 14), "14 Days • Habit Formed!")
+        XCTAssertTrue(ListeningStreakCalculator.milestoneHeadline(streak: 30).contains("1 Month"))
+
+        // 5. Motivational messages
+        XCTAssertFalse(ListeningStreakCalculator.motivationalMessage(streak: 0).isEmpty)
+        XCTAssertFalse(ListeningStreakCalculator.motivationalMessage(streak: 4).isEmpty)
+    }
 }

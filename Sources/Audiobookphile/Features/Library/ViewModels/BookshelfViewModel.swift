@@ -79,6 +79,7 @@ public class BookshelfViewModel {
     public var continueSeries: [Book] = []
     public var currentLibrary: Library?
     public var selectedBook: Book?
+    public var listeningStreak: Int = 0
     public var isLoading = true
     public var errorMessage: String?
 
@@ -188,6 +189,15 @@ public class BookshelfViewModel {
             self.continueSeries = try await service.fetchContinueSeries(libraryId: libraryId)
         } catch {
             print("[BookshelfViewModel] Failed to fetch continue series: \(error)")
+        }
+
+        // Fetch user listening streak
+        if isAuthenticated {
+            if let userStats = try? await AudiobookphileAPI.shared.getUserStats() {
+                self.listeningStreak = ListeningStreakCalculator.calculateStreak(sessions: userStats.recentSessions)
+            }
+        } else {
+            self.listeningStreak = 3
         }
 
         isLoading = false

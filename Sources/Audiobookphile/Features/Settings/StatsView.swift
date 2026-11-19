@@ -694,38 +694,7 @@ public struct StatsView: View {
     }
 
     private func calculateStreak(sessions: [PlaybackSessionRow]) -> Int {
-        let calendar = Calendar.current
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-
-        let activeDates = Set(sessions.compactMap { session -> String? in
-            guard let time = session.timeListening, time > 0 else { return nil }
-            if let dateStr = session.sessionDate, !dateStr.isEmpty {
-                return dateStr
-            }
-            if let date = session.updatedAt {
-                return formatter.string(from: date)
-            }
-            return nil
-        })
-
-        guard !activeDates.isEmpty else { return 0 }
-
-        var streak = 0
-        let today = Date()
-
-        for dayOffset in 0..<365 {
-            guard let targetDate = calendar.date(byAdding: .day, value: -dayOffset, to: today) else { break }
-            let key = formatter.string(from: targetDate)
-            if activeDates.contains(key) {
-                streak += 1
-            } else if dayOffset == 0 {
-                continue
-            } else {
-                break
-            }
-        }
-        return streak
+        return ListeningStreakCalculator.calculateStreak(sessions: sessions)
     }
 
     private func calculateTotalListeningSeconds(sessions: [PlaybackSessionRow], progress: [MediaProgressRow]) -> TimeInterval {
