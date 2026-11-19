@@ -9,6 +9,7 @@ public struct PlayerCoverArtView: View {
     var viewModel: AudioPlayerViewModel
     var coverURL: URL?
     var backgroundColor: Color
+    @State private var isShowingFullscreenCover = false
 
     public init(viewModel: AudioPlayerViewModel, coverURL: URL?, backgroundColor: Color) {
         self.viewModel = viewModel
@@ -81,8 +82,21 @@ public struct PlayerCoverArtView: View {
                 radius: 35,
                 y: 18
             )
+            .contentShape(Rectangle())
+            .onTapGesture {
+                DesignTokens.Haptics.selection()
+                isShowingFullscreenCover = true
+            }
         }
         .frame(height: 280)
+        .sheet(isPresented: $isShowingFullscreenCover) {
+            CoverFullscreenViewer(
+                title: viewModel.title,
+                author: viewModel.author,
+                coverURL: coverURL,
+                onDismiss: { isShowingFullscreenCover = false }
+            )
+        }
     }
 
     private func audiobookphileBadge(icon: String? = nil, text: String) -> some View {

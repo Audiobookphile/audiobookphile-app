@@ -1266,4 +1266,33 @@ final class UpstreamFeaturesTests: XCTestCase {
         DesignTokens.Haptics.isEnabled = true
         XCTAssertTrue(DesignTokens.Haptics.isEnabled)
     }
+
+    func testCoverFullscreenViewerAndMediaSpecs() throws {
+        var dismissed = false
+        let viewer = CoverFullscreenViewer(
+            title: "The Hobbit",
+            author: "J.R.R. Tolkien",
+            coverURL: URL(string: "https://example.com/cover.jpg"),
+            onDismiss: { dismissed = true }
+        )
+        XCTAssertEqual(viewer.title, "The Hobbit")
+        XCTAssertEqual(viewer.author, "J.R.R. Tolkien")
+        viewer.onDismiss()
+        XCTAssertTrue(dismissed)
+
+        let book = Book(
+            id: "book-spec-1",
+            title: "The Hobbit",
+            author: "J.R.R. Tolkien",
+            duration: 3600
+        )
+
+        var specsDismissed = false
+        let specsSheet = MediaSpecsSheet(detailed: book) {
+            specsDismissed = true
+        }
+        XCTAssertEqual(specsSheet.detailed.id, "book-spec-1")
+        specsSheet.onDismiss()
+        XCTAssertTrue(specsDismissed)
+    }
 }

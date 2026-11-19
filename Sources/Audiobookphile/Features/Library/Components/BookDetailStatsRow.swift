@@ -4,11 +4,18 @@ public struct BookDetailStatsRow: View {
     public let detailed: Book
     public let viewModel: BookDetailViewModel
     public var onSeriesTap: ((String) -> Void)?
+    public var onSpecsTap: (() -> Void)?
 
-    public init(detailed: Book, viewModel: BookDetailViewModel, onSeriesTap: ((String) -> Void)? = nil) {
+    public init(
+        detailed: Book,
+        viewModel: BookDetailViewModel,
+        onSeriesTap: ((String) -> Void)? = nil,
+        onSpecsTap: (() -> Void)? = nil
+    ) {
         self.detailed = detailed
         self.viewModel = viewModel
         self.onSeriesTap = onSeriesTap
+        self.onSpecsTap = onSpecsTap
     }
 
     public var body: some View {
@@ -29,7 +36,24 @@ public struct BookDetailStatsRow: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("View series \(series)")
             }
+            if onSpecsTap != nil {
+                Button {
+                    DesignTokens.Haptics.selection()
+                    onSpecsTap?()
+                } label: {
+                    statBadge(icon: "waveform", value: audioFormatLabel, label: "Specs")
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("View audio specifications")
+            }
         }
+    }
+
+    private var audioFormatLabel: String {
+        if let codec = detailed.media.audioFiles?.first?.codec, !codec.isEmpty {
+            return codec.uppercased()
+        }
+        return "Audio"
     }
 
     private func statBadge(icon: String, value: String, label: String) -> some View {

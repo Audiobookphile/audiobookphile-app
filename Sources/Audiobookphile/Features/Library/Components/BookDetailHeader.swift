@@ -12,6 +12,7 @@ public struct BookDetailHeader: View {
     public let viewModel: BookDetailViewModel
     public var onAuthorTap: ((String) -> Void)?
     public var onNarratorTap: ((String) -> Void)?
+    @State private var isShowingCoverPreview = false
 
     public init(
         detailed: Book,
@@ -31,6 +32,11 @@ public struct BookDetailHeader: View {
         VStack(spacing: 24) {
             // Large Cover Art
             coverArtSection
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    DesignTokens.Haptics.selection()
+                    isShowingCoverPreview = true
+                }
 
             // Title & Authors
             VStack(spacing: 6) {
@@ -113,6 +119,14 @@ public struct BookDetailHeader: View {
                     .padding(.top, 4)
                 }
             }
+        }
+        .sheet(isPresented: $isShowingCoverPreview) {
+            CoverFullscreenViewer(
+                title: detailed.title,
+                author: detailed.author,
+                coverURL: appState.getCoverURL(itemId: detailed.id, width: 1200, updatedAt: detailed.updatedAt),
+                onDismiss: { isShowingCoverPreview = false }
+            )
         }
     }
 

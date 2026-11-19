@@ -12,6 +12,7 @@ public struct BookDetailView: View {
     @State private var selectedAuthorName: String?
     @State private var selectedSeriesName: String?
     @State private var selectedNarratorInfo: SelectedNarratorInfo?
+    @State private var isShowingMediaSpecsSheet = false
     @Environment(\.dismiss) var dismiss
     @Environment(AppState.self) private var appState
 
@@ -74,6 +75,13 @@ public struct BookDetailView: View {
         }
         .sheet(item: $selectedNarratorInfo) { info in
             NarratorDetailSheet(narratorName: info.name, books: info.books)
+        }
+        .sheet(isPresented: $isShowingMediaSpecsSheet) {
+            if let detailed = viewModel.detailedBook {
+                MediaSpecsSheet(detailed: detailed) {
+                    isShowingMediaSpecsSheet = false
+                }
+            }
         }
         .task {
             await viewModel.fetchDetails(appState: appState)
@@ -182,9 +190,16 @@ public struct BookDetailView: View {
             }
 
             // Metadata Stats Row
-            BookDetailStatsRow(detailed: detailed, viewModel: viewModel) { series in
-                selectedSeriesName = series
-            }
+            BookDetailStatsRow(
+                detailed: detailed,
+                viewModel: viewModel,
+                onSeriesTap: { series in
+                    selectedSeriesName = series
+                },
+                onSpecsTap: {
+                    isShowingMediaSpecsSheet = true
+                }
+            )
 
             // Description (Expandable)
             if let description = detailed.description, !description.isEmpty {
