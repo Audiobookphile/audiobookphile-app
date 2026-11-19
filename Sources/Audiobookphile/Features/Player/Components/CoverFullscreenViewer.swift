@@ -98,3 +98,4 @@ public struct CoverFullscreenViewer: View {
         }
     }
 }
+

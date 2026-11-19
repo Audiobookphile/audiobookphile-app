@@ -23,3 +23,4 @@ public enum CatalogSortOption: String, CaseIterable, Identifiable, Sendable {
         }
     }
 }
+
