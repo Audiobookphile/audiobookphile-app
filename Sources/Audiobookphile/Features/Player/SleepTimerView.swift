@@ -269,6 +269,16 @@ public struct SleepTimerView: View {
                     }
                 }
                 .applyToolbarAdapters(isLight: false, isHidden: false)
+                .onReceive(NotificationCenter.default.publisher(for: .deviceDidShakeNotification)) { _ in
+                    guard AppState.shared.settings.shakeToResetSleepTimer else { return }
+                    if AudioPlayerService.shared.isSleepTimerActive {
+                        #if !SKIP && os(iOS)
+                        let generator = UINotificationFeedbackGenerator()
+                        generator.notificationOccurred(.success)
+                        #endif
+                        AudioPlayerService.shared.extendSleepTimer(by: 300)
+                    }
+                }
             }
         }
     }

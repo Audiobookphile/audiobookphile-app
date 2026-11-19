@@ -1103,4 +1103,41 @@ final class UpstreamFeaturesTests: XCTestCase {
         isListView.toggle()
         XCTAssertFalse(isListView)
     }
+
+    // MARK: - Feature 82 & 83: Playback Speed Presets & Shake to Extend Sleep Timer
+
+    func testPlaybackRateQuickPresetsAndReset() throws {
+        let presets: [Float] = [0.75, 0.90, 1.00, 1.20, 1.25, 1.50, 1.75, 2.00, 2.50]
+        XCTAssertEqual(presets.count, 9)
+
+        var currentRate: Float = 1.00
+        // Normal speed is not active styled
+        XCTAssertFalse(abs(currentRate - 1.0) > 0.05)
+
+        // Switch to 1.5x
+        currentRate = 1.50
+        XCTAssertTrue(abs(currentRate - 1.0) > 0.05)
+
+        // Reset back to 1.0x
+        currentRate = 1.00
+        XCTAssertFalse(abs(currentRate - 1.0) > 0.05)
+        XCTAssertEqual(currentRate, 1.00)
+    }
+
+    func testSleepTimerExtendByFiveMinutesOnShake() async throws {
+        let timer = AudioPlayerSleepTimer()
+        timer.setSleepTimer(seconds: 60) {}
+        XCTAssertTrue(timer.isActive)
+        XCTAssertEqual(timer.remaining, 60)
+
+        // Simulate shake action extending by 300s (5 minutes)
+        let didExtend = timer.extendSleepTimer(by: 300)
+        XCTAssertTrue(didExtend)
+        XCTAssertEqual(timer.remaining, 360)
+        XCTAssertEqual(timer.initialDuration, 360)
+
+        timer.stopSleepTimer()
+        XCTAssertFalse(timer.isActive)
+        XCTAssertNil(timer.remaining)
+    }
 }

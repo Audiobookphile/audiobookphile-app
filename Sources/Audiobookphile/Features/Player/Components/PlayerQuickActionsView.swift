@@ -65,6 +65,44 @@ public struct PlayerQuickActionsView: View {
                     textColor: coverIsLight ? DesignTokens.Color.background : DesignTokens.Color.foreground,
                     action: { showPlaybackSpeedSheet = true }
                 )
+                .contextMenu {
+                    Section {
+                        Text(String(format: "Playback Speed: %.2f×", viewModel.playbackRate))
+                            .font(.headline)
+                    }
+
+                    if abs(viewModel.playbackRate - 1.0) > 0.05 {
+                        Button {
+                            viewModel.setPlaybackRate(1.0)
+                            DesignTokens.Haptics.selection()
+                        } label: {
+                            Label("Reset to 1.00× (Normal)", systemImage: "arrow.uturn.backward")
+                        }
+                    }
+
+                    Section("Speed Presets") {
+                        ForEach([0.75, 0.90, 1.00, 1.20, 1.25, 1.50, 1.75, 2.00, 2.50] as [Float], id: \.self) { rate in
+                            Button {
+                                viewModel.setPlaybackRate(rate)
+                                DesignTokens.Haptics.selection()
+                            } label: {
+                                if abs(viewModel.playbackRate - rate) < 0.04 {
+                                    Label(String(format: "%.2f×", rate), systemImage: "checkmark")
+                                } else {
+                                    Text(String(format: "%.2f×", rate))
+                                }
+                            }
+                        }
+                    }
+
+                    Section {
+                        Button {
+                            showPlaybackSpeedSheet = true
+                        } label: {
+                            Label("Custom Speed...", systemImage: "slider.horizontal.3")
+                        }
+                    }
+                }
 
                 Spacer(minLength: 0)
 

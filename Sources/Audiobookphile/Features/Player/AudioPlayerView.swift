@@ -476,9 +476,9 @@ public struct AudioPlayerView: View {
             let generator = UINotificationFeedbackGenerator()
             generator.notificationOccurred(.success)
             #endif
-            AudioPlayerService.shared.resetSleepTimer()
+            AudioPlayerService.shared.extendSleepTimer(by: 300)
             withAnimation {
-                sleepTimerToast = "Sleep Timer Reset"
+                sleepTimerToast = "Sleep Timer Extended (+5m)"
             }
             Task {
                 try? await Task.sleep(nanoseconds: 2_000_000_000)
