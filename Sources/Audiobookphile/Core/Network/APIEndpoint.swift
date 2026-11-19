@@ -16,6 +16,7 @@ public enum APIEndpoint {
     case bookAI
     case getBookmarks(libraryItemId: String)
     case createBookmark
+    case updateBookmark(bookmarkId: String)
     case deleteBookmark(bookmarkId: String)
     case getItemDetails(id: String)
     case downloadItem(libraryItemId: String)
@@ -77,6 +78,7 @@ public enum APIEndpoint {
         case .bookAI: return "/api/ai/insights"
         case .getBookmarks(let libraryItemId): return "/api/me/bookmarks?libraryItemId=\(libraryItemId)"
         case .createBookmark: return "/api/me/bookmarks"
+        case .updateBookmark(let bookmarkId): return "/api/me/bookmarks/\(bookmarkId)"
         case .deleteBookmark(let bookmarkId): return "/api/me/bookmarks/\(bookmarkId)"
         case .getItemDetails(let id): return "/api/items/\(id)?expanded=1&include=progress"
         case .downloadItem(let libraryItemId): return "/api/items/\(libraryItemId)/download"

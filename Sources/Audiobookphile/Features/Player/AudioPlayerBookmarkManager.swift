@@ -33,6 +33,20 @@ public class AudioPlayerBookmarkManager {
         }
     }
 
+    public func updateBookmark(bookmarkId: String, title: String? = nil, note: String? = nil, timePos: Double? = nil) async -> Bookmark? {
+        do {
+            return try await AudiobookphileAPI.shared.updateBookmark(
+                bookmarkId: bookmarkId,
+                title: title,
+                note: note,
+                timePos: timePos
+            )
+        } catch {
+            logger.error("Failed to update bookmark: \(error)")
+            return nil
+        }
+    }
+
     public func deleteBookmark(_ bookmark: Bookmark, libraryItemId: String) async -> Bool {
         do {
             try await AudiobookphileAPI.shared.deleteBookmark(bookmarkId: bookmark.id)

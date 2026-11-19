@@ -879,6 +879,42 @@ public class AudioPlayerService: AudioPlayerServiceProtocol {
         }
     }
 
+    public func updateBookmark(_ bookmark: Bookmark, title: String, note: String?) {
+        guard let idx = self.bookmarks.firstIndex(where: { $0.id == bookmark.id }) else { return }
+        let bookmarkTitle = title.isEmpty ? "Bookmark at \(formatBookmarkTime(bookmark.timePos))" : title
+        let updated = Bookmark(
+            id: bookmark.id,
+            userId: bookmark.userId,
+            libraryItemId: bookmark.libraryItemId,
+            timePos: bookmark.timePos,
+            title: bookmarkTitle,
+            note: note,
+            createdAt: bookmark.createdAt
+        )
+        self.bookmarks[idx] = updated
+
+        Task {
+            if let saved = await bookmarkManager.updateBookmark(bookmarkId: bookmark.id, title: bookmarkTitle, note: note, timePos: bookmark.timePos) {
+                if let i = self.bookmarks.firstIndex(where: { $0.id == bookmark.id }) {
+                    self.bookmarks[i] = saved
+                }
+            }
+        }
+    }
+
+    private func formatBookmarkTime(_ time: TimeInterval) -> String {
+        guard !time.isNaN && !time.isInfinite && time >= 0 else { return "0:00" }
+        let totalSeconds = Int(time)
+        let hours = totalSeconds / 3600
+        let minutes = (totalSeconds % 3600) / 60
+        let seconds = totalSeconds % 60
+        if hours > 0 {
+            return String(format: "%d:%02d:%02d", hours, minutes, seconds)
+        } else {
+            return String(format: "%d:%02d", minutes, seconds)
+        }
+    }
+
     // MARK: - Sleep Timer
 
     public var isSleepTimerActive: Bool {

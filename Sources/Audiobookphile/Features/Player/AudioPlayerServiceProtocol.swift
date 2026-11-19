@@ -110,6 +110,9 @@ public protocol AudioPlayerServiceProtocol: AnyObject {
     /// - Parameter bookmark: The bookmark to delete.
     func deleteBookmark(_ bookmark: Bookmark)
 
+    /// Updates an existing bookmark's title and note.
+    func updateBookmark(_ bookmark: Bookmark, title: String, note: String?)
+
     // MARK: - Sleep Timer
 
     /// Starts the sleep timer for the given duration.

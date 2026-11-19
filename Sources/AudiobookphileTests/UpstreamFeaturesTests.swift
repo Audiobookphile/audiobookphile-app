@@ -614,4 +614,79 @@ final class UpstreamFeaturesTests: XCTestCase {
         XCTAssertFalse(ListeningStreakCalculator.motivationalMessage(streak: 0).isEmpty)
         XCTAssertFalse(ListeningStreakCalculator.motivationalMessage(streak: 4).isEmpty)
     }
+
+    @MainActor
+    func testBookmarksSearchAndMultiFormatExport() throws {
+        let session = PlaybackSession(
+            id: "sess-bm",
+            userId: "usr-bm",
+            libraryId: "lib-bm",
+            libraryItemId: "item-bm",
+            episodeId: nil,
+            displayTitle: "Dune",
+            displayAuthor: "Frank Herbert",
+            coverPath: nil,
+            duration: 72000,
+            playMethod: 0,
+            mediaPlayer: "AVQueuePlayer",
+            mediaType: "book",
+            audioTracks: [],
+            chapters: [],
+            manifestUrl: nil,
+            missingTrackCount: 0,
+            currentTime: 1500,
+            playbackRate: 1.0,
+            startedAt: Date(),
+            updatedAt: Date()
+        )
+        let vm = AudioPlayerViewModel(session: session)
+        let bm1 = Bookmark(
+            id: "bm-1",
+            userId: "usr-bm",
+            libraryItemId: "item-bm",
+            timePos: 360,
+            title: "Fear is the mind-killer",
+            note: "Litany Against Fear recited by Paul Atreides.",
+            createdAt: Date(timeIntervalSince1970: 1700000000)
+        )
+        let bm2 = Bookmark(
+            id: "bm-2",
+            userId: "usr-bm",
+            libraryItemId: "item-bm",
+            timePos: 3665,
+            title: "Arrakis Awakening",
+            note: "First glimpse of the deep desert.",
+            createdAt: Date(timeIntervalSince1970: 1700005000)
+        )
+
+        AudioPlayerService.shared.bookmarks = [bm1, bm2]
+
+        // 1. Markdown Export
+        let md = vm.exportBookmarksMarkdown()
+        XCTAssertTrue(md.contains("# Bookmarks for Dune"))
+        XCTAssertTrue(md.contains("Author: Frank Herbert"))
+        XCTAssertTrue(md.contains("Fear is the mind-killer"))
+        XCTAssertTrue(md.contains("> Litany Against Fear recited by Paul Atreides."))
+        XCTAssertTrue(md.contains("1:01:05"))
+
+        // 2. CSV Export
+        let csv = vm.exportBookmarksCSV()
+        XCTAssertTrue(csv.starts(with: "ID,Time Position,Timestamp,Title,Note,Created At\n"))
+        XCTAssertTrue(csv.contains("\"bm-1\",\"360.00\",\"6:00\",\"Fear is the mind-killer\",\"Litany Against Fear recited by Paul Atreides.\""))
+        XCTAssertTrue(csv.contains("\"bm-2\",\"3665.00\",\"1:01:05\",\"Arrakis Awakening\",\"First glimpse of the deep desert.\""))
+
+        // 3. JSON Export
+        let json = vm.exportBookmarksJSON()
+        XCTAssertTrue(json.contains("\"bookTitle\" : \"Dune\""))
+        XCTAssertTrue(json.contains("\"author\" : \"Frank Herbert\""))
+        XCTAssertTrue(json.contains("\"totalBookmarks\" : 2"))
+        XCTAssertTrue(json.contains("\"timePos\" : 360"))
+        XCTAssertTrue(json.contains("\"Fear is the mind-killer\""))
+
+        // 4. Update Bookmark
+        vm.updateBookmark(bm1, title: "The Litany Against Fear (Full)", note: "Must not fear; fear is the mind-killer.")
+        let updatedBm = AudioPlayerService.shared.bookmarks.first(where: { $0.id == "bm-1" })
+        XCTAssertEqual(updatedBm?.title, "The Litany Against Fear (Full)")
+        XCTAssertEqual(updatedBm?.note, "Must not fear; fear is the mind-killer.")
+    }
 }

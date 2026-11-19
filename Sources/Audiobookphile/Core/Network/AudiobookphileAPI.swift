@@ -907,6 +907,33 @@ public actor AudiobookphileAPI {
         return response.bookmark
     }
 
+    public struct BookmarkUpdateRequest: Codable {
+        let time_pos: Double?
+        let title: String?
+        let note: String?
+
+        public init(time_pos: Double? = nil, title: String? = nil, note: String? = nil) {
+            self.time_pos = time_pos
+            self.title = title
+            self.note = note
+        }
+    }
+
+    public func updateBookmark(bookmarkId: String, title: String? = nil, note: String? = nil, timePos: Double? = nil) async throws -> Bookmark {
+        guard let url = URL(string: APIEndpoint.updateBookmark(bookmarkId: bookmarkId).urlString(baseURL: self.baseURL)) else {
+            throw APIError.invalidResponse
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "PATCH"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let payload = BookmarkUpdateRequest(time_pos: timePos, title: title, note: note)
+        request.httpBody = try JSONEncoder().encode(payload)
+
+        let response = try await executeRequest(request, responseType: SingleBookmarkResponse.self)
+        return response.bookmark
+    }
+
     public func deleteBookmark(bookmarkId: String) async throws {
         guard let url = URL(string: APIEndpoint.deleteBookmark(bookmarkId: bookmarkId).urlString(baseURL: self.baseURL)) else {
             throw APIError.invalidResponse

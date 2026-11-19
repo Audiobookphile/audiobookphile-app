@@ -218,6 +218,10 @@ public class AudioPlayerViewModel {
         AudioPlayerService.shared.deleteBookmark(bookmark)
     }
 
+    public func updateBookmark(_ bookmark: Bookmark, title: String, note: String?) {
+        AudioPlayerService.shared.updateBookmark(bookmark, title: title, note: note)
+    }
+
     public func setPlaybackRate(_ rate: Float) {
         AudioPlayerService.shared.setPlaybackRate(rate)
     }
@@ -255,5 +259,64 @@ public class AudioPlayerViewModel {
             md += "\n"
         }
         return md
+    }
+
+    public func exportBookmarksCSV() -> String {
+        var csv = "ID,Time Position,Timestamp,Title,Note,Created At\n"
+        for bookmark in bookmarks {
+            let id = bookmark.id
+            let timePos = String(format: "%.2f", bookmark.timePos)
+            let timestamp = formatTime(bookmark.timePos)
+            let title = (bookmark.title ?? "").replacingOccurrences(of: "\"", with: "\"\"")
+            let note = (bookmark.note ?? "").replacingOccurrences(of: "\"", with: "\"\"")
+            let createdAt = bookmark.createdAt != nil ? ISO8601DateFormatter().string(from: bookmark.createdAt!) : ""
+            csv += "\"\(id)\",\"\(timePos)\",\"\(timestamp)\",\"\(title)\",\"\(note)\",\"\(createdAt)\"\n"
+        }
+        return csv
+    }
+
+    public func exportBookmarksJSON() -> String {
+        struct ExportItem: Codable {
+            let id: String
+            let timePos: Double
+            let timestamp: String
+            let title: String
+            let note: String?
+            let createdAt: String?
+        }
+        struct ExportPayload: Codable {
+            let bookTitle: String
+            let author: String
+            let exportedAt: String
+            let totalBookmarks: Int
+            let bookmarks: [ExportItem]
+        }
+
+        let iso = ISO8601DateFormatter()
+        let items: [ExportItem] = bookmarks.map { b in
+            ExportItem(
+                id: b.id,
+                timePos: b.timePos,
+                timestamp: formatTime(b.timePos),
+                title: b.title ?? "Bookmark at \(formatTime(b.timePos))",
+                note: b.note,
+                createdAt: b.createdAt != nil ? iso.string(from: b.createdAt!) : nil
+            )
+        }
+
+        let payload = ExportPayload(
+            bookTitle: title.isEmpty ? "Audiobook" : title,
+            author: author.isEmpty ? "Unknown Author" : author,
+            exportedAt: iso.string(from: Date()),
+            totalBookmarks: items.count,
+            bookmarks: items
+        )
+
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        if let data = try? encoder.encode(payload), let jsonString = String(data: data, encoding: .utf8) {
+            return jsonString
+        }
+        return "{}"
     }
 }
