@@ -52,10 +52,10 @@ public struct ChapterSelectionView: View {
 
     public var body: some View {
         NavigationStack {
-            ZStack {
-                FluidAuraBackground()
+            ScrollViewReader { proxy in
+                ZStack {
+                    FluidAuraBackground()
 
-                ScrollViewReader { proxy in
                     List {
                         if filteredChapters.isEmpty && !chapters.isEmpty {
                             VStack(spacing: 12) {
@@ -79,129 +79,165 @@ public struct ChapterSelectionView: View {
                                             if chapter.id == currentChapter?.id {
                                                 RoundedRectangle(cornerRadius: 8)
                                                     .fill(Color.appPrimary)
-                                                .frame(width: 4, height: 28)
-                                        }
+                                                    .frame(width: 4, height: 28)
+                                            }
 
-                                        VStack(alignment: .leading, spacing: 4) {
-                                            Text(chapter.title)
-                                                .font(.headline)
-                                                .fontWeight(chapter.id == currentChapter?.id ? .bold : .regular)
-                                                .foregroundStyle(chapter.id == currentChapter?.id ? Color.appPrimary : .primary)
-
-                                            HStack(spacing: 6) {
-                                                Text(formatTimestamp(chapter.start))
-                                                    .font(.caption2.monospaced())
-                                                    .fontWeight(.semibold)
-                                                    .padding(.horizontal, 6)
-                                                    .padding(.vertical, 2)
-                                                    .background(Color.white.opacity(0.08))
-                                                    .clipShape(Capsule())
-
-                                                Text(formatDuration(chapter.end - chapter.start))
-                                                    .font(.caption)
+                                            VStack(alignment: .leading, spacing: 4) {
+                                                Text(chapter.title)
+                                                    .font(.headline)
                                                     .fontWeight(chapter.id == currentChapter?.id ? .bold : .regular)
-                                                    .foregroundStyle(.secondary)
+                                                    .foregroundStyle(chapter.id == currentChapter?.id ? Color.appPrimary : .primary)
 
-                                                if chapter.id == currentChapter?.id, let current = currentTime {
-                                                    let remaining = max(0, chapter.end - current)
-                                                    Text("-\(formatDuration(remaining)) left")
-                                                        .font(.caption2.bold())
-                                                        .foregroundStyle(Color.appPrimary)
+                                                HStack(spacing: 6) {
+                                                    Text(formatTimestamp(chapter.start))
+                                                        .font(.caption2.monospaced())
+                                                        .fontWeight(.semibold)
                                                         .padding(.horizontal, 6)
                                                         .padding(.vertical, 2)
-                                                        .background(Color.appPrimary.opacity(0.15))
+                                                        .background(Color.white.opacity(0.08))
                                                         .clipShape(Capsule())
-                                                }
-                                            }
 
-                                            if chapter.id == currentChapter?.id, let current = currentTime {
-                                                let chapterDur = chapter.end - chapter.start
-                                                let progress = chapterDur > 0 ? min(1.0, max(0.0, (current - chapter.start) / chapterDur)) : 0.0
-                                                GeometryReader { g in
-                                                    ZStack(alignment: .leading) {
-                                                        Capsule()
-                                                            .fill(Color.white.opacity(0.12))
-                                                            .frame(height: 3)
-                                                        Capsule()
-                                                            .fill(Color.appPrimary)
-                                                            .frame(width: max(0, g.size.width * CGFloat(progress)), height: 3)
+                                                    Text(formatDuration(chapter.end - chapter.start))
+                                                        .font(.caption)
+                                                        .fontWeight(chapter.id == currentChapter?.id ? .bold : .regular)
+                                                        .foregroundStyle(.secondary)
+
+                                                    if chapter.id == currentChapter?.id, let current = currentTime {
+                                                        let remaining = max(0, chapter.end - current)
+                                                        Text("-\(formatDuration(remaining)) left")
+                                                            .font(.caption2.bold())
+                                                            .foregroundStyle(Color.appPrimary)
+                                                            .padding(.horizontal, 6)
+                                                            .padding(.vertical, 2)
+                                                            .background(Color.appPrimary.opacity(0.15))
+                                                            .clipShape(Capsule())
                                                     }
                                                 }
-                                                .frame(height: 3)
-                                                .padding(.top, 2)
+
+                                                if chapter.id == currentChapter?.id, let current = currentTime {
+                                                    let chapterDur = chapter.end - chapter.start
+                                                    let progress = chapterDur > 0 ? min(1.0, max(0.0, (current - chapter.start) / chapterDur)) : 0.0
+                                                    GeometryReader { g in
+                                                        ZStack(alignment: .leading) {
+                                                            Capsule()
+                                                                .fill(Color.white.opacity(0.12))
+                                                                .frame(height: 3)
+                                                            Capsule()
+                                                                .fill(Color.appPrimary)
+                                                                .frame(width: max(0, g.size.width * CGFloat(progress)), height: 3)
+                                                        }
+                                                    }
+                                                    .frame(height: 3)
+                                                    .padding(.top, 2)
+                                                }
+                                            }
+
+                                            Spacer()
+
+                                            if chapter.id == currentChapter?.id {
+                                                Image(systemName: "speaker.wave.2.fill")
+                                                    .foregroundStyle(Color.appPrimary)
                                             }
                                         }
+                                    }
 
-                                        Spacer()
+                                    // AI Insights Button
+                                    Button {
+                                        selectedChapterForAI = chapter
+                                    } label: {
+                                        Image(systemName: "sparkles")
+                                            .font(.body)
+                                            .foregroundStyle(Color.appPrimary)
+                                            .padding(8)
+                                            .background(Color.appPrimary.opacity(0.15), in: Circle())
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                                .contextMenu {
+                                    Button {
+                                        onSelect(chapter)
+                                    } label: {
+                                        Label("Play Chapter", systemImage: "play.circle")
+                                    }
 
-                                        if chapter.id == currentChapter?.id {
-                                            Image(systemName: "speaker.wave.2.fill")
-                                                .foregroundStyle(Color.appPrimary)
-                                        }
+                                    Button {
+                                        copyChapterLink(chapter)
+                                    } label: {
+                                        Label("Copy Chapter Link", systemImage: "link")
+                                    }
+
+                                    Button {
+                                        selectedChapterForAI = chapter
+                                    } label: {
+                                        Label("AI Insights", systemImage: "sparkles")
                                     }
                                 }
-
-                                // AI Insights Button
-                                Button {
-                                    selectedChapterForAI = chapter
-                                } label: {
-                                    Image(systemName: "sparkles")
-                                        .font(.body)
-                                        .foregroundStyle(Color.appPrimary)
-                                        .padding(8)
-                                        .background(Color.appPrimary.opacity(0.15), in: Circle())
-                                }
-                                .buttonStyle(.plain)
+                                .applyBookshelfScrollTransition()
+                                .id(chapter.id)
+                                .listRowBackground(Color.clear)
                             }
-                            .applyBookshelfScrollTransition()
-                            .id(chapter.id)
-                            .listRowBackground(Color.clear)
+                        }
+                    }
+                    .scrollContentBackground(.hidden)
+                    .searchable(text: $searchText, prompt: "Search chapters...")
+                    .onAppear {
+                        if let current = currentChapter, searchText.isEmpty {
+                            withAnimation {
+                                proxy.scrollTo(current.id, anchor: .center)
+                            }
                         }
                     }
                 }
-                .scrollContentBackground(.hidden)
-                .searchable(text: $searchText, prompt: "Search chapters...")
-                .onAppear {
-                    if let current = currentChapter, searchText.isEmpty {
-                        withAnimation {
-                            proxy.scrollTo(current.id, anchor: .center)
-                        }
-                    }
-                }
-            }
-            .navigationTitle("Chapters")
-            #if os(iOS) || SKIP
-            .navigationBarTitleDisplayMode(.inline)
-            #endif
-            .toolbar {
-                ToolbarItem(placement: leadingPlacement) {
-                    Button {
-                        withAnimation(DesignTokens.Spring.snappy) {
-                            isReversed.toggle()
-                        }
-                        DesignTokens.Haptics.selection()
-                    } label: {
-                        Image(systemName: isReversed ? "arrow.up.arrow.down.circle.fill" : "arrow.up.arrow.down.circle")
-                            .foregroundStyle(isReversed ? Color.appPrimary : Color.primary)
-                    }
-                    .help(isReversed ? "Reverse order (Newest first)" : "Standard order (Oldest first)")
-                }
+                .navigationTitle("Chapters")
+                #if os(iOS) || SKIP
+                .navigationBarTitleDisplayMode(.inline)
+                #endif
+                .toolbar {
+                    ToolbarItem(placement: leadingPlacement) {
+                        HStack(spacing: 12) {
+                            Button {
+                                withAnimation(DesignTokens.Spring.snappy) {
+                                    isReversed.toggle()
+                                }
+                                DesignTokens.Haptics.selection()
+                            } label: {
+                                Image(systemName: isReversed ? "arrow.up.arrow.down.circle.fill" : "arrow.up.arrow.down.circle")
+                                    .foregroundStyle(isReversed ? Color.appPrimary : Color.primary)
+                            }
+                            .help(isReversed ? "Reverse order (Newest first)" : "Standard order (Oldest first)")
 
-                ToolbarItem(placement: trailingPlacement) {
-                    Button("Done") {
-                        dismiss()
+                            if currentChapter != nil {
+                                Button {
+                                    if let current = currentChapter {
+                                        withAnimation(DesignTokens.Spring.snappy) {
+                                            proxy.scrollTo(current.id, anchor: .center)
+                                        }
+                                        DesignTokens.Haptics.light()
+                                    }
+                                } label: {
+                                    Image(systemName: "scope")
+                                        .foregroundStyle(Color.appPrimary)
+                                }
+                                .help("Jump to Playing Chapter")
+                            }
+                        }
+                    }
+
+                    ToolbarItem(placement: trailingPlacement) {
+                        Button("Done") {
+                            dismiss()
+                        }
                     }
                 }
-            }
-            .applyToolbarAdapters(isLight: false, isHidden: false)
-            .sheet(item: $selectedChapterForAI) { chapter in
-                ChapterAIInsightsSheet(
-                    chapter: chapter,
-                    bookTitle: bookTitle,
-                    bookAuthor: bookAuthor
-                )
-                .presentationDetents([.medium, .large])
-            }
+                .applyToolbarAdapters(isLight: false, isHidden: false)
+                .sheet(item: $selectedChapterForAI) { chapter in
+                    ChapterAIInsightsSheet(
+                        chapter: chapter,
+                        bookTitle: bookTitle,
+                        bookAuthor: bookAuthor
+                    )
+                    .presentationDetents([.medium, .large])
+                }
             }
         }
     }
@@ -226,5 +262,14 @@ public struct ChapterSelectionView: View {
             return "\(hours)h \(minutes)m"
         }
         return "\(minutes)m \(seconds)s"
+    }
+
+    private func copyChapterLink(_ chapter: Chapter) {
+        let itemId = AudioPlayerService.shared.session?.libraryItemId ?? ""
+        let urlString = "audiobookphile://item/\(itemId)?t=\(Int(chapter.start))"
+        #if os(iOS) && !SKIP
+        UIPasteboard.general.string = urlString
+        #endif
+        DesignTokens.Haptics.selection()
     }
 }

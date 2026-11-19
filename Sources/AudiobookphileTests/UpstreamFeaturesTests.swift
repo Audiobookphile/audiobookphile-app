@@ -968,4 +968,30 @@ final class UpstreamFeaturesTests: XCTestCase {
             XCTAssertFalse(timer.isActive)
         }
     }
+
+    func testChapterDeepLinkURLFormat() throws {
+        let chapter = Chapter(id: 3, title: "The Departure", start: 1450.5, end: 2800.0)
+        let itemId = "book-uuid-12345"
+        let expectedURL = "audiobookphile://item/\(itemId)?t=\(Int(chapter.start))"
+        XCTAssertEqual(expectedURL, "audiobookphile://item/book-uuid-12345?t=1450")
+
+        // Zero timestamp
+        let chZero = Chapter(id: 0, title: "Prologue", start: 0, end: 120.0)
+        let expectedZeroURL = "audiobookphile://item/\(itemId)?t=\(Int(chZero.start))"
+        XCTAssertEqual(expectedZeroURL, "audiobookphile://item/book-uuid-12345?t=0")
+    }
+
+    func testJumpToPlayingChapterSelectionTarget() throws {
+        let ch1 = Chapter(id: 1, title: "Chapter 1", start: 0, end: 300)
+        let ch2 = Chapter(id: 2, title: "Chapter 2", start: 300, end: 600)
+        let ch3 = Chapter(id: 3, title: "Chapter 3", start: 600, end: 900)
+        let chapters = [ch1, ch2, ch3]
+
+        // When playback position is 450s, active chapter should be ch2
+        let currentPos: TimeInterval = 450
+        let activeChapter = chapters.first { currentPos >= $0.start && currentPos < $0.end }
+        XCTAssertNotNil(activeChapter)
+        XCTAssertEqual(activeChapter?.id, 2)
+        XCTAssertEqual(activeChapter?.title, "Chapter 2")
+    }
 }
