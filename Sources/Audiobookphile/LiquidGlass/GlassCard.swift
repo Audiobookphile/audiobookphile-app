@@ -1,78 +1,123 @@
 //
 //  GlassCard.swift
-//  AudiobookphileClient
+//  Audiobookphile
 //
-//  Liquid Glass card component with blur effects and translucency
+//  Liquid Glass card component with blur effects and optical specular translucency
 //
 
 import SwiftUI
 
-/// Liquid Glass card container with customizable blur and styling
-struct GlassCard<Content: View>: View {
-    let content: Content
-    var padding: CGFloat = 16
-    var cornerRadius: CGFloat = 20
-    var material: Material = .ultraThinMaterial
-    var borderOpacity: Double = UIConstants.glassBorderOpacity
-    var shadowRadius: CGFloat = 10
-    var shadowY: CGFloat = 5
+/// Preset styles for Liquid Glass containers conforming to Apple Human Interface specs.
+public enum GlassStyle: Sendable {
+    case standard
+    case elevated
+    case subtle
+    case accent(Color)
+}
 
-    init(
+/// Liquid Glass card container with customizable blur, optical specular highlight, and styling.
+public struct GlassCard<Content: View>: View {
+    let content: Content
+    var style: GlassStyle = .standard
+    var padding: CGFloat = 16
+    var cornerRadius: CGFloat = DesignTokens.Radius.step2
+    var material: Material = .ultraThinMaterial
+
+    public init(
+        style: GlassStyle = .standard,
         padding: CGFloat = 16,
-        cornerRadius: CGFloat = 20,
+        cornerRadius: CGFloat = DesignTokens.Radius.step2,
         material: Material = .ultraThinMaterial,
-        borderOpacity: Double = 0.2,
-        shadowRadius: CGFloat = 10,
-        shadowY: CGFloat = 5,
         @ViewBuilder content: () -> Content
     ) {
         self.content = content()
+        self.style = style
         self.padding = padding
         self.cornerRadius = cornerRadius
         self.material = material
-        self.borderOpacity = borderOpacity
-        self.shadowRadius = shadowRadius
-        self.shadowY = shadowY
     }
 
-    var body: some View {
+    public var body: some View {
         content
             .padding(padding)
             .background {
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(material)
-                    .overlay {
+                ZStack {
+                    // Frosted physical material
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .fill(material)
+
+                    // Optional dynamic aura tint
+                    if case .accent(let color) = style {
                         RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                            .strokeBorder(
-                                LinearGradient(
-                                    colors: [
-                                        DesignTokens.Color.surface.opacity(borderOpacity),
-                                        Color.white.opacity(borderOpacity * 0.4),
-                                        Color.white.opacity(0.0)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 1
-                            )
+                            .fill(color.opacity(0.12))
                     }
-                    .shadow(
-                        color: DesignTokens.Color.background.opacity(0.15),
-                        radius: shadowRadius,
-                        y: shadowY
-                    )
+
+                    // Optical specular rim highlight
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .strokeBorder(strokeGradient, lineWidth: 1)
+                }
+                .shadow(
+                    color: shadowColor,
+                    radius: shadowRadius,
+                    x: 0,
+                    y: shadowY
+                )
             }
+    }
+
+    private var strokeGradient: LinearGradient {
+        switch style {
+        case .accent(let color):
+            return DesignTokens.Glass.accentSpecular(color: color)
+        case .elevated:
+            return DesignTokens.Glass.specularGradient
+        case .standard, .subtle:
+            return DesignTokens.Glass.borderGradient
+        }
+    }
+
+    private var shadowColor: Color {
+        switch style {
+        case .accent(let color):
+            return color.opacity(0.35)
+        case .elevated:
+            return DesignTokens.Color.background.opacity(DesignTokens.Elevation.floating.opacity)
+        case .standard:
+            return DesignTokens.Color.background.opacity(DesignTokens.Elevation.card.opacity)
+        case .subtle:
+            return DesignTokens.Color.background.opacity(DesignTokens.Elevation.subtle.opacity)
+        }
+    }
+
+    private var shadowRadius: CGFloat {
+        switch style {
+        case .accent: return 14
+        case .elevated: return DesignTokens.Elevation.floating.radius
+        case .standard: return DesignTokens.Elevation.card.radius
+        case .subtle: return DesignTokens.Elevation.subtle.radius
+        }
+    }
+
+    private var shadowY: CGFloat {
+        switch style {
+        case .accent: return 6
+        case .elevated: return DesignTokens.Elevation.floating.y
+        case .standard: return DesignTokens.Elevation.card.y
+        case .subtle: return DesignTokens.Elevation.subtle.y
+        }
     }
 }
 
-/// Convenience modifier to apply glass card styling
+/// Convenience modifiers to apply liquid glass styling
 extension View {
-    func glassCard(
+    public func glassCard(
+        style: GlassStyle = .standard,
         padding: CGFloat = 16,
-        cornerRadius: CGFloat = 20,
+        cornerRadius: CGFloat = DesignTokens.Radius.step2,
         material: Material = .ultraThinMaterial
     ) -> some View {
         self.modifier(GlassCardModifier(
+            style: style,
             padding: padding,
             cornerRadius: cornerRadius,
             material: material
@@ -80,13 +125,15 @@ extension View {
     }
 }
 
-struct GlassCardModifier: ViewModifier {
+public struct GlassCardModifier: ViewModifier {
+    let style: GlassStyle
     let padding: CGFloat
     let cornerRadius: CGFloat
     let material: Material
 
-    func body(content: Content) -> some View {
+    public func body(content: Content) -> some View {
         GlassCard(
+            style: style,
             padding: padding,
             cornerRadius: cornerRadius,
             material: material

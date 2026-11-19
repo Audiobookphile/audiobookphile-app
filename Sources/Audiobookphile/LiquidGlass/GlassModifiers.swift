@@ -297,6 +297,56 @@ extension View {
     }
 }
 
+// MARK: - Optical Specular Border & Badges
+extension View {
+    /// Apply an optical specular highlight border simulating light reflection on beveled glass edges
+    public func specularBorder(
+        cornerRadius: CGFloat = DesignTokens.Radius.step1,
+        lineWidth: CGFloat = 1
+    ) -> some View {
+        self.overlay(
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .strokeBorder(DesignTokens.Glass.borderGradient, lineWidth: lineWidth)
+        )
+    }
+
+    /// Apply an Apple-grade Liquid Glass pill for filter chips, tags, and category badges
+    public func glassPill(isSelected: Bool = false, tint: Color = Color.appPrimary) -> some View {
+        self
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background {
+                if isSelected {
+                    Capsule()
+                        .fill(tint)
+                        .shadow(color: tint.opacity(0.35), radius: 8, x: 0, y: 3)
+                } else {
+                    Capsule()
+                        .fill(DesignTokens.Color.surface.opacity(0.55))
+                        .overlay(
+                            Capsule()
+                                .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.8)
+                        )
+                }
+            }
+    }
+
+    /// Apply a frosted glass badge for item status (e.g., Abridged, Explicit, Track count)
+    public func glassBadge(tint: Color? = nil) -> some View {
+        self
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
+            .background {
+                RoundedRectangle(cornerRadius: 4, style: .continuous)
+                    .fill((tint ?? Color.black).opacity(0.75))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 4, style: .continuous)
+                            .strokeBorder(Color.white.opacity(0.2), lineWidth: 0.5)
+                    )
+            }
+    }
+}
+
 /*
 // MARK: - Preview
 #Preview("Glass Modifiers Demo") {

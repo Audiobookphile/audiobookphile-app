@@ -9,6 +9,7 @@ public struct ContinueListeningCard: View {
     public let book: Book
     public let onTap: () -> Void
     @Environment(AppState.self) private var appState
+    @State private var colorLoader = DynamicColorLoader()
 
     public init(book: Book, onTap: @escaping () -> Void) {
         self.book = book
@@ -51,19 +52,15 @@ public struct ContinueListeningCard: View {
                         }
                     }
                     .clipped()
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.step1, style: .continuous))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        RoundedRectangle(cornerRadius: DesignTokens.Radius.step1, style: .continuous)
                             .strokeBorder(
-                                LinearGradient(
-                                    colors: [DesignTokens.Color.foreground.opacity(0.35), DesignTokens.Color.foreground.opacity(0.05)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
+                                DesignTokens.Glass.borderGradient,
                                 lineWidth: 1
                             )
                     )
-                    .shadow(color: DesignTokens.Color.accentSecondary.opacity(0.3), radius: 10, x: 0, y: 6)
+                    .shadow(color: colorLoader.backgroundColor.opacity(0.35), radius: 12, x: 0, y: 6)
 
                 // Title & Progress with strict height
                 VStack(alignment: .leading, spacing: 4) {
@@ -98,6 +95,9 @@ public struct ContinueListeningCard: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.liquid)
+        .task(id: coverURL) {
+            await colorLoader.loadColor(from: coverURL)
+        }
     }
 
     private var fallbackCover: some View {

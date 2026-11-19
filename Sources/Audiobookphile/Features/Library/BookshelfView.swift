@@ -133,10 +133,8 @@ public struct BookshelfView: View {
                     let count = viewModel.count(for: filter)
 
                     Button(action: {
-                        #if !SKIP && os(iOS)
-                        UISelectionFeedbackGenerator().selectionChanged()
-                        #endif
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
+                        DesignTokens.Haptics.selection()
+                        withAnimation(DesignTokens.Spring.snappy) {
                             viewModel.setFilter(filter)
                         }
                     }) {
@@ -157,22 +155,7 @@ public struct BookshelfView: View {
                             }
                         }
                         .foregroundStyle(isSelected ? Color.white : Color.primary)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-                        .background {
-                            if isSelected {
-                                Capsule()
-                                    .fill(Color.appPrimary)
-                                    .shadow(color: Color.appPrimary.opacity(0.35), radius: 8, x: 0, y: 3)
-                            } else {
-                                Capsule()
-                                    .fill(DesignTokens.Color.surface.opacity(0.55))
-                                    .overlay(
-                                        Capsule()
-                                            .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.8)
-                                    )
-                            }
-                        }
+                        .glassPill(isSelected: isSelected, tint: Color.appPrimary)
                     }
                     .buttonStyle(.plain)
                 }

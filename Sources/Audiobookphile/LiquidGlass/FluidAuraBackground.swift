@@ -33,19 +33,26 @@ public struct FluidAuraBackground: View {
                 ZStack {
                     Circle()
                         .fill(primaryOrbColor)
-                        .frame(width: width * 0.8, height: width * 0.8)
-                        .blur(radius: 80)
-                        .offset(x: animate ? width * 0.2 : -width * 0.2,
-                                y: animate ? -height * 0.2 : height * 0.2)
+                        .frame(width: width * 0.85, height: width * 0.85)
+                        .blur(radius: 85)
+                        .offset(x: animate ? width * 0.22 : -width * 0.18,
+                                y: animate ? -height * 0.18 : height * 0.15)
 
                     Circle()
                         .fill(secondaryOrbColor)
-                        .frame(width: width * 0.6, height: width * 0.6)
-                        .blur(radius: 60)
-                        .offset(x: animate ? -width * 0.3 : width * 0.1,
-                                y: animate ? height * 0.3 : -height * 0.1)
+                        .frame(width: width * 0.7, height: width * 0.7)
+                        .blur(radius: 70)
+                        .offset(x: animate ? -width * 0.25 : width * 0.15,
+                                y: animate ? height * 0.25 : -height * 0.12)
+
+                    Circle()
+                        .fill(tertiaryOrbColor)
+                        .frame(width: width * 0.55, height: width * 0.55)
+                        .blur(radius: 55)
+                        .offset(x: animate ? width * 0.08 : -width * 0.12,
+                                y: animate ? height * 0.05 : -height * 0.22)
                 }
-                .saturation(1.3)
+                .saturation(1.35)
             }
             
             // Liquid glass noise or overlay layer
@@ -73,5 +80,12 @@ public struct FluidAuraBackground: View {
             return colorScheme == .dark ? accents[1].opacity(0.55) : accents[1].opacity(0.6)
         }
         return colorScheme == .dark ? Color(red: 0.8, green: 0.3, blue: 0.0).opacity(0.5) : Color(red: 1.0, green: 0.8, blue: 0.5).opacity(0.7)
+    }
+
+    private var tertiaryOrbColor: Color {
+        if let accents = accentColors, accents.count > 2 {
+            return colorScheme == .dark ? accents[2].opacity(0.45) : accents[2].opacity(0.35)
+        }
+        return colorScheme == .dark ? DesignTokens.Color.accentHighlight.opacity(0.35) : Color(red: 1.0, green: 0.9, blue: 0.7).opacity(0.45)
     }
 }

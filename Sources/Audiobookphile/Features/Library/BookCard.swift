@@ -14,7 +14,7 @@ public struct BookCard: View {
     let book: Book
     public var aspectRatio: CGFloat = 1.0
     public let onTap: () -> Void
-    @State var coverColor: Color = .gray
+    @State private var colorLoader = DynamicColorLoader()
     var proMotion = ProMotionManager.shared
     var downloadService = DownloadService.shared
 
@@ -65,6 +65,9 @@ public struct BookCard: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.liquid)
+        .task(id: coverURL) {
+            await colorLoader.loadColor(from: coverURL)
+        }
     }
 
     // MARK: - Cover Image
@@ -124,19 +127,13 @@ public struct BookCard: View {
                             Text("ABRIDGED")
                                 .font(.system(size: 8, weight: .bold))
                                 .foregroundStyle(.white)
-                                .padding(.horizontal, 5)
-                                .padding(.vertical, 2.5)
-                                .background(.black.opacity(0.75))
-                                .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+                                .glassBadge(tint: Color.black)
                         }
                         if book.media.metadata.explicit {
                             Text("E")
                                 .font(.system(size: 8, weight: .heavy))
                                 .foregroundStyle(.white)
-                                .padding(.horizontal, 4)
-                                .padding(.vertical, 2.5)
-                                .background(Color.red.opacity(0.85))
-                                .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
+                                .glassBadge(tint: Color.red)
                         }
                         Spacer()
                     }
@@ -147,21 +144,17 @@ public struct BookCard: View {
         .aspectRatio(aspectRatio, contentMode: .fit)
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.step1, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.step1, style: .continuous)
                 .strokeBorder(
-                    LinearGradient(
-                        colors: [DesignTokens.Color.foreground.opacity(0.3), DesignTokens.Color.foreground.opacity(0.05)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
+                    DesignTokens.Glass.borderGradient,
                     lineWidth: 1
                 )
         )
         .shadow(
-            color: (coverColor == .gray ? Color.appPrimary : coverColor).opacity(0.35),
-            radius: 14,
+            color: (colorLoader.isLoaded ? colorLoader.backgroundColor : Color.appPrimary).opacity(0.35),
+            radius: 12,
             x: 0,
-            y: 8
+            y: 6
         )
     }
 
