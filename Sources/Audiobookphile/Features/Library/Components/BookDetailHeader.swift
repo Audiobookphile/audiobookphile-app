@@ -11,12 +11,20 @@ public struct BookDetailHeader: View {
     // Read-only access — no property mutation, so @Bindable is not needed
     public let viewModel: BookDetailViewModel
     public var onAuthorTap: ((String) -> Void)?
+    public var onNarratorTap: ((String) -> Void)?
 
-    public init(detailed: Book, appState: AppState, viewModel: BookDetailViewModel, onAuthorTap: ((String) -> Void)? = nil) {
+    public init(
+        detailed: Book,
+        appState: AppState,
+        viewModel: BookDetailViewModel,
+        onAuthorTap: ((String) -> Void)? = nil,
+        onNarratorTap: ((String) -> Void)? = nil
+    ) {
         self.detailed = detailed
         self.appState = appState
         self.viewModel = viewModel
         self.onAuthorTap = onAuthorTap
+        self.onNarratorTap = onNarratorTap
     }
 
     public var body: some View {
@@ -50,10 +58,31 @@ public struct BookDetailHeader: View {
                 }
 
                 if let narrator = detailed.media.metadata.narratorName, !narrator.isEmpty {
-                    Text("Narrated by \(narrator)")
-                        .font(.subheadline)
-                        .foregroundStyle(DesignTokens.Color.foreground.opacity(0.65))
-                        .multilineTextAlignment(.center)
+                    if let onNarratorTap {
+                        Button {
+                            DesignTokens.Haptics.selection()
+                            onNarratorTap(narrator)
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "mic.fill")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundStyle(Color.appPrimary.opacity(0.8))
+                                Text("Narrated by \(narrator)")
+                                    .font(.subheadline)
+                                    .foregroundStyle(DesignTokens.Color.foreground.opacity(0.85))
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundStyle(Color.appPrimary.opacity(0.7))
+                            }
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("View narrator \(narrator)")
+                    } else {
+                        Text("Narrated by \(narrator)")
+                            .font(.subheadline)
+                            .foregroundStyle(DesignTokens.Color.foreground.opacity(0.65))
+                            .multilineTextAlignment(.center)
+                    }
                 }
 
                 if detailed.media.metadata.abridged == true || detailed.media.metadata.explicit {

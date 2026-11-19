@@ -367,8 +367,11 @@ public struct BookshelfView: View {
     // MARK: - Authors and Narrators Sections
 
     private var authorsTabSection: some View {
+        let query = viewModel.filterSearchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         let grouped = Dictionary(grouping: viewModel.books, by: { $0.displayAuthor.trimmingCharacters(in: .whitespacesAndNewlines) })
-            .filter { !$0.key.isEmpty }
+            .filter { key, _ in
+                !key.isEmpty && (query.isEmpty || key.lowercased().contains(query))
+            }
             .sorted { $0.key < $1.key }
 
         return VStack(spacing: 12) {
@@ -378,12 +381,17 @@ public struct BookshelfView: View {
                     Image(systemName: "person.2")
                         .font(.system(size: 44))
                         .foregroundStyle(.secondary)
-                    Text("No Authors Found")
+                    Text(query.isEmpty ? "No Authors Found" : "No Authors Matching \"\(viewModel.filterSearchText)\"")
                         .font(.headline)
                         .foregroundStyle(.secondary)
                 }
             } else {
                 ForEach(grouped, id: \.key) { author, books in
+                    let totalDuration = books.reduce(0.0) { $0 + $1.duration }
+                    let hours = Int(totalDuration) / 3600
+                    let minutes = (Int(totalDuration) % 3600) / 60
+                    let durationText = hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m"
+
                     GlassCard {
                         HStack(spacing: 16) {
                             Circle()
@@ -398,7 +406,7 @@ public struct BookshelfView: View {
                                 Text(author)
                                     .font(.headline)
                                     .foregroundStyle(.primary)
-                                Text("\(books.count) \(books.count == 1 ? "Audiobook" : "Audiobooks")")
+                                Text("\(books.count) \(books.count == 1 ? "Audiobook" : "Audiobooks") • \(durationText)")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
@@ -412,6 +420,7 @@ public struct BookshelfView: View {
                         .padding(.vertical, 4)
                     }
                     .onTapGesture {
+                        DesignTokens.Haptics.selection()
                         selectedAuthorName = author
                     }
                 }
@@ -422,8 +431,11 @@ public struct BookshelfView: View {
     }
 
     private var narratorsTabSection: some View {
+        let query = viewModel.filterSearchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         let grouped = Dictionary(grouping: viewModel.books, by: { ($0.narrator ?? "Unknown Narrator").trimmingCharacters(in: .whitespacesAndNewlines) })
-            .filter { !$0.key.isEmpty }
+            .filter { key, _ in
+                !key.isEmpty && (query.isEmpty || key.lowercased().contains(query))
+            }
             .sorted { $0.key < $1.key }
 
         return VStack(spacing: 12) {
@@ -433,12 +445,17 @@ public struct BookshelfView: View {
                     Image(systemName: "mic")
                         .font(.system(size: 44))
                         .foregroundStyle(.secondary)
-                    Text("No Narrators Found")
+                    Text(query.isEmpty ? "No Narrators Found" : "No Narrators Matching \"\(viewModel.filterSearchText)\"")
                         .font(.headline)
                         .foregroundStyle(.secondary)
                 }
             } else {
                 ForEach(grouped, id: \.key) { narrator, books in
+                    let totalDuration = books.reduce(0.0) { $0 + $1.duration }
+                    let hours = Int(totalDuration) / 3600
+                    let minutes = (Int(totalDuration) % 3600) / 60
+                    let durationText = hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m"
+
                     GlassCard {
                         HStack(spacing: 16) {
                             Circle()
@@ -453,7 +470,7 @@ public struct BookshelfView: View {
                                 Text(narrator)
                                     .font(.headline)
                                     .foregroundStyle(.primary)
-                                Text("\(books.count) \(books.count == 1 ? "Audiobook" : "Audiobooks")")
+                                Text("\(books.count) \(books.count == 1 ? "Audiobook" : "Audiobooks") • \(durationText)")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
@@ -467,6 +484,7 @@ public struct BookshelfView: View {
                         .padding(.vertical, 4)
                     }
                     .onTapGesture {
+                        DesignTokens.Haptics.selection()
                         selectedNarratorInfo = SelectedNarratorInfo(name: narrator, books: books)
                     }
                 }

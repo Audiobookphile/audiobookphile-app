@@ -11,6 +11,7 @@ public struct BookDetailView: View {
     @State var viewModel: BookDetailViewModel
     @State private var selectedAuthorName: String?
     @State private var selectedSeriesName: String?
+    @State private var selectedNarratorInfo: SelectedNarratorInfo?
     @Environment(\.dismiss) var dismiss
     @Environment(AppState.self) private var appState
 
@@ -70,6 +71,9 @@ public struct BookDetailView: View {
             set: { selectedSeriesName = $0?.name }
         )) { wrapper in
             SeriesDetailView(seriesName: wrapper.name, libraryId: viewModel.detailedBook?.libraryId)
+        }
+        .sheet(item: $selectedNarratorInfo) { info in
+            NarratorDetailSheet(narratorName: info.name, books: info.books)
         }
         .task {
             await viewModel.fetchDetails(appState: appState)
@@ -143,9 +147,31 @@ public struct BookDetailView: View {
     private func bookDetailsContent(_ detailed: Book) -> some View {
         VStack(spacing: 24) {
             // Header: Large Cover Art, Title & Authors
-            BookDetailHeader(detailed: detailed, appState: appState, viewModel: viewModel) { author in
-                selectedAuthorName = author
-            }
+            BookDetailHeader(
+                detailed: detailed,
+                appState: appState,
+                viewModel: viewModel,
+                onAuthorTap: { author in
+                    selectedAuthorName = author
+                },
+                onNarratorTap: { narrator in
+                    let candidates = ([detailed] + viewModel.similarBooks).filter {
+                        $0.media.metadata.narratorName?.localizedCaseInsensitiveContains(narrator) == true
+                    }
+                    var uniqueBooks: [Book] = []
+                    var seenIds = Set<String>()
+                    for b in (candidates.isEmpty ? [detailed] : candidates) {
+                        if !seenIds.contains(b.id) {
+                            seenIds.insert(b.id)
+                            uniqueBooks.append(b)
+                        }
+                    }
+                    selectedNarratorInfo = SelectedNarratorInfo(
+                        name: narrator,
+                        books: uniqueBooks
+                    )
+                }
+            )
 
             // Play & Download Actions
             BookActionRow(detailed: detailed, viewModel: viewModel)

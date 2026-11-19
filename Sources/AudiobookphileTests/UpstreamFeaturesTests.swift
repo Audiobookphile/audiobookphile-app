@@ -1180,4 +1180,47 @@ final class UpstreamFeaturesTests: XCTestCase {
         note = applyTag(note, tag: "Key Idea")
         XCTAssertEqual(note, "[Key Idea] [Quote] Fear is the mind-killer.")
     }
+
+    // MARK: - Features 90 & 91: Narrator Navigation & Search with Duration
+
+    func testSelectedNarratorInfoModel() throws {
+        let dummyBook = Book(id: "book-1", title: "Dune", author: "Frank Herbert", duration: 7200)
+        let info = SelectedNarratorInfo(name: "Scott Brick", books: [dummyBook])
+        XCTAssertEqual(info.id, "Scott Brick")
+        XCTAssertEqual(info.name, "Scott Brick")
+        XCTAssertEqual(info.books.count, 1)
+        XCTAssertEqual(info.books.first?.title, "Dune")
+    }
+
+    func testAuthorAndNarratorSearchFiltering() throws {
+        let authors = ["Frank Herbert", "Brandon Sanderson", "George R.R. Martin", "Isaac Asimov"]
+        let query = "san"
+        let filtered = authors.filter { $0.lowercased().contains(query.lowercased()) }
+        XCTAssertEqual(filtered, ["Brandon Sanderson"])
+
+        let emptyQuery = ""
+        let allAuthors = authors.filter { emptyQuery.isEmpty || $0.lowercased().contains(emptyQuery.lowercased()) }
+        XCTAssertEqual(allAuthors.count, 4)
+    }
+
+    func testAuthorAndNarratorAggregateListeningDuration() throws {
+        let books = [
+            Book(id: "b1", title: "Book 1", author: "Author", duration: 3660), // 1h 1m
+            Book(id: "b2", title: "Book 2", author: "Author", duration: 7200), // 2h 0m
+        ]
+        let totalDuration = books.reduce(0.0) { $0 + $1.duration }
+        XCTAssertEqual(totalDuration, 10860)
+
+        let hours = Int(totalDuration) / 3600
+        let minutes = (Int(totalDuration) % 3600) / 60
+        let formatted = hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m"
+        XCTAssertEqual(formatted, "3h 1m")
+
+        let shortBooks = [Book(id: "b3", title: "Short", author: "Author", duration: 1500)] // 25m
+        let shortDuration = shortBooks.reduce(0.0) { $0 + $1.duration }
+        let shortHours = Int(shortDuration) / 3600
+        let shortMinutes = (Int(shortDuration) % 3600) / 60
+        let shortFormatted = shortHours > 0 ? "\(shortHours)h \(shortMinutes)m" : "\(shortMinutes)m"
+        XCTAssertEqual(shortFormatted, "25m")
+    }
 }
