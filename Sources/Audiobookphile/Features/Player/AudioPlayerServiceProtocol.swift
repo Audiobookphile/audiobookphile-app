@@ -46,8 +46,11 @@ public protocol AudioPlayerServiceProtocol: AnyObject {
     var playbackQueue: [PlaybackSession] { get set }
 
     func addToPlaybackQueue(session: PlaybackSession)
+    func playNextInPlaybackQueue(session: PlaybackSession)
     func removeFromPlaybackQueue(at index: Int)
+    func movePlaybackQueueItem(fromIndex: Int, toIndex: Int)
     func clearPlaybackQueue()
+    var totalQueueDuration: TimeInterval { get }
 
     // MARK: - Seek Epoch (Architectural Invariant)
 

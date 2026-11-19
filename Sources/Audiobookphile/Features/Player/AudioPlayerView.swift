@@ -131,6 +131,7 @@ public struct AudioPlayerView: View {
             ChapterSelectionView(
                 chapters: viewModel.chapters,
                 currentChapter: viewModel.currentChapter,
+                currentTime: viewModel.currentTime,
                 bookTitle: viewModel.title,
                 bookAuthor: viewModel.author,
                 onSelect: { chapter in

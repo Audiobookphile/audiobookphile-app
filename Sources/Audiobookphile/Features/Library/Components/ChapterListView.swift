@@ -39,9 +39,19 @@ public struct ChapterListView: View {
 
                                 Spacer()
 
-                                Text(viewModel.formatDuration(chapter.duration))
-                                    .font(.caption.monospaced())
-                                    .foregroundStyle(.secondary)
+                                HStack(spacing: 8) {
+                                    Text(viewModel.formatDuration(chapter.start))
+                                        .font(.caption2.monospaced())
+                                        .foregroundStyle(DesignTokens.Color.foreground.opacity(0.6))
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(DesignTokens.Color.foreground.opacity(0.06))
+                                        .clipShape(Capsule())
+
+                                    Text(viewModel.formatDuration(chapter.duration))
+                                        .font(.caption.monospaced())
+                                        .foregroundStyle(.secondary)
+                                }
                             }
                             .padding(.vertical, 12)
                             .padding(.horizontal, 14)

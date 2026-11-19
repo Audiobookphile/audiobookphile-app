@@ -114,7 +114,7 @@ public struct PlaybackQueueSheet: View {
     private var upNextSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("UP NEXT (\(viewModel.playbackQueue.count))")
+                Text("UP NEXT (\(viewModel.playbackQueue.count))" + (viewModel.totalQueueDuration > 0 ? " • \(viewModel.totalQueueDurationPretty) remaining" : ""))
                     .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(.secondary)
                 Spacer()
@@ -167,6 +167,36 @@ public struct PlaybackQueueSheet: View {
                             }
 
                             Spacer()
+
+                            // Reorder controls
+                            if viewModel.playbackQueue.count > 1 {
+                                HStack(spacing: 4) {
+                                    if index > 0 {
+                                        Button {
+                                            viewModel.movePlaybackQueueItem(fromIndex: index, toIndex: index - 1)
+                                        } label: {
+                                            Image(systemName: "chevron.up")
+                                                .font(.caption2)
+                                                .foregroundStyle(.secondary)
+                                                .frame(width: 22, height: 22)
+                                                .background(Color.white.opacity(0.08))
+                                                .clipShape(Circle())
+                                        }
+                                    }
+                                    if index < viewModel.playbackQueue.count - 1 {
+                                        Button {
+                                            viewModel.movePlaybackQueueItem(fromIndex: index, toIndex: index + 1)
+                                        } label: {
+                                            Image(systemName: "chevron.down")
+                                                .font(.caption2)
+                                                .foregroundStyle(.secondary)
+                                                .frame(width: 22, height: 22)
+                                                .background(Color.white.opacity(0.08))
+                                                .clipShape(Circle())
+                                        }
+                                    }
+                                }
+                            }
 
                             // Play immediately button
                             Button {

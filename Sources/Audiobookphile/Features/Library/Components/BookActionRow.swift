@@ -177,6 +177,37 @@ public struct BookActionRow: View {
             }
             .accessibilityLabel("Podcast RSS Feed")
             .accessibilityHint("Copies private podcast feed link to clipboard")
+
+            // Playback Queue Menu (Play Next & Add to Queue)
+            Menu {
+                Button {
+                    #if os(iOS) && !SKIP
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    #endif
+                    viewModel.playNext(detailed)
+                } label: {
+                    Label("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward")
+                }
+
+                Button {
+                    #if os(iOS) && !SKIP
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    #endif
+                    viewModel.addToQueue(detailed)
+                } label: {
+                    Label("Add to Queue", systemImage: "text.badge.plus")
+                }
+            } label: {
+                Image(systemName: viewModel.hasAddedToQueue ? "checkmark" : "text.badge.plus")
+                    .font(.title3)
+                    .foregroundStyle(viewModel.hasAddedToQueue ? DesignTokens.Color.success : DesignTokens.Color.foreground)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .background(DesignTokens.Color.surface.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+            .accessibilityLabel("Queue Options")
+            .accessibilityHint("Add to playback queue or play next")
         }
     }
     

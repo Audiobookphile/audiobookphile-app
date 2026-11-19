@@ -294,6 +294,110 @@ final class UpstreamFeaturesTests: XCTestCase {
         XCTAssertTrue(playerService.playbackQueue.isEmpty)
     }
 
+    func testPlayNextInPlaybackQueueAndReorder() {
+        let playerService = AudioPlayerService.shared
+        playerService.clearPlaybackQueue()
+
+        let session1 = PlaybackSession(
+            id: "session-1",
+            userId: "user-1",
+            libraryId: "lib-1",
+            libraryItemId: "item-1",
+            episodeId: nil,
+            displayTitle: "Book One",
+            displayAuthor: "Author",
+            coverPath: nil,
+            duration: 3600,
+            playMethod: 0,
+            mediaPlayer: "AVQueuePlayer",
+            mediaType: "book",
+            audioTracks: [],
+            chapters: [],
+            manifestUrl: nil,
+            missingTrackCount: 0,
+            currentTime: 0,
+            playbackRate: 1.0,
+            startedAt: Date(),
+            updatedAt: Date()
+        )
+
+        let session2 = PlaybackSession(
+            id: "session-2",
+            userId: "user-1",
+            libraryId: "lib-1",
+            libraryItemId: "item-2",
+            episodeId: nil,
+            displayTitle: "Book Two",
+            displayAuthor: "Author",
+            coverPath: nil,
+            duration: 7200,
+            playMethod: 0,
+            mediaPlayer: "AVQueuePlayer",
+            mediaType: "book",
+            audioTracks: [],
+            chapters: [],
+            manifestUrl: nil,
+            missingTrackCount: 0,
+            currentTime: 0,
+            playbackRate: 1.0,
+            startedAt: Date(),
+            updatedAt: Date()
+        )
+
+        let sessionNext = PlaybackSession(
+            id: "session-next",
+            userId: "user-1",
+            libraryId: "lib-1",
+            libraryItemId: "item-next",
+            episodeId: nil,
+            displayTitle: "Book Next",
+            displayAuthor: "Author",
+            coverPath: nil,
+            duration: 1800,
+            playMethod: 0,
+            mediaPlayer: "AVQueuePlayer",
+            mediaType: "book",
+            audioTracks: [],
+            chapters: [],
+            manifestUrl: nil,
+            missingTrackCount: 0,
+            currentTime: 0,
+            playbackRate: 1.0,
+            startedAt: Date(),
+            updatedAt: Date()
+        )
+
+        // Queue session1 and session2
+        playerService.addToPlaybackQueue(session: session1)
+        playerService.addToPlaybackQueue(session: session2)
+        XCTAssertEqual(playerService.playbackQueue.count, 2)
+
+        // Insert sessionNext with playNext
+        playerService.playNextInPlaybackQueue(session: sessionNext)
+        XCTAssertEqual(playerService.playbackQueue.count, 3)
+        XCTAssertEqual(playerService.playbackQueue[0].id, "session-next")
+        XCTAssertEqual(playerService.playbackQueue[1].id, "session-1")
+        XCTAssertEqual(playerService.playbackQueue[2].id, "session-2")
+
+        // Call playNext with session2 (which is already at index 2) - should move to index 0 without duplicating
+        playerService.playNextInPlaybackQueue(session: session2)
+        XCTAssertEqual(playerService.playbackQueue.count, 3)
+        XCTAssertEqual(playerService.playbackQueue[0].id, "session-2")
+        XCTAssertEqual(playerService.playbackQueue[1].id, "session-next")
+        XCTAssertEqual(playerService.playbackQueue[2].id, "session-1")
+
+        // Reorder: move item from index 0 to index 2
+        playerService.movePlaybackQueueItem(fromIndex: 0, toIndex: 2)
+        XCTAssertEqual(playerService.playbackQueue[0].id, "session-next")
+        XCTAssertEqual(playerService.playbackQueue[1].id, "session-1")
+        XCTAssertEqual(playerService.playbackQueue[2].id, "session-2")
+
+        // Total queue duration
+        XCTAssertEqual(playerService.totalQueueDuration, 12600) // 1800 + 3600 + 7200
+
+        playerService.clearPlaybackQueue()
+    }
+
     func testAuthorDetailViewModelLoading() async throws {
         let mockService = MockLibraryService()
         let vm = AuthorDetailViewModel(authorName: "Andy Weir", libraryId: "mock-lib", service: mockService)

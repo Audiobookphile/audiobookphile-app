@@ -19,6 +19,7 @@ public class BookDetailViewModel {
     public var isDescriptionExpanded = false
     public var similarBooks: [Book] = []
     public var hasCopiedRssFeed = false
+    public var hasAddedToQueue = false
 
     public var colorLoader = DynamicColorLoader()
     private var downloadService = DownloadService.shared
@@ -104,6 +105,34 @@ public class BookDetailViewModel {
         Task {
             try? await Task.sleep(nanoseconds: 2_000_000_000)
             hasCopiedRssFeed = false
+        }
+    }
+
+    public func addToQueue(_ detailed: Book) {
+        Task {
+            do {
+                let session = try await AudiobookphileAPI.shared.startPlaybackSession(libraryItemId: detailed.id)
+                AudioPlayerService.shared.addToPlaybackQueue(session: session)
+                hasAddedToQueue = true
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                hasAddedToQueue = false
+            } catch {
+                print("Failed to add to queue: \(error)")
+            }
+        }
+    }
+
+    public func playNext(_ detailed: Book) {
+        Task {
+            do {
+                let session = try await AudiobookphileAPI.shared.startPlaybackSession(libraryItemId: detailed.id)
+                AudioPlayerService.shared.playNextInPlaybackQueue(session: session)
+                hasAddedToQueue = true
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                hasAddedToQueue = false
+            } catch {
+                print("Failed to play next: \(error)")
+            }
         }
     }
 }

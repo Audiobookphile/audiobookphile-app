@@ -89,13 +89,30 @@ public class AudioPlayerService: AudioPlayerServiceProtocol {
         playbackQueue.append(session)
     }
 
+    public func playNextInPlaybackQueue(session: PlaybackSession) {
+        playbackQueue.removeAll { $0.id == session.id }
+        playbackQueue.insert(session, at: 0)
+    }
+
     public func removeFromPlaybackQueue(at index: Int) {
         guard index >= 0 && index < playbackQueue.count else { return }
         playbackQueue.remove(at: index)
     }
 
+    public func movePlaybackQueueItem(fromIndex: Int, toIndex: Int) {
+        guard fromIndex >= 0 && fromIndex < playbackQueue.count,
+              toIndex >= 0 && toIndex < playbackQueue.count,
+              fromIndex != toIndex else { return }
+        let item = playbackQueue.remove(at: fromIndex)
+        playbackQueue.insert(item, at: toIndex)
+    }
+
     public func clearPlaybackQueue() {
         playbackQueue.removeAll()
+    }
+
+    public var totalQueueDuration: TimeInterval {
+        playbackQueue.compactMap { $0.duration }.reduce(0, +)
     }
     
     public var sleepTimerRemaining: TimeInterval? {

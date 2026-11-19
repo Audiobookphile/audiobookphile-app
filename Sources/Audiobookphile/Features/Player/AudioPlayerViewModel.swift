@@ -89,12 +89,34 @@ public class AudioPlayerViewModel {
         AudioPlayerService.shared.addToPlaybackQueue(session: session)
     }
 
+    public func playNextInPlaybackQueue(_ session: PlaybackSession) {
+        AudioPlayerService.shared.playNextInPlaybackQueue(session: session)
+    }
+
     public func removeFromPlaybackQueue(at index: Int) {
         AudioPlayerService.shared.removeFromPlaybackQueue(at: index)
     }
 
+    public func movePlaybackQueueItem(fromIndex: Int, toIndex: Int) {
+        AudioPlayerService.shared.movePlaybackQueueItem(fromIndex: fromIndex, toIndex: toIndex)
+    }
+
     public func clearPlaybackQueue() {
         AudioPlayerService.shared.clearPlaybackQueue()
+    }
+
+    public var totalQueueDuration: TimeInterval {
+        AudioPlayerService.shared.totalQueueDuration
+    }
+
+    public var totalQueueDurationPretty: String {
+        let total = totalQueueDuration
+        let hours = Int(total) / 3600
+        let minutes = (Int(total) % 3600) / 60
+        if hours > 0 {
+            return "\(hours)h \(minutes)m"
+        }
+        return "\(minutes)m"
     }
 
     public var currentChapter: Chapter? {
