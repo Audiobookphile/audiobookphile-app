@@ -135,7 +135,7 @@ public struct Book: Identifiable, Codable, Hashable, Sendable {
     }
 
     // Progress
-    public let userMediaProgress: MediaProgress?
+    public var userMediaProgress: MediaProgress?
 
     // Timestamps
     public let addedAt: Date?

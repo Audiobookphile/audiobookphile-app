@@ -468,6 +468,26 @@ public struct SettingsView: View {
                 isOn: $viewModel.volumeLevelerEnabled
             )
 
+            Picker(selection: Binding(
+                get: { viewModel.volumeBoost },
+                set: { viewModel.volumeBoost = $0 }
+            )) {
+                Text("100% (Normal)").tag(1.0)
+                Text("125% (+2 dB)").tag(1.25)
+                Text("150% (+3.5 dB)").tag(1.5)
+                Text("175% (+5 dB)").tag(1.75)
+                Text("200% (+6 dB - Quiet Books)").tag(2.0)
+            } label: {
+                HStack {
+                    Image(systemName: "speaker.wave.3.fill")
+                        .foregroundStyle(Color.appPrimary)
+                        .frame(width: 28)
+                    Text("Volume Boost Pre-amp")
+                        .foregroundStyle(.primary)
+                }
+                .padding(.vertical, 12)
+            }
+
             SettingsToggleRow(
                 icon: "speaker.wave.1.fill",
                 title: "Mono Audio Mix",
@@ -927,6 +947,16 @@ public class SettingsViewModel {
         set { 
             var s = AppState.shared.settings
             s.volumeLevelerEnabled = newValue
+            AppState.shared.updateSettings(s)
+            AudioPlayerService.shared.applyAudioDSP()
+        }
+    }
+
+    public var volumeBoost: Double {
+        get { AppState.shared.settings.volumeBoost }
+        set {
+            var s = AppState.shared.settings
+            s.volumeBoost = newValue
             AppState.shared.updateSettings(s)
             AudioPlayerService.shared.applyAudioDSP()
         }

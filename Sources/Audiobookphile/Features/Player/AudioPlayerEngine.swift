@@ -341,6 +341,22 @@ public class AudioPlayerEngine {
         eq.bands[2].bypass = !settings.deEsserEnabled
         eq.bands[3].bypass = !settings.volumeLevelerEnabled
 
+        // Volume boost pre-amp gain mapping (up to +6 dB for 200%)
+        let boost = settings.volumeBoost
+        let gainDb: Float
+        if boost <= 1.0 {
+            gainDb = 0.0
+        } else if boost <= 1.25 {
+            gainDb = 2.0
+        } else if boost <= 1.5 {
+            gainDb = 3.5
+        } else if boost <= 1.75 {
+            gainDb = 5.0
+        } else {
+            gainDb = 6.0
+        }
+        eq.globalGain = gainDb
+
         if reverbUnit == nil {
             let reverb = AVAudioUnitReverb()
             reverb.loadFactoryPreset(.smallRoom)

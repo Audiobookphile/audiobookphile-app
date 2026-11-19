@@ -208,6 +208,24 @@ public struct BookActionRow: View {
             }
             .accessibilityLabel("Queue Options")
             .accessibilityHint("Add to playback queue or play next")
+
+            // Mark as Finished / Not Finished Button
+            Button {
+                #if os(iOS) && !SKIP
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                #endif
+                viewModel.toggleFinished()
+            } label: {
+                Image(systemName: detailed.userMediaProgress?.isFinished == true ? "checkmark.circle.fill" : "checkmark.circle")
+                    .font(.title3)
+                    .foregroundStyle(detailed.userMediaProgress?.isFinished == true ? DesignTokens.Color.success : DesignTokens.Color.foreground)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .background(DesignTokens.Color.surface.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+            .accessibilityLabel(detailed.userMediaProgress?.isFinished == true ? "Mark as Not Finished" : "Mark as Finished")
+            .accessibilityHint("Toggles completed listening status")
         }
     }
     

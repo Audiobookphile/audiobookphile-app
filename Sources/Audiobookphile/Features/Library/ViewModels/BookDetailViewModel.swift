@@ -83,6 +83,34 @@ public class BookDetailViewModel {
             try? downloadService.deleteDownload(bookId: detailed.id)
         }
     }
+
+    public func toggleFinished() {
+        guard let detailed = detailedBook else { return }
+        let currentlyFinished = detailed.userMediaProgress?.isFinished ?? false
+        let newFinished = !currentlyFinished
+        Task {
+            do {
+                try await AudiobookphileAPI.shared.updateMediaProgress(libraryItemId: detailed.id, isFinished: newFinished)
+                let duration = detailed.duration
+                let newProgress = MediaProgress(
+                    id: detailed.userMediaProgress?.id ?? UUID().uuidString,
+                    libraryItemId: detailed.id,
+                    episodeId: nil,
+                    duration: duration,
+                    progress: newFinished ? 1.0 : 0.0,
+                    currentTime: newFinished ? duration : 0.0,
+                    isFinished: newFinished,
+                    hideFromContinueListening: newFinished,
+                    lastUpdate: Date(),
+                    startedAt: detailed.userMediaProgress?.startedAt ?? Date(),
+                    finishedAt: newFinished ? Date() : nil
+                )
+                detailedBook?.userMediaProgress = newProgress
+            } catch {
+                print("[BookDetailViewModel] Error toggling finished: \(error)")
+            }
+        }
+    }
     
     public func formatDuration(_ duration: TimeInterval) -> String {
         let hours = Int(duration) / 3600

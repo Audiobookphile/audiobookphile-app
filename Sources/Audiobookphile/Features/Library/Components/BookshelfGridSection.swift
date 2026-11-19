@@ -25,10 +25,16 @@ public struct BookshelfGridSection: View {
                         ForEach(viewModel.filteredBooks) { book in
                             BookCard(
                                 book: book,
-                                aspectRatio: viewModel.coverAspectRatio
-                            ) {
-                                selectedBookForDetails = book
-                            }
+                                aspectRatio: viewModel.coverAspectRatio,
+                                onTap: {
+                                    selectedBookForDetails = book
+                                },
+                                onToggleFinished: {
+                                    Task {
+                                        await viewModel.toggleFinished(for: book)
+                                    }
+                                }
+                            )
                             .applyBookshelfScrollTransition()
                             .onAppear {
                                 Task {

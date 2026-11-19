@@ -1096,6 +1096,29 @@ public actor AudiobookphileAPI {
         }
     }
 
+    /// Update user media progress (mark finished / reset)
+    public func updateMediaProgress(libraryItemId: String, isFinished: Bool, episodeId: String? = nil) async throws {
+        var path = "/api/me/progress/\(libraryItemId)"
+        if let episodeId = episodeId {
+            path += "/\(episodeId)"
+        }
+
+        guard let url = URL(string: APIEndpoint.custom(path: path).urlString(baseURL: self.baseURL)) else {
+            throw APIError.invalidResponse
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "PATCH"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        var body: [String: Any] = ["isFinished": isFinished]
+        if let episodeId = episodeId {
+            body["episodeId"] = episodeId
+        }
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let _: EmptyResponse = try await executeRequest(request, responseType: EmptyResponse.self)
+    }
+
     // MARK: - Cover Images
 
     /// Get cover image URL

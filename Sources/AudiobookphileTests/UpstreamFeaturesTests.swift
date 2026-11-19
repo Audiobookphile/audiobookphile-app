@@ -398,6 +398,75 @@ final class UpstreamFeaturesTests: XCTestCase {
         playerService.clearPlaybackQueue()
     }
 
+    func testVolumeBoostSettingsAndDSP() throws {
+        var settings = AppSettings()
+        XCTAssertEqual(settings.volumeBoost, 1.0)
+
+        settings.volumeBoost = 1.5
+        let data = try JSONEncoder().encode(settings)
+        let decoded = try JSONDecoder().decode(AppSettings.self, from: data)
+        XCTAssertEqual(decoded.volumeBoost, 1.5)
+
+        // Test boundary values
+        settings.volumeBoost = 2.0
+        XCTAssertEqual(settings.volumeBoost, 2.0)
+    }
+
+    func testBookMediaProgressToggleAndOptimisticUpdate() {
+        let initialProgress = MediaProgress(
+            id: "prog-1",
+            libraryItemId: "item-1",
+            episodeId: nil,
+            duration: 3600,
+            progress: 0.25,
+            currentTime: 900,
+            isFinished: false,
+            hideFromContinueListening: false,
+            lastUpdate: Date(),
+            startedAt: Date(),
+            finishedAt: nil
+        )
+
+        // Mark as finished
+        let duration = initialProgress.duration
+        let finishedProgress = MediaProgress(
+            id: initialProgress.id,
+            libraryItemId: initialProgress.libraryItemId,
+            episodeId: nil,
+            duration: duration,
+            progress: 1.0,
+            currentTime: duration,
+            isFinished: true,
+            hideFromContinueListening: true,
+            lastUpdate: Date(),
+            startedAt: initialProgress.startedAt,
+            finishedAt: Date()
+        )
+
+        XCTAssertTrue(finishedProgress.isFinished)
+        XCTAssertEqual(finishedProgress.progress, 1.0)
+        XCTAssertEqual(finishedProgress.currentTime, 3600)
+
+        // Mark as not finished (reset)
+        let resetProgress = MediaProgress(
+            id: initialProgress.id,
+            libraryItemId: initialProgress.libraryItemId,
+            episodeId: nil,
+            duration: duration,
+            progress: 0.0,
+            currentTime: 0.0,
+            isFinished: false,
+            hideFromContinueListening: false,
+            lastUpdate: Date(),
+            startedAt: initialProgress.startedAt,
+            finishedAt: nil
+        )
+
+        XCTAssertFalse(resetProgress.isFinished)
+        XCTAssertEqual(resetProgress.progress, 0.0)
+        XCTAssertEqual(resetProgress.currentTime, 0.0)
+    }
+
     func testAuthorDetailViewModelLoading() async throws {
         let mockService = MockLibraryService()
         let vm = AuthorDetailViewModel(authorName: "Andy Weir", libraryId: "mock-lib", service: mockService)

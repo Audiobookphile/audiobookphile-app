@@ -261,6 +261,36 @@ public class BookshelfViewModel {
         applyFilter()
     }
 
+    public func toggleFinished(for book: Book) async {
+        let currentlyFinished = book.userMediaProgress?.isFinished ?? false
+        let newFinished = !currentlyFinished
+        do {
+            try await AudiobookphileAPI.shared.updateMediaProgress(libraryItemId: book.id, isFinished: newFinished)
+            if let index = books.firstIndex(where: { $0.id == book.id }) {
+                var updatedBook = books[index]
+                let duration = updatedBook.duration
+                let newProgress = MediaProgress(
+                    id: updatedBook.userMediaProgress?.id ?? UUID().uuidString,
+                    libraryItemId: book.id,
+                    episodeId: nil,
+                    duration: duration,
+                    progress: newFinished ? 1.0 : 0.0,
+                    currentTime: newFinished ? duration : 0.0,
+                    isFinished: newFinished,
+                    hideFromContinueListening: newFinished,
+                    lastUpdate: Date(),
+                    startedAt: updatedBook.userMediaProgress?.startedAt ?? Date(),
+                    finishedAt: newFinished ? Date() : nil
+                )
+                updatedBook.userMediaProgress = newProgress
+                books[index] = updatedBook
+                applyFilter()
+            }
+        } catch {
+            print("[BookshelfViewModel] Error updating progress: \(error)")
+        }
+    }
+
     public func count(for filter: BookshelfFilter) -> Int {
         let downloadedIds = Set(DownloadService.shared.downloads.filter { $0.status == .completed }.map { $0.libraryItemId })
         switch filter {

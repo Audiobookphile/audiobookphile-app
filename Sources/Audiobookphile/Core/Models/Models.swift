@@ -114,6 +114,7 @@ public struct AppSettings: Codable, Sendable {
     public var lowCutFilterEnabled: Bool = true
     public var binauralReverbEnabled: Bool = false
     public var binauralReverbPresetRaw: Int = 0
+    public var volumeBoost: Double = 1.0
 
     public init() {}
 
@@ -141,6 +142,7 @@ public struct AppSettings: Codable, Sendable {
         lowCutFilterEnabled = try container.decodeIfPresent(Bool.self, forKey: .lowCutFilterEnabled) ?? true
         binauralReverbEnabled = try container.decodeIfPresent(Bool.self, forKey: .binauralReverbEnabled) ?? false
         binauralReverbPresetRaw = try container.decodeIfPresent(Int.self, forKey: .binauralReverbPresetRaw) ?? 0
+        volumeBoost = try container.decodeIfPresent(Double.self, forKey: .volumeBoost) ?? 1.0
         smartRewindEnabled = try container.decodeIfPresent(Bool.self, forKey: .smartRewindEnabled) ?? true
         smartRewindSeconds = try container.decodeIfPresent(Int.self, forKey: .smartRewindSeconds) ?? 20
         shakeToResetSleepTimer = try container.decodeIfPresent(Bool.self, forKey: .shakeToResetSleepTimer) ?? true
@@ -175,6 +177,7 @@ public struct AppSettings: Codable, Sendable {
         case lowCutFilterEnabled
         case binauralReverbEnabled
         case binauralReverbPresetRaw
+        case volumeBoost
         case smartRewindEnabled
         case smartRewindSeconds
         case shakeToResetSleepTimer

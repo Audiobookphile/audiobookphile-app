@@ -14,14 +14,21 @@ public struct BookCard: View {
     let book: Book
     public var aspectRatio: CGFloat = 1.0
     public let onTap: () -> Void
+    public var onToggleFinished: (() -> Void)? = nil
     @State private var colorLoader = DynamicColorLoader()
     var proMotion = ProMotionManager.shared
     var downloadService = DownloadService.shared
 
-    public init(book: Book, aspectRatio: CGFloat = 1.0, onTap: @escaping () -> Void) {
+    public init(
+        book: Book,
+        aspectRatio: CGFloat = 1.0,
+        onTap: @escaping () -> Void,
+        onToggleFinished: (() -> Void)? = nil
+    ) {
         self.book = book
         self.aspectRatio = aspectRatio
         self.onTap = onTap
+        self.onToggleFinished = onToggleFinished
     }
 
     public var body: some View {
@@ -65,6 +72,75 @@ public struct BookCard: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.liquid)
+        .contextMenu {
+            Button {
+                onTap()
+            } label: {
+                Label("View Details", systemImage: "info.circle")
+            }
+
+            Button {
+                Task {
+                    if let session = try? await AudiobookphileAPI.shared.startPlaybackSession(libraryItemId: book.id) {
+                        AudioPlayerService.shared.startPlayback(session: session)
+                    }
+                }
+            } label: {
+                Label(book.userMediaProgress?.isFinished == true ? "Play Again" : "Play", systemImage: "play.fill")
+            }
+
+            Button {
+                Task {
+                    if let session = try? await AudiobookphileAPI.shared.startPlaybackSession(libraryItemId: book.id) {
+                        AudioPlayerService.shared.playNextInPlaybackQueue(session: session)
+                    }
+                }
+            } label: {
+                Label("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward")
+            }
+
+            Button {
+                Task {
+                    if let session = try? await AudiobookphileAPI.shared.startPlaybackSession(libraryItemId: book.id) {
+                        AudioPlayerService.shared.addToPlaybackQueue(session: session)
+                    }
+                }
+            } label: {
+                Label("Add to Queue", systemImage: "text.badge.plus")
+            }
+
+            if let onToggleFinished = onToggleFinished {
+                Divider()
+
+                Button {
+                    onToggleFinished()
+                } label: {
+                    if book.userMediaProgress?.isFinished == true {
+                        Label("Mark as Not Finished", systemImage: "arrow.counterclockwise")
+                    } else {
+                        Label("Mark as Finished", systemImage: "checkmark.circle")
+                    }
+                }
+            }
+
+            Divider()
+
+            if isDownloaded {
+                Button(role: .destructive) {
+                    try? downloadService.deleteDownload(bookId: book.id)
+                } label: {
+                    Label("Remove Download", systemImage: "trash")
+                }
+            } else if book.isMissing != true {
+                Button {
+                    Task {
+                        await downloadService.downloadBook(book)
+                    }
+                } label: {
+                    Label("Download", systemImage: "arrow.down.circle")
+                }
+            }
+        }
         .task(id: coverURL) {
             await colorLoader.loadColor(from: coverURL)
         }
