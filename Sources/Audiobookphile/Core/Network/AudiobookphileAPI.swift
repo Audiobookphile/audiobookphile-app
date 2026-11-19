@@ -1097,7 +1097,7 @@ public actor AudiobookphileAPI {
     }
 
     /// Update user media progress (mark finished / reset)
-    public func updateMediaProgress(libraryItemId: String, isFinished: Bool, episodeId: String? = nil) async throws {
+    public func updateMediaProgress(libraryItemId: String, isFinished: Bool, episodeId: String? = nil, currentTime: TimeInterval? = nil) async throws {
         var path = "/api/me/progress/\(libraryItemId)"
         if let episodeId = episodeId {
             path += "/\(episodeId)"
@@ -1113,6 +1113,9 @@ public actor AudiobookphileAPI {
         var body: [String: Any] = ["isFinished": isFinished]
         if let episodeId = episodeId {
             body["episodeId"] = episodeId
+        }
+        if let currentTime = currentTime {
+            body["currentTime"] = currentTime
         }
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 

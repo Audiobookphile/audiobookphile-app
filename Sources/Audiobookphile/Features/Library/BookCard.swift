@@ -123,6 +123,21 @@ public struct BookCard: View {
                 }
             }
 
+            if book.userMediaProgress != nil {
+                Button {
+                    Task {
+                        _ = try? await AudiobookphileAPI.shared.updateMediaProgress(
+                            libraryItemId: book.id,
+                            isFinished: false,
+                            currentTime: 0
+                        )
+                        DesignTokens.Haptics.success()
+                    }
+                } label: {
+                    Label("Reset Progress (0:00)", systemImage: "arrow.uturn.backward")
+                }
+            }
+
             Divider()
 
             if isDownloaded {

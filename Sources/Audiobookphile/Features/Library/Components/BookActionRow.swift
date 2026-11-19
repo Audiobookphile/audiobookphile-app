@@ -226,6 +226,26 @@ public struct BookActionRow: View {
             }
             .accessibilityLabel(detailed.userMediaProgress?.isFinished == true ? "Mark as Not Finished" : "Mark as Finished")
             .accessibilityHint("Toggles completed listening status")
+
+            // Reset Progress to Beginning (0:00) Button
+            if hasProgress(detailed) || detailed.userMediaProgress?.isFinished == true {
+                Button {
+                    #if os(iOS) && !SKIP
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    #endif
+                    viewModel.resetProgress()
+                } label: {
+                    Image(systemName: "arrow.uturn.backward")
+                        .font(.title3)
+                        .foregroundStyle(DesignTokens.Color.foreground)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        .background(DesignTokens.Color.surface.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                .accessibilityLabel("Reset Progress")
+                .accessibilityHint("Resets listening progress to 0:00")
+            }
         }
     }
     

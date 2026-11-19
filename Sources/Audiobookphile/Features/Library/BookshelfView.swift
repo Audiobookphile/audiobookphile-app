@@ -30,6 +30,7 @@ public struct BookshelfView: View {
         case series = "Series"
         case authors = "Authors"
         case narrators = "Narrators"
+        case genres = "Genres"
     }
 
     public init() {}
@@ -50,8 +51,10 @@ public struct BookshelfView: View {
                         seriesTabSection
                     } else if selectedPill == .authors {
                         authorsTabSection
-                    } else {
+                    } else if selectedPill == .narrators {
                         narratorsTabSection
+                    } else {
+                        genresTabSection
                     }
 
                     Spacer().frame(height: 100) // Bottom clearance for floating MiniPlayer
@@ -112,6 +115,7 @@ public struct BookshelfView: View {
                     Text("Series").tag(LibraryPill.series)
                     Text("Authors").tag(LibraryPill.authors)
                     Text("Narrators").tag(LibraryPill.narrators)
+                    Text("Genres").tag(LibraryPill.genres)
                 }
                 .pickerStyle(.segmented)
                 .controlSize(.large)
@@ -486,6 +490,77 @@ public struct BookshelfView: View {
                     .onTapGesture {
                         DesignTokens.Haptics.selection()
                         selectedNarratorInfo = SelectedNarratorInfo(name: narrator, books: books)
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 12)
+    }
+
+    private var genresTabSection: some View {
+        let query = viewModel.filterSearchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let pairs: [(String, Book)] = viewModel.books.flatMap { book in
+            book.media.metadata.genres.map { ($0.trimmingCharacters(in: .whitespacesAndNewlines), book) }
+        }.filter { !$0.0.isEmpty }
+
+        let grouped = Dictionary(grouping: pairs, by: { $0.0 })
+            .mapValues { pairs in
+                Array(Dictionary(grouping: pairs.map { $0.1 }, by: { $0.id }).compactMap { $0.value.first })
+            }
+            .filter { key, _ in
+                query.isEmpty || key.lowercased().contains(query)
+            }
+            .sorted { $0.key < $1.key }
+
+        return VStack(spacing: 12) {
+            if grouped.isEmpty {
+                VStack(spacing: 16) {
+                    Spacer().frame(height: 60)
+                    Image(systemName: "tag")
+                        .font(.system(size: 44))
+                        .foregroundStyle(.secondary)
+                    Text(query.isEmpty ? "No Genres Found" : "No Genres Matching \"\(viewModel.filterSearchText)\"")
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
+                }
+            } else {
+                ForEach(grouped, id: \.key) { genre, books in
+                    let totalDuration = books.reduce(0.0) { $0 + $1.duration }
+                    let hours = Int(totalDuration) / 3600
+                    let minutes = (Int(totalDuration) % 3600) / 60
+                    let durationText = hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m"
+
+                    GlassCard {
+                        HStack(spacing: 16) {
+                            Circle()
+                                .fill(Color.appPrimary.opacity(0.15))
+                                .frame(width: 44, height: 44)
+                                .overlay {
+                                    Image(systemName: "tag.fill")
+                                        .foregroundStyle(Color.appPrimary)
+                                }
+
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(genre)
+                                    .font(.headline)
+                                    .foregroundStyle(.primary)
+                                Text("\(books.count) \(books.count == 1 ? "Audiobook" : "Audiobooks") • \(durationText)")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            Spacer()
+
+                            Image(systemName: "chevron.right")
+                                .font(.caption.bold())
+                                .foregroundStyle(.tertiary)
+                        }
+                        .padding(.vertical, 4)
+                    }
+                    .onTapGesture {
+                        DesignTokens.Haptics.selection()
+                        selectedNarratorInfo = SelectedNarratorInfo(name: genre, books: books)
                     }
                 }
             }

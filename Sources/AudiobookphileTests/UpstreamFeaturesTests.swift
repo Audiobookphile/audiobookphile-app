@@ -1295,4 +1295,37 @@ final class UpstreamFeaturesTests: XCTestCase {
         specsSheet.onDismiss()
         XCTAssertTrue(specsDismissed)
     }
+
+    func testGenresTabGrouping() throws {
+        let b1 = Book(
+            id: "b1",
+            title: "Dune",
+            author: "Frank Herbert",
+            duration: 7200
+        )
+        let b2 = Book(
+            id: "b2",
+            title: "Neuromancer",
+            author: "William Gibson",
+            duration: 5400
+        )
+
+        let _ = [b1, b2]
+        // Grouping pairs test
+        let pairs: [(String, Book)] = [
+            ("Science Fiction", b1),
+            ("Sci-Fi", b1),
+            ("Science Fiction", b2),
+            ("Cyberpunk", b2)
+        ]
+
+        let grouped = Dictionary(grouping: pairs, by: { $0.0 })
+            .mapValues { $0.map(\.1) }
+
+        XCTAssertEqual(grouped["Science Fiction"]?.count, 2)
+        XCTAssertEqual(grouped["Cyberpunk"]?.count, 1)
+
+        let totalSciFiDuration = grouped["Science Fiction"]?.reduce(0.0) { $0 + $1.duration } ?? 0
+        XCTAssertEqual(totalSciFiDuration, 12600)
+    }
 }

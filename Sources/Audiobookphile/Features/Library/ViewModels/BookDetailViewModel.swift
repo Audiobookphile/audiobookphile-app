@@ -111,6 +111,37 @@ public class BookDetailViewModel {
             }
         }
     }
+
+    public func resetProgress() {
+        guard let detailed = detailedBook else { return }
+        Task {
+            do {
+                try await AudiobookphileAPI.shared.updateMediaProgress(
+                    libraryItemId: detailed.id,
+                    isFinished: false,
+                    currentTime: 0
+                )
+                let duration = detailed.duration
+                let newProgress = MediaProgress(
+                    id: detailed.userMediaProgress?.id ?? UUID().uuidString,
+                    libraryItemId: detailed.id,
+                    episodeId: nil,
+                    duration: duration,
+                    progress: 0.0,
+                    currentTime: 0.0,
+                    isFinished: false,
+                    hideFromContinueListening: false,
+                    lastUpdate: Date(),
+                    startedAt: nil,
+                    finishedAt: nil
+                )
+                detailedBook?.userMediaProgress = newProgress
+                DesignTokens.Haptics.success()
+            } catch {
+                print("[BookDetailViewModel] Error resetting progress: \(error)")
+            }
+        }
+    }
     
     public func formatDuration(_ duration: TimeInterval) -> String {
         let hours = Int(duration) / 3600
