@@ -20,11 +20,14 @@ public struct BookshelfView: View {
     @State var selectedBookForDetails: Book?
     @State var selectedAuthorName: String?
     @State var selectedNarratorInfo: SelectedNarratorInfo?
+    @State var selectedSeriesName: String?
+    @State var isListView: Bool = false
 
     @State var selectedPill: LibraryPill = .library
     
     enum LibraryPill: String, CaseIterable {
         case library = "Library"
+        case series = "Series"
         case authors = "Authors"
         case narrators = "Narrators"
     }
@@ -43,6 +46,8 @@ public struct BookshelfView: View {
                     if selectedPill == .library {
                         filterChipsBar
                         libraryGridSection
+                    } else if selectedPill == .series {
+                        seriesTabSection
                     } else if selectedPill == .authors {
                         authorsTabSection
                     } else {
@@ -83,6 +88,14 @@ public struct BookshelfView: View {
                 AuthorDetailView(authorName: author, libraryId: appState.currentLibraryId)
             }
         }
+        .navigationDestination(isPresented: Binding(
+            get: { selectedSeriesName != nil },
+            set: { if !$0 { selectedSeriesName = nil } }
+        )) {
+            if let series = selectedSeriesName {
+                SeriesDetailView(seriesName: series, libraryId: appState.currentLibraryId)
+            }
+        }
         .sheet(item: $selectedNarratorInfo) { info in
             NarratorDetailSheet(narratorName: info.name, books: info.books) { book in
                 selectedBookForDetails = book
@@ -96,6 +109,7 @@ public struct BookshelfView: View {
             ToolbarItem(placement: .principal) {
                 Picker("Library View", selection: $selectedPill) {
                     Text("Library").tag(LibraryPill.library)
+                    Text("Series").tag(LibraryPill.series)
                     Text("Authors").tag(LibraryPill.authors)
                     Text("Narrators").tag(LibraryPill.narrators)
                 }
@@ -106,13 +120,39 @@ public struct BookshelfView: View {
             #if os(iOS) || SKIP
             ToolbarItem(placement: .topBarTrailing) {
                 if selectedPill == .library {
-                    sortMenuView
+                    HStack(spacing: 8) {
+                        Button {
+                            withAnimation(DesignTokens.Spring.snappy) {
+                                isListView.toggle()
+                            }
+                            DesignTokens.Haptics.selection()
+                        } label: {
+                            Image(systemName: isListView ? "square.grid.2x2" : "list.bullet")
+                        }
+                        .tint(.primary)
+                        .help(isListView ? "Switch to Grid View" : "Switch to List View")
+
+                        sortMenuView
+                    }
                 }
             }
             #else
             ToolbarItem(placement: .primaryAction) {
                 if selectedPill == .library {
-                    sortMenuView
+                    HStack(spacing: 8) {
+                        Button {
+                            withAnimation(DesignTokens.Spring.snappy) {
+                                isListView.toggle()
+                            }
+                            DesignTokens.Haptics.selection()
+                        } label: {
+                            Image(systemName: isListView ? "square.grid.2x2" : "list.bullet")
+                        }
+                        .tint(.primary)
+                        .help(isListView ? "Switch to Grid View" : "Switch to List View")
+
+                        sortMenuView
+                    }
                 }
             }
             #endif
@@ -229,7 +269,99 @@ public struct BookshelfView: View {
     // MARK: - Library Grid
 
     private var libraryGridSection: some View {
-        BookshelfGridSection(viewModel: viewModel, selectedBookForDetails: $selectedBookForDetails)
+        BookshelfGridSection(viewModel: viewModel, selectedBookForDetails: $selectedBookForDetails, isListView: isListView)
+    }
+
+    // MARK: - Series Section
+
+    private var seriesTabSection: some View {
+        let query = viewModel.filterSearchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let grouped = Dictionary(grouping: viewModel.books.compactMap { b -> (String, Book)? in
+            guard let name = b.seriesName?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty else {
+                return nil
+            }
+            return (name, b)
+        }, by: { $0.0 })
+        .mapValues { pairs in pairs.map { $0.1 } }
+        .filter { seriesName, _ in
+            query.isEmpty || seriesName.lowercased().contains(query)
+        }
+        .sorted { $0.key < $1.key }
+
+        return VStack(spacing: 12) {
+            if grouped.isEmpty {
+                VStack(spacing: 16) {
+                    Spacer().frame(height: 60)
+                    Image(systemName: "books.vertical")
+                        .font(.system(size: 44))
+                        .foregroundStyle(.secondary)
+                    Text(query.isEmpty ? "No Series Found" : "No Series Matching \"\(viewModel.filterSearchText)\"")
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
+                }
+            } else {
+                ForEach(grouped, id: \.key) { seriesName, books in
+                    let totalDuration = books.reduce(0.0) { $0 + $1.duration }
+                    GlassCard {
+                        HStack(spacing: 16) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color.appPrimary.opacity(0.15))
+                                    .frame(width: 52, height: 52)
+
+                                Image(systemName: "books.vertical.fill")
+                                    .font(.title3)
+                                    .foregroundStyle(Color.appPrimary)
+                            }
+
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(seriesName)
+                                    .font(.headline)
+                                    .foregroundStyle(.primary)
+
+                                HStack(spacing: 8) {
+                                    Text("\(books.count) \(books.count == 1 ? "Audiobook" : "Audiobooks")")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+
+                                    if totalDuration > 0 {
+                                        Text("•")
+                                            .font(.caption2)
+                                            .foregroundStyle(.tertiary)
+                                        Text(formatSeriesDuration(totalDuration))
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                            }
+
+                            Spacer()
+
+                            Image(systemName: "chevron.right")
+                                .font(.caption.bold())
+                                .foregroundStyle(.tertiary)
+                        }
+                        .padding(.vertical, 4)
+                    }
+                    .onTapGesture {
+                        DesignTokens.Haptics.selection()
+                        selectedSeriesName = seriesName
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 12)
+    }
+
+    private func formatSeriesDuration(_ duration: TimeInterval) -> String {
+        let total = Int(max(0, duration))
+        let hours = total / 3600
+        let minutes = (total % 3600) / 60
+        if hours > 0 {
+            return "\(hours)h \(minutes)m"
+        }
+        return "\(minutes)m"
     }
 
     // MARK: - Authors and Narrators Sections

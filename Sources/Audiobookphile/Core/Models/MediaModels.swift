@@ -149,7 +149,7 @@ public struct Book: Identifiable, Codable, Hashable, Sendable {
 }
 
 extension Book {
-    public init(id: String, title: String, author: String?, duration: TimeInterval? = nil) {
+    public init(id: String, title: String, author: String?, seriesName: String? = nil, duration: TimeInterval? = nil) {
         self.id = id
         self.libraryId = nil
         self.folderId = nil
@@ -162,7 +162,7 @@ extension Book {
             chapters: nil,
             duration: duration,
             size: nil,
-            metadata: BookMetadata(title: title, authorName: author),
+            metadata: BookMetadata(title: title, authorName: author, seriesName: seriesName),
             coverPath: nil,
             tags: nil,
             audioFiles: nil,

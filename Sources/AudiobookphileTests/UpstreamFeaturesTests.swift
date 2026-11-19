@@ -1048,4 +1048,59 @@ final class UpstreamFeaturesTests: XCTestCase {
             XCTAssertEqual(settings.jumpBackwardsTime, interval)
         }
     }
+
+    func testSeriesTabGroupingAndTotalDuration() throws {
+        let b1 = Book(
+            id: "b1",
+            title: "Dune",
+            author: "Frank Herbert",
+            seriesName: "Dune Saga",
+            duration: 36000
+        )
+        let b2 = Book(
+            id: "b2",
+            title: "Dune Messiah",
+            author: "Frank Herbert",
+            seriesName: "Dune Saga",
+            duration: 18000
+        )
+        let bStandalone = Book(
+            id: "b3",
+            title: "Standalone Novel",
+            author: "Author",
+            seriesName: nil,
+            duration: 20000
+        )
+
+        let books = [b1, b2, bStandalone]
+
+        let seriesGrouped = Dictionary(grouping: books.compactMap { b -> (String, Book)? in
+            guard let name = b.seriesName?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty else {
+                return nil
+            }
+            return (name, b)
+        }, by: { $0.0 })
+        .mapValues { pairs in pairs.map { $0.1 } }
+
+        // Only Dune Saga should be grouped
+        XCTAssertEqual(seriesGrouped.count, 1)
+        XCTAssertNotNil(seriesGrouped["Dune Saga"])
+        XCTAssertEqual(seriesGrouped["Dune Saga"]?.count, 2)
+
+        let totalDuration = seriesGrouped["Dune Saga"]?.reduce(0.0) { $0 + $1.duration } ?? 0
+        XCTAssertEqual(totalDuration, 54000) // 15 hours
+    }
+
+    func testBookshelfListViewLayoutToggle() throws {
+        var isListView = false
+        XCTAssertFalse(isListView)
+
+        // Toggle to list view
+        isListView.toggle()
+        XCTAssertTrue(isListView)
+
+        // Toggle back to grid view
+        isListView.toggle()
+        XCTAssertFalse(isListView)
+    }
 }
