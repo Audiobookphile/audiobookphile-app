@@ -267,3 +267,4 @@ public struct BookmarksListView: View {
         }
     }
 }
+

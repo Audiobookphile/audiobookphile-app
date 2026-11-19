@@ -551,11 +551,13 @@ public class AudioPlayerService: AudioPlayerServiceProtocol {
         let asset = AVURLAsset(url: url, options: options)
         let item = AVPlayerItem(asset: asset)
         item.preferredForwardBufferDuration = 60.0
-        #if os(iOS)
+        #if os(iOS) || os(macOS)
         item.audioTimePitchAlgorithm = .spectral
+        #if os(iOS)
         if #available(iOS 15.0, *) {
             item.allowedAudioSpatializationFormats = [.monoAndStereo, .multichannel]
         }
+        #endif
         #endif
         return item
     }

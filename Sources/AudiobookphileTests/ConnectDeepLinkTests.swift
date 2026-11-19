@@ -95,4 +95,56 @@ final class ConnectDeepLinkTests: XCTestCase {
         let link = ConnectDeepLink.parse(url)
         XCTAssertNil(link)
     }
+
+    func testParseAudiobookDeepLinkWithTimestamp() {
+        guard let url = URL(string: "audiobookphile://item/book-456?t=1250&play=1") else {
+            XCTFail("Failed to construct URL")
+            return
+        }
+
+        let link = AudiobookDeepLink.parse(url)
+        XCTAssertNotNil(link)
+        XCTAssertEqual(link?.itemId, "book-456")
+        XCTAssertEqual(link?.timestamp, 1250.0)
+        XCTAssertEqual(link?.autoPlay, true)
+    }
+
+    func testParseAudiobookPlayDeepLink() {
+        guard let url = URL(string: "audiobookphile://play/book-789?t=360") else {
+            XCTFail("Failed to construct URL")
+            return
+        }
+
+        let link = AudiobookDeepLink.parse(url)
+        XCTAssertNotNil(link)
+        XCTAssertEqual(link?.itemId, "book-789")
+        XCTAssertEqual(link?.timestamp, 360.0)
+        XCTAssertEqual(link?.autoPlay, true)
+    }
+
+    func testParseWebShareLinkWithTimestamp() {
+        guard let url = URL(string: "https://demo.audiobookphile.app/share/great-gatsby?t=4820") else {
+            XCTFail("Failed to construct URL")
+            return
+        }
+
+        let link = AudiobookDeepLink.parse(url)
+        XCTAssertNotNil(link)
+        XCTAssertEqual(link?.itemId, "great-gatsby")
+        XCTAssertEqual(link?.timestamp, 4820.0)
+        XCTAssertEqual(link?.autoPlay, false)
+    }
+
+    func testParseWebLibraryItemLink() {
+        guard let url = URL(string: "https://demo.audiobookphile.app/library/default/item/item-xyz?t=150&play=true") else {
+            XCTFail("Failed to construct URL")
+            return
+        }
+
+        let link = AudiobookDeepLink.parse(url)
+        XCTAssertNotNil(link)
+        XCTAssertEqual(link?.itemId, "item-xyz")
+        XCTAssertEqual(link?.timestamp, 150.0)
+        XCTAssertEqual(link?.autoPlay, true)
+    }
 }
