@@ -54,6 +54,23 @@ public struct PlaybackControlsView: View {
                     viewModel.jumpBackward()
                 }
             )
+            .contextMenu {
+                Text("Jump Backward Duration")
+                ForEach([5, 10, 15, 30, 45, 60], id: \.self) { seconds in
+                    Button {
+                        var s = AppState.shared.settings
+                        s.jumpBackwardsTime = seconds
+                        AppState.shared.updateSettings(s)
+                        triggerHaptic(isLight: false)
+                    } label: {
+                        if viewModel.jumpBackwardTime == seconds {
+                            Label("\(seconds) Seconds", systemImage: "checkmark")
+                        } else {
+                            Text("\(seconds) Seconds")
+                        }
+                    }
+                }
+            }
             .disabled(isUiLocked)
             .opacity(isUiLocked ? 0.3 : 1.0)
 
@@ -72,6 +89,23 @@ public struct PlaybackControlsView: View {
                     viewModel.jumpForward()
                 }
             )
+            .contextMenu {
+                Text("Jump Forward Duration")
+                ForEach([5, 10, 15, 30, 45, 60], id: \.self) { seconds in
+                    Button {
+                        var s = AppState.shared.settings
+                        s.jumpForwardTime = seconds
+                        AppState.shared.updateSettings(s)
+                        triggerHaptic(isLight: false)
+                    } label: {
+                        if viewModel.jumpForwardTime == seconds {
+                            Label("\(seconds) Seconds", systemImage: "checkmark")
+                        } else {
+                            Text("\(seconds) Seconds")
+                        }
+                    }
+                }
+            }
             .disabled(isUiLocked)
             .opacity(isUiLocked ? 0.3 : 1.0)
 

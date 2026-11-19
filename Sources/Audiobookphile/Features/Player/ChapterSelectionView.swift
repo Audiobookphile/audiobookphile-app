@@ -86,7 +86,11 @@ public struct ChapterSelectionView: View {
                                                 Text(chapter.title)
                                                     .font(.headline)
                                                     .fontWeight(chapter.id == currentChapter?.id ? .bold : .regular)
-                                                    .foregroundStyle(chapter.id == currentChapter?.id ? Color.appPrimary : .primary)
+                                                    .foregroundStyle(
+                                                        chapter.id == currentChapter?.id
+                                                            ? Color.appPrimary
+                                                            : (isListened(chapter) ? .secondary : .primary)
+                                                    )
 
                                                 HStack(spacing: 6) {
                                                     Text(formatTimestamp(chapter.start))
@@ -101,6 +105,16 @@ public struct ChapterSelectionView: View {
                                                         .font(.caption)
                                                         .fontWeight(chapter.id == currentChapter?.id ? .bold : .regular)
                                                         .foregroundStyle(.secondary)
+
+                                                    if isListened(chapter) {
+                                                        Text("Listened")
+                                                            .font(.caption2.bold())
+                                                            .foregroundStyle(Color.green)
+                                                            .padding(.horizontal, 6)
+                                                            .padding(.vertical, 2)
+                                                            .background(Color.green.opacity(0.12))
+                                                            .clipShape(Capsule())
+                                                    }
 
                                                     if chapter.id == currentChapter?.id, let current = currentTime {
                                                         let remaining = max(0, chapter.end - current)
@@ -137,6 +151,10 @@ public struct ChapterSelectionView: View {
                                             if chapter.id == currentChapter?.id {
                                                 Image(systemName: "speaker.wave.2.fill")
                                                     .foregroundStyle(Color.appPrimary)
+                                            } else if isListened(chapter) {
+                                                Image(systemName: "checkmark.circle.fill")
+                                                    .font(.subheadline)
+                                                    .foregroundStyle(Color.green.opacity(0.85))
                                             }
                                         }
                                     }
@@ -262,6 +280,11 @@ public struct ChapterSelectionView: View {
             return "\(hours)h \(minutes)m"
         }
         return "\(minutes)m \(seconds)s"
+    }
+
+    private func isListened(_ chapter: Chapter) -> Bool {
+        guard let current = currentTime else { return false }
+        return current >= chapter.end
     }
 
     private func copyChapterLink(_ chapter: Chapter) {

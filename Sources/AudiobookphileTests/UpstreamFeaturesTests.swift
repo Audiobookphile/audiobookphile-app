@@ -994,4 +994,58 @@ final class UpstreamFeaturesTests: XCTestCase {
         XCTAssertEqual(activeChapter?.id, 2)
         XCTAssertEqual(activeChapter?.title, "Chapter 2")
     }
+
+    func testChapterCompletionAndListenedCalculation() throws {
+        let ch1 = Chapter(id: 1, title: "Chapter 1", start: 0, end: 300)
+        let ch2 = Chapter(id: 2, title: "Chapter 2", start: 300, end: 600)
+        let ch3 = Chapter(id: 3, title: "Chapter 3", start: 600, end: 900)
+
+        func isChapterListened(_ chapter: Chapter, currentTime: TimeInterval?) -> Bool {
+            guard let current = currentTime else { return false }
+            return current >= chapter.end
+        }
+
+        // 1. Playback before ch1 finishes (150s) -> None listened
+        XCTAssertFalse(isChapterListened(ch1, currentTime: 150))
+        XCTAssertFalse(isChapterListened(ch2, currentTime: 150))
+        XCTAssertFalse(isChapterListened(ch3, currentTime: 150))
+
+        // 2. Playback midway in ch2 (450s) -> ch1 listened, ch2 & ch3 not listened
+        XCTAssertTrue(isChapterListened(ch1, currentTime: 450))
+        XCTAssertFalse(isChapterListened(ch2, currentTime: 450))
+        XCTAssertFalse(isChapterListened(ch3, currentTime: 450))
+
+        // 3. Playback at 900s (completed all) -> ch1, ch2, ch3 all listened
+        XCTAssertTrue(isChapterListened(ch1, currentTime: 900))
+        XCTAssertTrue(isChapterListened(ch2, currentTime: 900))
+        XCTAssertTrue(isChapterListened(ch3, currentTime: 900))
+
+        // 4. Nil currentTime -> None listened
+        XCTAssertFalse(isChapterListened(ch1, currentTime: nil))
+    }
+
+    func testQuickJumpDurationSettingsUpdate() throws {
+        var settings = AppSettings()
+        XCTAssertEqual(settings.jumpForwardTime, 30)
+        XCTAssertEqual(settings.jumpBackwardsTime, 10)
+
+        // Update to non-default jump intervals
+        settings.jumpForwardTime = 45
+        settings.jumpBackwardsTime = 15
+
+        let data = try JSONEncoder().encode(settings)
+        let decoded = try JSONDecoder().decode(AppSettings.self, from: data)
+
+        XCTAssertEqual(decoded.jumpForwardTime, 45)
+        XCTAssertEqual(decoded.jumpBackwardsTime, 15)
+
+        // Verify supported intervals
+        let supported = [5, 10, 15, 30, 45, 60]
+        for interval in supported {
+            settings.jumpForwardTime = interval
+            settings.jumpBackwardsTime = interval
+            XCTAssertEqual(settings.jumpForwardTime, interval)
+            XCTAssertEqual(settings.jumpBackwardsTime, interval)
+        }
+    }
 }
