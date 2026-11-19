@@ -11,9 +11,19 @@ public struct ChapterSelectionView: View {
     @Environment(\.dismiss) var dismiss
     @State private var selectedChapterForAI: Chapter?
     @State private var searchText = ""
+    @State private var isReversed = false
 
     private var filteredChapters: [Chapter] {
-        Chapter.filter(chapters: chapters, query: searchText)
+        let filtered = Chapter.filter(chapters: chapters, query: searchText)
+        return isReversed ? filtered.reversed() : filtered
+    }
+
+    private var leadingPlacement: ToolbarItemPlacement {
+        #if os(iOS) || SKIP
+        return .navigationBarLeading
+        #else
+        return .navigation
+        #endif
     }
 
     private var trailingPlacement: ToolbarItemPlacement {
@@ -164,6 +174,19 @@ public struct ChapterSelectionView: View {
             .navigationBarTitleDisplayMode(.inline)
             #endif
             .toolbar {
+                ToolbarItem(placement: leadingPlacement) {
+                    Button {
+                        withAnimation(DesignTokens.Spring.snappy) {
+                            isReversed.toggle()
+                        }
+                        DesignTokens.Haptics.selection()
+                    } label: {
+                        Image(systemName: isReversed ? "arrow.up.arrow.down.circle.fill" : "arrow.up.arrow.down.circle")
+                            .foregroundStyle(isReversed ? Color.appPrimary : Color.primary)
+                    }
+                    .help(isReversed ? "Reverse order (Newest first)" : "Standard order (Oldest first)")
+                }
+
                 ToolbarItem(placement: trailingPlacement) {
                     Button("Done") {
                         dismiss()

@@ -929,4 +929,43 @@ final class UpstreamFeaturesTests: XCTestCase {
         let intervalNextDay = nextTarget2.timeIntervalSince(baseDate)
         XCTAssertEqual(intervalNextDay, 7200) // 2 hours
     }
+
+    func testChapterOrderReversalInSelectionView() throws {
+        let ch1 = Chapter(id: 0, title: "Chapter 1", start: 0, end: 300)
+        let ch2 = Chapter(id: 1, title: "Chapter 2", start: 300, end: 600)
+        let ch3 = Chapter(id: 2, title: "Chapter 3", start: 600, end: 900)
+        let chapters = [ch1, ch2, ch3]
+
+        // 1. Ascending standard order
+        let ascending = Chapter.filter(chapters: chapters, query: "")
+        XCTAssertEqual(ascending.count, 3)
+        XCTAssertEqual(ascending.first?.id, 0)
+        XCTAssertEqual(ascending.last?.id, 2)
+
+        // 2. Reversed descending order
+        let descending = ascending.reversed()
+        XCTAssertEqual(descending.count, 3)
+        XCTAssertEqual(descending.first?.id, 2)
+        XCTAssertEqual(descending.last?.id, 0)
+        XCTAssertEqual(descending.first?.title, "Chapter 3")
+
+        // 3. Search filter with reverse order
+        let filtered = Chapter.filter(chapters: chapters, query: "Chapter 2").reversed()
+        XCTAssertEqual(filtered.count, 1)
+        XCTAssertEqual(filtered.first?.id, 1)
+    }
+
+    func testSleepTimerQuickActionsPresetDurations() throws {
+        let timer = AudioPlayerSleepTimer()
+        let presets = [15 * 60, 30 * 60, 45 * 60, 60 * 60]
+
+        for duration in presets {
+            timer.setSleepTimer(seconds: TimeInterval(duration)) {}
+            XCTAssertTrue(timer.isActive)
+            XCTAssertEqual(timer.remaining, TimeInterval(duration))
+            XCTAssertEqual(timer.initialDuration, TimeInterval(duration))
+            timer.stopSleepTimer()
+            XCTAssertFalse(timer.isActive)
+        }
+    }
 }

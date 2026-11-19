@@ -78,6 +78,77 @@ public struct PlayerQuickActionsView: View {
                     textColor: coverIsLight ? DesignTokens.Color.background : DesignTokens.Color.foreground,
                     action: { showSleepTimer = true }
                 )
+                .contextMenu {
+                    if viewModel.sleepTimerActive {
+                        Button {
+                            _ = AudioPlayerService.shared.resetSleepTimer()
+                            DesignTokens.Haptics.selection()
+                        } label: {
+                            Label("Reset Timer", systemImage: "arrow.counterclockwise")
+                        }
+
+                        Button {
+                            AudioPlayerService.shared.extendSleepTimer(by: 5 * 60)
+                            DesignTokens.Haptics.light()
+                        } label: {
+                            Label("+5 Minutes", systemImage: "plus.circle")
+                        }
+
+                        Button {
+                            AudioPlayerService.shared.extendSleepTimer(by: 15 * 60)
+                            DesignTokens.Haptics.light()
+                        } label: {
+                            Label("+15 Minutes", systemImage: "plus.circle.fill")
+                        }
+
+                        Divider()
+
+                        Button(role: .destructive) {
+                            AudioPlayerService.shared.stopSleepTimer()
+                            DesignTokens.Haptics.medium()
+                        } label: {
+                            Label("Turn Off Sleep Timer", systemImage: "moon.slash")
+                        }
+                    } else {
+                        Button {
+                            AudioPlayerService.shared.startSleepTimer(duration: 15 * 60)
+                            DesignTokens.Haptics.selection()
+                        } label: {
+                            Label("15 Minutes", systemImage: "clock")
+                        }
+
+                        Button {
+                            AudioPlayerService.shared.startSleepTimer(duration: 30 * 60)
+                            DesignTokens.Haptics.selection()
+                        } label: {
+                            Label("30 Minutes", systemImage: "clock")
+                        }
+
+                        Button {
+                            AudioPlayerService.shared.startSleepTimer(duration: 45 * 60)
+                            DesignTokens.Haptics.selection()
+                        } label: {
+                            Label("45 Minutes", systemImage: "clock")
+                        }
+
+                        Button {
+                            AudioPlayerService.shared.startSleepTimer(duration: 60 * 60)
+                            DesignTokens.Haptics.selection()
+                        } label: {
+                            Label("60 Minutes", systemImage: "clock")
+                        }
+
+                        if let chapter = viewModel.currentChapter {
+                            let remaining = max(1, chapter.end - viewModel.currentTime)
+                            Button {
+                                AudioPlayerService.shared.startSleepTimer(duration: remaining)
+                                DesignTokens.Haptics.selection()
+                            } label: {
+                                Label("End of Chapter", systemImage: "moon.stars")
+                            }
+                        }
+                    }
+                }
 
                 Spacer(minLength: 0)
 
