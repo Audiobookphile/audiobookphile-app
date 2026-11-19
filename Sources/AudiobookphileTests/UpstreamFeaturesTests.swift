@@ -1223,4 +1223,47 @@ final class UpstreamFeaturesTests: XCTestCase {
         let shortFormatted = shortHours > 0 ? "\(shortHours)h \(shortMinutes)m" : "\(shortMinutes)m"
         XCTAssertEqual(shortFormatted, "25m")
     }
+
+    // MARK: - Features 94 & 95: Catalog Sorting & Haptic Master Toggle
+
+    func testCatalogSortOptions() throws {
+        let b1 = Book(id: "b1", title: "Zeta Book", author: "Author", duration: 1000)
+        let b2 = Book(id: "b2", title: "Alpha Book", author: "Author", duration: 5000)
+        let b3 = Book(id: "b3", title: "Beta Book", author: "Author", duration: 3000)
+        let books = [b1, b2, b3]
+
+        // Sort by Title
+        let byTitle = books.sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+        XCTAssertEqual(byTitle.map(\.title), ["Alpha Book", "Beta Book", "Zeta Book"])
+
+        // Sort by Duration
+        let byDuration = books.sorted { $0.duration > $1.duration }
+        XCTAssertEqual(byDuration.map(\.title), ["Alpha Book", "Beta Book", "Zeta Book"])
+
+        // Enum cases
+        XCTAssertEqual(CatalogSortOption.allCases.count, 3)
+        XCTAssertEqual(CatalogSortOption.title.icon, "textformat.abc")
+        XCTAssertEqual(CatalogSortOption.duration.icon, "clock")
+        XCTAssertEqual(CatalogSortOption.year.icon, "calendar")
+    }
+
+    func testHapticsMasterToggleSetting() throws {
+        var settings = AppSettings()
+        XCTAssertTrue(settings.hapticsEnabled)
+
+        settings.hapticsEnabled = false
+        XCTAssertFalse(settings.hapticsEnabled)
+
+        DesignTokens.Haptics.isEnabled = false
+        XCTAssertFalse(DesignTokens.Haptics.isEnabled)
+        // Calling haptic methods should execute silently without crashing
+        DesignTokens.Haptics.selection()
+        DesignTokens.Haptics.light()
+        DesignTokens.Haptics.medium()
+        DesignTokens.Haptics.success()
+        DesignTokens.Haptics.warning()
+
+        DesignTokens.Haptics.isEnabled = true
+        XCTAssertTrue(DesignTokens.Haptics.isEnabled)
+    }
 }

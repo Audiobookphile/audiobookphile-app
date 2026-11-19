@@ -128,6 +128,7 @@ public class AppState {
 
     public func updateSettings(_ newSettings: AppSettings) {
         self.settings = newSettings
+        DesignTokens.Haptics.isEnabled = newSettings.hapticsEnabled
         Task {
             do {
                 _ = try await AudiobookphileAPI.shared.updatePreferences(newSettings)

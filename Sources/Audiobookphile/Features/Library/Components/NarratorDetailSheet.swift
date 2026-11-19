@@ -11,6 +11,7 @@ import SwiftUI
 public struct NarratorDetailSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppState.self) private var appState
+    @State private var sortOption: CatalogSortOption = .title
     public let narratorName: String
     public let books: [Book]
     public var onSelectBook: ((Book) -> Void)?
@@ -19,6 +20,17 @@ public struct NarratorDetailSheet: View {
         self.narratorName = narratorName
         self.books = books
         self.onSelectBook = onSelectBook
+    }
+
+    private var sortedBooks: [Book] {
+        switch sortOption {
+        case .title:
+            return books.sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+        case .duration:
+            return books.sorted { $0.duration > $1.duration }
+        case .year:
+            return books.sorted { ($0.media.metadata.publishedYear ?? "") > ($1.media.metadata.publishedYear ?? "") }
+        }
     }
 
     private var totalDurationFormatted: String {
@@ -83,12 +95,34 @@ public struct NarratorDetailSheet: View {
 
                         // Audiobooks List
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("Audiobooks")
-                                .font(.headline.weight(.bold))
-                                .foregroundStyle(.primary)
-                                .padding(.horizontal, 4)
+                            HStack {
+                                Text("Audiobooks")
+                                    .font(.headline.weight(.bold))
+                                    .foregroundStyle(.primary)
+                                Spacer()
+                                Menu {
+                                    Picker("Sort by", selection: $sortOption) {
+                                        ForEach(CatalogSortOption.allCases) { opt in
+                                            Label(opt.rawValue, systemImage: opt.icon).tag(opt)
+                                        }
+                                    }
+                                } label: {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "arrow.up.arrow.down")
+                                            .font(.system(size: 11, weight: .bold))
+                                        Text(sortOption.rawValue)
+                                            .font(.system(size: 11, weight: .semibold))
+                                    }
+                                    .foregroundStyle(Color.appPrimary)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 3)
+                                    .background(Color.appPrimary.opacity(0.12))
+                                    .clipShape(Capsule())
+                                }
+                            }
+                            .padding(.horizontal, 4)
 
-                            ForEach(books) { book in
+                            ForEach(sortedBooks) { book in
                                 GlassCard {
                                     HStack(spacing: 14) {
                                         let coverURL = appState.getCoverURL(itemId: book.id, width: 140, updatedAt: book.updatedAt)

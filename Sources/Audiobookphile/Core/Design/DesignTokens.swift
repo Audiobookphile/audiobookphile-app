@@ -125,31 +125,38 @@ public enum DesignTokens {
 
     /// Centralized cross-platform tactile haptic feedback.
     public enum Haptics {
+        nonisolated(unsafe) public static var isEnabled: Bool = true
+
         public static func selection() {
+            guard isEnabled else { return }
             #if !SKIP && os(iOS)
             UISelectionFeedbackGenerator().selectionChanged()
             #endif
         }
 
         public static func light() {
+            guard isEnabled else { return }
             #if !SKIP && os(iOS)
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             #endif
         }
 
         public static func medium() {
+            guard isEnabled else { return }
             #if !SKIP && os(iOS)
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             #endif
         }
 
         public static func success() {
+            guard isEnabled else { return }
             #if !SKIP && os(iOS)
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             #endif
         }
 
         public static func warning() {
+            guard isEnabled else { return }
             #if !SKIP && os(iOS)
             UINotificationFeedbackGenerator().notificationOccurred(.warning)
             #endif

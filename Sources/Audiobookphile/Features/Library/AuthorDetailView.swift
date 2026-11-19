@@ -14,6 +14,7 @@ public struct AuthorDetailView: View {
     @State private var viewModel: AuthorDetailViewModel
     @State private var selectedBook: Book?
     @State private var isBioExpanded = false
+    @State private var sortOption: CatalogSortOption = .title
 
     public init(authorName: String, libraryId: String? = nil, service: LibraryServiceProtocol? = nil) {
         self._viewModel = State(wrappedValue: AuthorDetailViewModel(
@@ -191,6 +192,17 @@ public struct AuthorDetailView: View {
 
     // MARK: - Audiobooks Section
 
+    private var sortedBooks: [Book] {
+        switch sortOption {
+        case .title:
+            return viewModel.books.sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+        case .duration:
+            return viewModel.books.sorted { $0.duration > $1.duration }
+        case .year:
+            return viewModel.books.sorted { ($0.media.metadata.publishedYear ?? "") > ($1.media.metadata.publishedYear ?? "") }
+        }
+    }
+
     private var audiobooksSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
@@ -198,6 +210,25 @@ public struct AuthorDetailView: View {
                     .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(.secondary)
                 Spacer()
+                Menu {
+                    Picker("Sort by", selection: $sortOption) {
+                        ForEach(CatalogSortOption.allCases) { opt in
+                            Label(opt.rawValue, systemImage: opt.icon).tag(opt)
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.up.arrow.down")
+                            .font(.system(size: 11, weight: .bold))
+                        Text(sortOption.rawValue)
+                            .font(.system(size: 11, weight: .semibold))
+                    }
+                    .foregroundStyle(Color.appPrimary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(Color.appPrimary.opacity(0.12))
+                    .clipShape(Capsule())
+                }
                 Text("\(viewModel.books.count)")
                     .font(.system(size: 12, weight: .semibold, design: .monospaced))
                     .foregroundStyle(.secondary)
@@ -229,7 +260,7 @@ public struct AuthorDetailView: View {
                 .glassCard(cornerRadius: 16)
             } else {
                 VStack(spacing: 10) {
-                    ForEach(viewModel.books) { book in
+                    ForEach(sortedBooks) { book in
                         bookRow(book: book)
                     }
                 }
