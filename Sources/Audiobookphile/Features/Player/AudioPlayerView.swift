@@ -491,6 +491,26 @@ public struct AudioPlayerView: View {
 
 }
 
+// MARK: - Audio Equalizer Preset
+
+public enum AudioEqualizerPreset: String, CaseIterable, Identifiable {
+    case speechClarity = "Speech Clarity"
+    case bassWarmth = "Bass Warmth"
+    case nightMode = "Night Mode"
+    case audiophileFlat = "Flat / Bypass"
+
+    public var id: String { rawValue }
+
+    public var icon: String {
+        switch self {
+        case .speechClarity: return "waveform.and.person.filled"
+        case .bassWarmth: return "speaker.wave.3.fill"
+        case .nightMode: return "moon.stars.fill"
+        case .audiophileFlat: return "slider.horizontal.3"
+        }
+    }
+}
+
 // MARK: - Audio Accessibility Quick Sheet
 
 public struct AudioAccessibilityQuickSheet: View {
@@ -499,6 +519,55 @@ public struct AudioAccessibilityQuickSheet: View {
 
     public init() {}
 
+    private func applyPreset(_ preset: AudioEqualizerPreset) {
+        switch preset {
+        case .speechClarity:
+            settings.spokenAudioModeEnabled = true
+            settings.vocalBoostEnabled = true
+            settings.deEsserEnabled = true
+            settings.lowCutFilterEnabled = true
+            settings.volumeLevelerEnabled = false
+        case .bassWarmth:
+            settings.spokenAudioModeEnabled = false
+            settings.vocalBoostEnabled = false
+            settings.deEsserEnabled = false
+            settings.lowCutFilterEnabled = false
+            settings.volumeLevelerEnabled = false
+        case .nightMode:
+            settings.spokenAudioModeEnabled = true
+            settings.vocalBoostEnabled = true
+            settings.deEsserEnabled = true
+            settings.lowCutFilterEnabled = true
+            settings.volumeLevelerEnabled = true
+        case .audiophileFlat:
+            settings.spokenAudioModeEnabled = false
+            settings.vocalBoostEnabled = false
+            settings.deEsserEnabled = false
+            settings.lowCutFilterEnabled = false
+            settings.volumeLevelerEnabled = false
+            settings.highResAudioEnabled = true
+        }
+        AppState.shared.updateSettings(settings)
+        #if os(iOS)
+        AudioPlayerService.shared.reconfigureAudioSession()
+        #endif
+        AudioPlayerService.shared.applyAudioDSP()
+        DesignTokens.Haptics.selection()
+    }
+
+    private func isPresetActive(_ preset: AudioEqualizerPreset) -> Bool {
+        switch preset {
+        case .speechClarity:
+            return settings.vocalBoostEnabled && settings.deEsserEnabled && settings.lowCutFilterEnabled && !settings.volumeLevelerEnabled
+        case .bassWarmth:
+            return !settings.lowCutFilterEnabled && !settings.vocalBoostEnabled && !settings.volumeLevelerEnabled
+        case .nightMode:
+            return settings.volumeLevelerEnabled && settings.vocalBoostEnabled && settings.deEsserEnabled
+        case .audiophileFlat:
+            return !settings.vocalBoostEnabled && !settings.deEsserEnabled && !settings.lowCutFilterEnabled && !settings.volumeLevelerEnabled
+        }
+    }
+
     public var body: some View {
         NavigationStack {
             ZStack {
@@ -506,6 +575,60 @@ public struct AudioAccessibilityQuickSheet: View {
 
                 VStack(spacing: 16) {
                     List {
+                        Section(header: Text("Equalizer Presets").foregroundStyle(DesignTokens.Color.foreground.opacity(0.7))) {
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 8) {
+                                    ForEach(AudioEqualizerPreset.allCases) { preset in
+                                        Button {
+                                            applyPreset(preset)
+                                        } label: {
+                                            HStack(spacing: 6) {
+                                                Image(systemName: preset.icon)
+                                                Text(preset.rawValue)
+                                            }
+                                            .font(.caption.bold())
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 8)
+                                            .background(isPresetActive(preset) ? Color.appPrimary : DesignTokens.Color.surface.opacity(0.12))
+                                            .foregroundStyle(isPresetActive(preset) ? Color.white : DesignTokens.Color.foreground)
+                                            .clipShape(Capsule())
+                                            .overlay(
+                                                Capsule()
+                                                    .strokeBorder(isPresetActive(preset) ? Color.white.opacity(0.3) : DesignTokens.Color.foreground.opacity(0.1), lineWidth: 1)
+                                            )
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                }
+                                .padding(.vertical, 4)
+                            }
+                        }
+                        .listRowBackground(DesignTokens.Color.surface.opacity(0.08))
+
+                        Section(header: Text("Volume Boost Pre-amp").foregroundStyle(DesignTokens.Color.foreground.opacity(0.7))) {
+                            Picker("Volume Boost", selection: Binding(
+                                get: { settings.volumeBoost },
+                                set: { newBoost in
+                                    settings.volumeBoost = newBoost
+                                    AppState.shared.updateSettings(settings)
+                                    AudioPlayerService.shared.applyAudioDSP()
+                                    DesignTokens.Haptics.selection()
+                                }
+                            )) {
+                                Text("100%").tag(1.0)
+                                Text("125%").tag(1.25)
+                                Text("150%").tag(1.5)
+                                Text("175%").tag(1.75)
+                                Text("200%").tag(2.0)
+                            }
+                            .pickerStyle(.segmented)
+
+                            Text("Applies clean parametric pre-amp gain (+6 dB) across the audio graph for quiet narrations.")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                        .listRowBackground(DesignTokens.Color.surface.opacity(0.08))
+
                         Section(header: Text("Spoken Audio & Speech Clarity").foregroundStyle(DesignTokens.Color.foreground.opacity(0.7))) {
                             Toggle("Spoken Audio Optimization", isOn: Binding(
                                 get: { settings.spokenAudioModeEnabled },
@@ -595,6 +718,6 @@ public struct AudioAccessibilityQuickSheet: View {
                 }
             }
         }
-        .presentationDetents([.medium])
+        .presentationDetents([.medium, .large])
     }
 }

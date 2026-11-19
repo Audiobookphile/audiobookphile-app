@@ -8,6 +8,8 @@ public struct MiniPlayerView: View {
     let onTap: () -> Void
     let onClose: () -> Void
 
+    @State private var dragOffset: CGSize = .zero
+
     public init(audioPlayer: AudioPlayerService, onTap: @escaping () -> Void, onClose: @escaping () -> Void) {
         self.audioPlayer = audioPlayer
         self.onTap = onTap
@@ -128,6 +130,35 @@ public struct MiniPlayerView: View {
                 )
         })
         .padding(.horizontal, 12)
+        .offset(x: dragOffset.width * 0.45, y: max(0, dragOffset.height * 0.7))
+        .gesture(
+            DragGesture(minimumDistance: 15)
+                .onChanged { value in
+                    dragOffset = value.translation
+                }
+                .onEnded { value in
+                    let hTranslation = value.translation.width
+                    let vTranslation = value.translation.height
+
+                    // Downward swipe dismisses/stops player
+                    if vTranslation > 60 && abs(vTranslation) > abs(hTranslation) {
+                        DesignTokens.Haptics.medium()
+                        onClose()
+                    } else if hTranslation < -50 {
+                        // Swipe Left -> Skip Forward
+                        DesignTokens.Haptics.light()
+                        audioPlayer.skipForward(AppState.shared.settings.jumpForwardTime)
+                    } else if hTranslation > 50 {
+                        // Swipe Right -> Skip Backward
+                        DesignTokens.Haptics.light()
+                        audioPlayer.skipBackward(AppState.shared.settings.jumpBackwardsTime)
+                    }
+
+                    withAnimation(DesignTokens.Spring.snappy) {
+                        dragOffset = .zero
+                    }
+                }
+        )
         .liquidPressable()
         .onTapGesture {
             onTap()

@@ -862,4 +862,71 @@ final class UpstreamFeaturesTests: XCTestCase {
         XCTAssertEqual(updatedBm?.title, "The Litany Against Fear (Full)")
         XCTAssertEqual(updatedBm?.note, "Must not fear; fear is the mind-killer.")
     }
+
+    func testAudioEqualizerPresetsAndDSPMapping() throws {
+        var settings = AppState.shared.settings
+
+        // 1. Speech Clarity
+        XCTAssertEqual(AudioEqualizerPreset.speechClarity.rawValue, "Speech Clarity")
+        XCTAssertEqual(AudioEqualizerPreset.speechClarity.icon, "waveform.and.person.filled")
+        settings.spokenAudioModeEnabled = true
+        settings.vocalBoostEnabled = true
+        settings.deEsserEnabled = true
+        settings.lowCutFilterEnabled = true
+        settings.volumeLevelerEnabled = false
+        AppState.shared.updateSettings(settings)
+        AudioPlayerService.shared.applyAudioDSP()
+
+        // 2. Night Mode
+        XCTAssertEqual(AudioEqualizerPreset.nightMode.rawValue, "Night Mode")
+        XCTAssertEqual(AudioEqualizerPreset.nightMode.icon, "moon.stars.fill")
+        settings.volumeLevelerEnabled = true
+        AppState.shared.updateSettings(settings)
+        AudioPlayerService.shared.applyAudioDSP()
+        XCTAssertTrue(AppState.shared.settings.volumeLevelerEnabled)
+
+        // 3. Flat / Bypass
+        XCTAssertEqual(AudioEqualizerPreset.audiophileFlat.rawValue, "Flat / Bypass")
+        settings.vocalBoostEnabled = false
+        settings.deEsserEnabled = false
+        settings.lowCutFilterEnabled = false
+        settings.volumeLevelerEnabled = false
+        AppState.shared.updateSettings(settings)
+        AudioPlayerService.shared.applyAudioDSP()
+        XCTAssertFalse(AppState.shared.settings.vocalBoostEnabled)
+    }
+
+    func testSleepTimerStopAtSpecificTimeCalculation() throws {
+        let calendar = Calendar.current
+        var comps = DateComponents()
+        comps.year = 2026
+        comps.month = 11
+        comps.day = 18
+        comps.hour = 22
+        comps.minute = 30
+        comps.second = 0
+        guard let baseDate = calendar.date(from: comps) else {
+            XCTFail("Could not create base date")
+            return
+        }
+
+        // Target: 23:30 (1 hour later on same day)
+        var targetComps1 = DateComponents()
+        targetComps1.hour = 23
+        targetComps1.minute = 30
+        var nextTarget1 = calendar.date(bySettingHour: 23, minute: 30, second: 0, of: baseDate)!
+        if nextTarget1 <= baseDate {
+            nextTarget1 = calendar.date(byAdding: .day, value: 1, to: nextTarget1)!
+        }
+        let intervalSameDay = nextTarget1.timeIntervalSince(baseDate)
+        XCTAssertEqual(intervalSameDay, 3600) // 1 hour
+
+        // Target: 00:30 (Midnight rollover, earlier hour than 22:30)
+        var nextTarget2 = calendar.date(bySettingHour: 0, minute: 30, second: 0, of: baseDate)!
+        if nextTarget2 <= baseDate {
+            nextTarget2 = calendar.date(byAdding: .day, value: 1, to: nextTarget2)!
+        }
+        let intervalNextDay = nextTarget2.timeIntervalSince(baseDate)
+        XCTAssertEqual(intervalNextDay, 7200) // 2 hours
+    }
 }

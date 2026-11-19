@@ -3,6 +3,7 @@ import SwiftUI
 public struct SleepTimerView: View {
     @Environment(\.dismiss) var dismiss
     @State private var customMinutes: Int = 20
+    @State private var targetTime: Date = Calendar.current.date(byAdding: .minute, value: 30, to: Date()) ?? Date()
 
     public let onSetTimer: (TimeInterval?) -> Void
     public let onSetEndOfChapter: () -> Void
@@ -16,6 +17,12 @@ public struct SleepTimerView: View {
         self.onSetTimer = onSetTimer
         self.onSetEndOfChapter = onSetEndOfChapter
         self.onSetEndOfTrack = onSetEndOfTrack
+    }
+
+    private var targetTimeFormatted: String {
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        return formatter.string(from: targetTime)
     }
 
     private var isTimerActive: Bool {
@@ -128,6 +135,43 @@ public struct SleepTimerView: View {
                             HStack {
                                 Spacer()
                                 Text("Set \(customMinutes) Minute Timer")
+                                    .font(.subheadline.bold())
+                                    .foregroundStyle(Color.accentColor)
+                                Spacer()
+                            }
+                        }
+                    }
+
+                    // Stop at Specific Time (Time of Day)
+                    Section("Stop at Specific Time") {
+                        DatePicker("Target Time", selection: $targetTime, displayedComponents: .hourAndMinute)
+                            .datePickerStyle(.compact)
+
+                        Button {
+                            let calendar = Calendar.current
+                            let now = Date()
+                            let targetComponents = calendar.dateComponents([.hour, .minute], from: targetTime)
+
+                            var nextTarget = calendar.date(bySettingHour: targetComponents.hour ?? 0,
+                                                           minute: targetComponents.minute ?? 0,
+                                                           second: 0,
+                                                           of: now) ?? targetTime
+
+                            // If target time is earlier than current time today, advance to tomorrow
+                            if nextTarget <= now {
+                                nextTarget = calendar.date(byAdding: .day, value: 1, to: nextTarget) ?? nextTarget
+                            }
+
+                            let interval = nextTarget.timeIntervalSince(now)
+                            if interval > 0 {
+                                onSetTimer(interval)
+                                DesignTokens.Haptics.selection()
+                                dismiss()
+                            }
+                        } label: {
+                            HStack {
+                                Spacer()
+                                Text("Set Timer for \(targetTimeFormatted)")
                                     .font(.subheadline.bold())
                                     .foregroundStyle(Color.accentColor)
                                 Spacer()
