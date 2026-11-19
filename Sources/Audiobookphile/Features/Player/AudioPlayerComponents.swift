@@ -64,10 +64,7 @@ public struct GlassIconButton: View {
 
     public var body: some View {
         Button {
-            #if os(iOS) && !SKIP
-            let generator = UIImpactFeedbackGenerator(style: .light)
-            generator.impactOccurred()
-            #endif
+            DesignTokens.Haptics.light()
             action()
         } label: {
             Image(systemName: icon)
@@ -78,18 +75,11 @@ public struct GlassIconButton: View {
                 .background {
                     Circle()
                         .fill(Color.white.opacity(0.14))
-                        .shadow(color: Color.black.opacity(0.12), radius: 6, x: 0, y: 3)
+                        .shadow(color: Color.black.opacity(0.16), radius: 8, x: 0, y: 3)
                 }
                 .overlay {
                     Circle()
-                        .strokeBorder(
-                            LinearGradient(
-                                colors: [.white.opacity(0.4), .white.opacity(0.08)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
-                        )
+                        .strokeBorder(DesignTokens.Glass.specularGradient, lineWidth: 1)
                 }
         }
         .buttonStyle(ScaleButtonStyle())
@@ -133,10 +123,7 @@ public struct GlassPillButton: View {
 
     public var body: some View {
         Button {
-            #if os(iOS) && !SKIP
-            let generator = UIImpactFeedbackGenerator(style: .light)
-            generator.impactOccurred()
-            #endif
+            DesignTokens.Haptics.light()
             action()
         } label: {
             HStack(spacing: 5) {
@@ -157,24 +144,24 @@ public struct GlassPillButton: View {
             .frame(height: height)
             .background(
                 isActive
-                ? activeColor.opacity(0.18)
-                : Color.white.opacity(0.14)
+                ? activeColor.opacity(0.22)
+                : Color.white.opacity(0.12)
             )
             .clipShape(Capsule())
             .overlay(
                 Capsule()
                     .strokeBorder(
-                        LinearGradient(
-                            colors: isActive
-                                ? [activeColor.opacity(0.6), activeColor.opacity(0.2)]
-                                : [.white.opacity(0.4), .white.opacity(0.08)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
+                        isActive
+                            ? LinearGradient(
+                                colors: [activeColor.opacity(0.7), activeColor.opacity(0.2)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                            : DesignTokens.Glass.borderGradient,
                         lineWidth: 1
                     )
             )
-            .shadow(color: isActive ? activeColor.opacity(0.2) : Color.black.opacity(0.12), radius: 6, x: 0, y: 3)
+            .shadow(color: isActive ? activeColor.opacity(0.25) : Color.black.opacity(0.12), radius: 6, x: 0, y: 3)
         }
         .buttonStyle(ScaleButtonStyle())
         .accessibilityElement(children: .ignore)
@@ -187,8 +174,8 @@ public struct ScaleButtonStyle: ButtonStyle {
     public init() {}
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .scaleEffect(configuration.isPressed ? 0.90 : 1.0)
-            .animation(.spring(response: 0.2, dampingFraction: 0.6), value: configuration.isPressed)
+            .scaleEffect(configuration.isPressed ? 0.92 : 1.0)
+            .animation(DesignTokens.Spring.snappy, value: configuration.isPressed)
     }
 }
 

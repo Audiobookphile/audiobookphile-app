@@ -25,8 +25,12 @@ public struct GlassBookCard: View {
                         DesignTokens.Color.surface.opacity(0.1)
                     }
                 }
-                .clipped()
-                .cornerRadius(8)
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .strokeBorder(DesignTokens.Glass.borderGradient, lineWidth: 0.75)
+                }
+                .shadow(color: Color.black.opacity(0.12), radius: 6, x: 0, y: 3)
 
             // Info
             VStack(alignment: .leading, spacing: 6) {
@@ -68,8 +72,11 @@ public struct GlassBookCard: View {
                 .foregroundStyle(.secondary)
         }
         .contentShape(Rectangle())
-        .onTapGesture(perform: onTap)
-        .glassCard()
+        .onTapGesture {
+            DesignTokens.Haptics.light()
+            onTap()
+        }
+        .glassCard(style: .elevated)
     }
 
     private var coverURL: URL? {

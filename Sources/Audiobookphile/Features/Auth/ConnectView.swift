@@ -537,14 +537,37 @@ struct GlassTextField: View {
                 .autocorrectionDisabled()
                 .modifier(ConnectFieldFocus(focus: focus, field: field))
                 .onSubmit { onSubmit?() }
+
+            if !text.isEmpty {
+                Button {
+                    DesignTokens.Haptics.light()
+                    text = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(Color.primary.opacity(0.45))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Clear text")
+            }
         }
-        .padding(16)
-        .background(.regularMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .padding(14)
+        .background {
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.step1, style: .continuous)
+                .fill(Color.white.opacity(0.08))
+                .overlay {
+                    #if os(iOS) || os(macOS)
+                    RoundedRectangle(cornerRadius: DesignTokens.Radius.step1, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                        .opacity(0.6)
+                    #endif
+                }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.step1, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 12)
-                .strokeBorder(Color.gray.opacity(0.3), lineWidth: 1)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.step1, style: .continuous)
+                .strokeBorder(DesignTokens.Glass.borderGradient, lineWidth: 1)
         }
+        .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 3)
     }
 }
 
@@ -586,20 +609,33 @@ struct GlassSecureField: View {
             }
 
             Button {
+                DesignTokens.Haptics.light()
                 showPassword.toggle()
             } label: {
                 Image(systemName: showPassword ? "eye.slash" : "eye")
                     .foregroundStyle(Color.primary.opacity(0.6))
             }
+            .buttonStyle(.plain)
             .accessibilityLabel(showPassword ? "Hide Password" : "Show Password")
         }
-        .padding(16)
-        .background(.regularMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .overlay {
-            RoundedRectangle(cornerRadius: 12)
-                .strokeBorder(Color.gray.opacity(0.3), lineWidth: 1)
+        .padding(14)
+        .background {
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.step1, style: .continuous)
+                .fill(Color.white.opacity(0.08))
+                .overlay {
+                    #if os(iOS) || os(macOS)
+                    RoundedRectangle(cornerRadius: DesignTokens.Radius.step1, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                        .opacity(0.6)
+                    #endif
+                }
         }
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.step1, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.step1, style: .continuous)
+                .strokeBorder(DesignTokens.Glass.borderGradient, lineWidth: 1)
+        }
+        .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 3)
     }
 }
 

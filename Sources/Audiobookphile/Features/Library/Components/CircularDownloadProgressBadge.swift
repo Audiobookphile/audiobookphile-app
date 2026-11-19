@@ -16,9 +16,7 @@ public struct CircularDownloadProgressBadge: View {
         Group {
             if let onTap = onTap {
                 Button(action: {
-                    #if os(iOS) && !SKIP
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    #endif
+                    DesignTokens.Haptics.light()
                     onTap()
                 }) {
                     badgeContent
