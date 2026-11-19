@@ -190,6 +190,16 @@ public struct BookmarksListView: View {
                 }
 
                 Button {
+                    copyBookmarkLink(bookmark)
+                } label: {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.body)
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 4)
+
+                Button {
                     startEditing(bookmark)
                 } label: {
                     Image(systemName: "pencil.circle")
@@ -207,6 +217,43 @@ public struct BookmarksListView: View {
             .padding(.vertical, 4)
         }
         .buttonStyle(.plain)
+        .contextMenu {
+            Button {
+                viewModel.seek(to: bookmark.timePos)
+                dismiss()
+            } label: {
+                Label("Play from Bookmark", systemImage: "play.circle")
+            }
+
+            Button {
+                copyBookmarkLink(bookmark)
+            } label: {
+                Label("Copy Timestamp Link", systemImage: "doc.on.doc")
+            }
+
+            Button {
+                startEditing(bookmark)
+            } label: {
+                Label("Edit Note", systemImage: "pencil")
+            }
+
+            Button(role: .destructive) {
+                viewModel.deleteBookmark(bookmark)
+            } label: {
+                Label("Delete Bookmark", systemImage: "trash")
+            }
+        }
+    }
+
+    private func copyBookmarkLink(_ bookmark: Bookmark) {
+        let seconds = Int(bookmark.timePos / 1000)
+        let itemId = viewModel.libraryItemId ?? ""
+        let link = "audiobookphile://item/\(itemId)?t=\(seconds)"
+        #if !SKIP && os(iOS)
+        UIPasteboard.general.string = link
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.success)
+        #endif
     }
 
     private func startEditing(_ bookmark: Bookmark) {
@@ -226,6 +273,33 @@ public struct BookmarksListView: View {
                         TextField("Title", text: $editTitle)
                     } header: {
                         Text("Bookmark Title")
+                    }
+
+                    Section {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(["Quote", "Key Idea", "Plot", "Review", "Vocabulary"], id: \.self) { tag in
+                                    Button {
+                                        let tagPrefix = "[\(tag)] "
+                                        if !editNote.contains(tagPrefix) {
+                                            editNote = tagPrefix + editNote
+                                        }
+                                        DesignTokens.Haptics.selection()
+                                    } label: {
+                                        Text("+\(tag)")
+                                            .font(.caption.weight(.semibold))
+                                            .padding(.horizontal, 10)
+                                            .padding(.vertical, 5)
+                                            .background(Color.white.opacity(0.1), in: Capsule())
+                                            .foregroundStyle(Color.appPrimary)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            .padding(.vertical, 2)
+                        }
+                    } header: {
+                        Text("Quick Category Tags")
                     }
 
                     Section {

@@ -36,6 +36,10 @@ public class AudioPlayerViewModel {
         AudioPlayerService.shared.currentTime
     }
 
+    public var libraryItemId: String? {
+        AudioPlayerService.shared.session?.libraryItemId
+    }
+
     public var playbackRate: Float {
         AudioPlayerService.shared.playbackRate
     }

@@ -1140,4 +1140,44 @@ final class UpstreamFeaturesTests: XCTestCase {
         XCTAssertFalse(timer.isActive)
         XCTAssertNil(timer.remaining)
     }
+
+    // MARK: - Features 88 & 89: Bookmark Sharing & Quick Category Tags
+
+    func testBookmarkTimestampShareLinkConstruction() throws {
+        let itemId = "item-dune-42"
+        let timePosMs: Double = 75400 // 75.4 seconds -> 75s
+        let seconds = Int(timePosMs / 1000)
+        let deepLink = "audiobookphile://item/\(itemId)?t=\(seconds)"
+
+        XCTAssertEqual(seconds, 75)
+        XCTAssertEqual(deepLink, "audiobookphile://item/item-dune-42?t=75")
+
+        let hourMs: Double = 3600000 // 1 hour -> 3600s
+        let hourSeconds = Int(hourMs / 1000)
+        let hourLink = "audiobookphile://item/\(itemId)?t=\(hourSeconds)"
+        XCTAssertEqual(hourLink, "audiobookphile://item/item-dune-42?t=3600")
+    }
+
+    func testBookmarkQuickCategoryTagsPrepending() throws {
+        let tags = ["Quote", "Key Idea", "Plot", "Review", "Vocabulary"]
+        XCTAssertEqual(tags.count, 5)
+
+        var note = "Fear is the mind-killer."
+        func applyTag(_ note: String, tag: String) -> String {
+            let prefix = "[\(tag)] "
+            if note.contains(prefix) { return note }
+            return prefix + note
+        }
+
+        note = applyTag(note, tag: "Quote")
+        XCTAssertEqual(note, "[Quote] Fear is the mind-killer.")
+
+        // Idempotent
+        note = applyTag(note, tag: "Quote")
+        XCTAssertEqual(note, "[Quote] Fear is the mind-killer.")
+
+        // Prepend second tag
+        note = applyTag(note, tag: "Key Idea")
+        XCTAssertEqual(note, "[Key Idea] [Quote] Fear is the mind-killer.")
+    }
 }
