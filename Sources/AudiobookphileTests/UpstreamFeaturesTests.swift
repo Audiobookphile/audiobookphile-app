@@ -1328,4 +1328,122 @@ final class UpstreamFeaturesTests: XCTestCase {
         let totalSciFiDuration = grouped["Science Fiction"]?.reduce(0.0) { $0 + $1.duration } ?? 0
         XCTAssertEqual(totalSciFiDuration, 12600)
     }
+
+    // MARK: - Features 106 & 107: Bookmarks Chapter Name & Estimated Finish Time
+
+    func testBookmarksChapterNameResolutionAndFilter() throws {
+        let ch1 = Chapter(id: 0, title: "Prologue: Awakening", start: 0, end: 600)
+        let ch2 = Chapter(id: 1, title: "Chapter 1: The Deep Desert", start: 600, end: 1800)
+        let ch3 = Chapter(id: 2, title: "Chapter 2: Water of Life", start: 1800, end: 3600)
+
+        let session = PlaybackSession(
+            id: "sess-ch-test",
+            userId: "usr-1",
+            libraryId: "lib-1",
+            libraryItemId: "item-1",
+            episodeId: nil,
+            displayTitle: "Dune",
+            displayAuthor: "Frank Herbert",
+            coverPath: nil,
+            duration: 3600,
+            playMethod: 0,
+            mediaPlayer: "AVQueuePlayer",
+            mediaType: "book",
+            audioTracks: [],
+            chapters: [ch1, ch2, ch3],
+            manifestUrl: nil,
+            missingTrackCount: 0,
+            currentTime: 100,
+            playbackRate: 1.0,
+            startedAt: Date(),
+            updatedAt: Date()
+        )
+
+        let vm = AudioPlayerViewModel(session: session)
+
+        // Test chapterName resolution
+        XCTAssertEqual(vm.chapterName(for: 150), "Prologue: Awakening")
+        XCTAssertEqual(vm.chapterName(for: 600), "Chapter 1: The Deep Desert")
+        XCTAssertEqual(vm.chapterName(for: 1200), "Chapter 1: The Deep Desert")
+        XCTAssertEqual(vm.chapterName(for: 1800), "Chapter 2: Water of Life")
+        XCTAssertEqual(vm.chapterName(for: 3500), "Chapter 2: Water of Life")
+
+        // Test millisecond fallback (> 1000 and > duration)
+        XCTAssertEqual(vm.chapterName(for: 750000), "Chapter 1: The Deep Desert") // 750s
+
+        // Test bookmark search query matching chapter name
+        let bm1 = Bookmark(id: "bm-ch1", userId: "usr-1", libraryItemId: "item-1", timePos: 1200, title: "Desert Vision", note: "Spices in the wind")
+        let bm2 = Bookmark(id: "bm-ch2", userId: "usr-1", libraryItemId: "item-1", timePos: 200, title: "First Thought", note: "Morning reverie")
+
+        let allBookmarks = [bm1, bm2]
+        let query = "deep desert"
+        let filtered = allBookmarks.filter { b in
+            let titleMatch = (b.title ?? "").lowercased().contains(query)
+            let noteMatch = (b.note ?? "").lowercased().contains(query)
+            let chapterMatch = (vm.chapterName(for: b.timePos) ?? "").lowercased().contains(query)
+            return titleMatch || noteMatch || chapterMatch
+        }
+
+        XCTAssertEqual(filtered.count, 1)
+        XCTAssertEqual(filtered.first?.id, "bm-ch1")
+    }
+
+    func testEstimatedCompletionClockTimeAndThreeWayToggle() throws {
+        let session = PlaybackSession(
+            id: "sess-finish-test",
+            userId: "usr-1",
+            libraryId: "lib-1",
+            libraryItemId: "item-1",
+            episodeId: nil,
+            displayTitle: "Test Book",
+            displayAuthor: "Test Author",
+            coverPath: nil,
+            duration: 3600,
+            playMethod: 0,
+            mediaPlayer: "AVQueuePlayer",
+            mediaType: "book",
+            audioTracks: [],
+            chapters: [
+                Chapter(id: 0, title: "Chapter 1", start: 0, end: 1800),
+                Chapter(id: 1, title: "Chapter 2", start: 1800, end: 3600)
+            ],
+            manifestUrl: nil,
+            missingTrackCount: 0,
+            currentTime: 600,
+            playbackRate: 1.5,
+            startedAt: Date(),
+            updatedAt: Date()
+        )
+
+        let vm = AudioPlayerViewModel(session: session)
+        AudioPlayerService.shared.setPlaybackRate(1.5)
+        defer { AudioPlayerService.shared.setPlaybackRate(1.0) }
+
+        // Initial mode: total remaining
+        XCTAssertEqual(vm.timeRemainingMode, .totalRemaining)
+        // Duration 3600, currentTime 600 -> raw remaining 3000. At 1.5x -> 2000s = 33m 20s
+        let formattedTotal = vm.formattedRemainingTime(for: 600)
+        XCTAssertEqual(formattedTotal, "-33:20")
+
+        // Toggle 1: chapter remaining (Chapter 1 end is 1800, remaining 1200 / 1.5 = 800s = 13m 20s)
+        vm.toggleTimeRemainingMode()
+        XCTAssertEqual(vm.timeRemainingMode, .chapterRemaining)
+        let formattedChapter = vm.formattedRemainingTime(for: 600)
+        XCTAssertEqual(formattedChapter, "-13:20")
+
+        // Toggle 2: estimated finish clock time
+        vm.toggleTimeRemainingMode()
+        XCTAssertEqual(vm.timeRemainingMode, .estimatedFinishTime)
+
+        // Mock base date: 2:00:00 PM
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = TimeZone(secondsFromGMT: 0)!
+        let baseDate = Date(timeIntervalSince1970: 1700000000)
+        let finishFormatted = vm.formattedRemainingTime(for: 600, from: baseDate)
+        XCTAssertTrue(finishFormatted.starts(with: "Ends "))
+
+        // Toggle 3: cycles back to totalRemaining
+        vm.toggleTimeRemainingMode()
+        XCTAssertEqual(vm.timeRemainingMode, .totalRemaining)
+    }
 }

@@ -139,7 +139,18 @@ public class AudioPlayerViewModel {
         progress
     }
 
-    public var showChapterTimeRemaining: Bool = false
+    public enum TimeRemainingMode: Int, CaseIterable, Sendable {
+        case totalRemaining = 0
+        case chapterRemaining = 1
+        case estimatedFinishTime = 2
+    }
+
+    public var timeRemainingMode: TimeRemainingMode = .totalRemaining
+
+    public var showChapterTimeRemaining: Bool {
+        get { timeRemainingMode == .chapterRemaining }
+        set { timeRemainingMode = newValue ? .chapterRemaining : .totalRemaining }
+    }
 
     public var currentTimePretty: String {
         formatTime(currentTime)
@@ -160,14 +171,17 @@ public class AudioPlayerViewModel {
     }
 
     public var timeRemainingPretty: String {
-        if showChapterTimeRemaining, let chapter = currentChapter {
-            return "-" + formatTime(max(0, chapter.end - currentTime))
-        }
-        return totalTimeRemainingPretty
+        formattedRemainingTime(for: currentTime)
     }
 
     public func toggleTimeRemainingMode() {
-        showChapterTimeRemaining.toggle()
+        let allModes = TimeRemainingMode.allCases
+        let nextIndex = (timeRemainingMode.rawValue + 1) % allModes.count
+        if nextIndex == 1 && chapters.isEmpty {
+            timeRemainingMode = .estimatedFinishTime
+        } else {
+            timeRemainingMode = allModes[nextIndex]
+        }
     }
 
     public func chapter(at time: TimeInterval) -> Chapter? {
@@ -175,12 +189,43 @@ public class AudioPlayerViewModel {
         return chapters.first { $0.start <= time && $0.end > time } ?? chapters.last
     }
 
-    public func formattedRemainingTime(for targetTime: TimeInterval) -> String {
-        if showChapterTimeRemaining, let chapter = chapter(at: targetTime) {
-            return "-" + formatTime(max(0, chapter.end - targetTime))
+    public func chapterName(for timePos: Double) -> String? {
+        guard !chapters.isEmpty else { return nil }
+        let seconds = (timePos > 1000 && timePos > duration) ? (timePos / 1000.0) : timePos
+        return chapter(at: seconds)?.title
+    }
+
+    public func formattedRemainingTime(for targetTime: TimeInterval, from now: Date = Date()) -> String {
+        let rate: Double = Double((playbackRate.isNaN || playbackRate <= 0) ? 1.0 : playbackRate)
+
+        switch timeRemainingMode {
+        case .chapterRemaining:
+            if let chapter = chapter(at: targetTime) {
+                let remaining = max(0, chapter.end - targetTime) / rate
+                return "-" + formatTime(remaining)
+            }
+            fallthrough
+        case .totalRemaining:
+            let remaining = max(0, duration - targetTime) / rate
+            return "-" + formatTime(remaining)
+        case .estimatedFinishTime:
+            let remaining = max(0, duration - targetTime) / rate
+            let finishDate = now.addingTimeInterval(remaining)
+            let formatter = DateFormatter()
+            let calendar = Calendar.current
+            formatter.timeStyle = .short
+            formatter.dateStyle = .none
+            let timeString = formatter.string(from: finishDate)
+            if calendar.isDateInToday(finishDate) {
+                return "Ends \(timeString)"
+            } else if calendar.isDateInTomorrow(finishDate) {
+                return "Ends tom. \(timeString)"
+            } else {
+                let dayFormatter = DateFormatter()
+                dayFormatter.dateFormat = "E"
+                return "Ends \(dayFormatter.string(from: finishDate)) \(timeString)"
+            }
         }
-        let remaining = max(0, duration - targetTime)
-        return "-" + formatTime(remaining)
     }
 
     public init(session: PlaybackSession) {

@@ -93,18 +93,26 @@ public struct PlaybackScrubberView: View {
 
                 Spacer()
 
-                // Interactive Remaining Time Button: Tap to toggle between Total Book Remaining and Chapter Remaining
+                // Interactive Remaining Time Button: Tap to toggle between Total Book Remaining, Chapter Remaining, and Estimated Finish Clock Time
                 Button {
                     viewModel.toggleTimeRemainingMode()
                     triggerImpactHaptic()
                 } label: {
                     HStack(spacing: 3) {
                         Text(viewModel.formattedRemainingTime(for: displayTime))
-                        if viewModel.showChapterTimeRemaining && activeScrubChapter != nil {
+                        if viewModel.timeRemainingMode == .chapterRemaining && activeScrubChapter != nil {
                             Text("CH")
                                 .font(.system(size: 9, weight: .bold, design: .rounded))
                                 .padding(.horizontal, 4)
                                 .padding(.vertical, 1)
+                                .background(Color.appPrimary.opacity(0.2))
+                                .foregroundStyle(Color.appPrimary)
+                                .clipShape(Capsule())
+                        } else if viewModel.timeRemainingMode == .estimatedFinishTime {
+                            Image(systemName: "clock")
+                                .font(.system(size: 9, weight: .bold))
+                                .padding(.horizontal, 4)
+                                .padding(.vertical, 2)
                                 .background(Color.appPrimary.opacity(0.2))
                                 .foregroundStyle(Color.appPrimary)
                                 .clipShape(Capsule())

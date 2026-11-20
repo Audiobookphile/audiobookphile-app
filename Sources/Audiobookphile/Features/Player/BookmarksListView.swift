@@ -22,7 +22,8 @@ public struct BookmarksListView: View {
             let titleMatch = (b.title ?? "").lowercased().contains(query)
             let noteMatch = (b.note ?? "").lowercased().contains(query)
             let timeMatch = viewModel.formatTime(b.timePos).lowercased().contains(query)
-            return titleMatch || noteMatch || timeMatch
+            let chapterMatch = (viewModel.chapterName(for: b.timePos) ?? "").lowercased().contains(query)
+            return titleMatch || noteMatch || timeMatch || chapterMatch
         }
     }
 
@@ -88,7 +89,7 @@ public struct BookmarksListView: View {
                     }
                 }
                 .scrollContentBackground(.hidden)
-                .searchable(text: $searchText, prompt: "Search title, notes, or time...")
+                .searchable(text: $searchText, prompt: "Search title, notes, chapter, or time...")
                 .navigationTitle(viewModel.bookmarks.isEmpty ? "Bookmarks" : "Bookmarks (\(viewModel.bookmarks.count))")
                 #if os(iOS) || SKIP
                 .navigationBarTitleDisplayMode(.inline)
@@ -178,6 +179,20 @@ public struct BookmarksListView: View {
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
                         .background(Color.white.opacity(0.08), in: Capsule())
+                    }
+
+                    if let chapterTitle = viewModel.chapterName(for: bookmark.timePos), !chapterTitle.isEmpty {
+                        HStack(spacing: 3) {
+                            Image(systemName: "bookmark")
+                                .font(.system(size: 9))
+                            Text(chapterTitle)
+                                .font(.caption2.weight(.medium))
+                                .lineLimit(1)
+                        }
+                        .foregroundStyle(Color.appPrimary)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.appPrimary.opacity(0.12), in: Capsule())
                     }
 
                     if let note = bookmark.note, !note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
