@@ -13,6 +13,7 @@ public struct BookDetailView: View {
     @State private var selectedSeriesName: String?
     @State private var selectedNarratorInfo: SelectedNarratorInfo?
     @State private var isShowingMediaSpecsSheet = false
+    @State private var navigatedBook: Book?
     @Environment(\.dismiss) var dismiss
     @Environment(AppState.self) private var appState
 
@@ -82,6 +83,9 @@ public struct BookDetailView: View {
                     isShowingMediaSpecsSheet = false
                 }
             }
+        }
+        .sheet(item: $navigatedBook) { book in
+            BookDetailView(book: book)
         }
         .task {
             await viewModel.fetchDetails(appState: appState)
@@ -201,6 +205,9 @@ public struct BookDetailView: View {
                 }
             )
 
+            // Series Continuity (Previous & Next book in series)
+            seriesContinuitySection(detailed)
+
             // Description (Expandable)
             if let description = detailed.description, !description.isEmpty {
                 BookDetailDescriptionSection(text: description, viewModel: viewModel)
@@ -250,5 +257,77 @@ public struct BookDetailView: View {
         )
     }
 
+    @ViewBuilder
+    private func seriesContinuitySection(_ detailed: Book) -> some View {
+        if viewModel.previousInSeries != nil || viewModel.nextInSeries != nil {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 6) {
+                    Image(systemName: "books.vertical.fill")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color.appPrimary)
+                    Text("SERIES CONTINUITY")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(DesignTokens.Color.foreground.opacity(0.7))
+                        .tracking(0.5)
+                }
 
+                HStack(spacing: 12) {
+                    if let prev = viewModel.previousInSeries {
+                        Button {
+                            DesignTokens.Haptics.selection()
+                            navigatedBook = prev
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "chevron.left")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundStyle(Color.appPrimary)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("PREVIOUS")
+                                        .font(.system(size: 9, weight: .bold))
+                                        .foregroundStyle(.secondary)
+                                    Text(prev.title)
+                                        .font(.system(size: 12, weight: .semibold))
+                                        .foregroundStyle(DesignTokens.Color.foreground)
+                                        .lineLimit(1)
+                                }
+                                Spacer()
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 10)
+                            .glassCard(cornerRadius: 12)
+                        }
+                        .buttonStyle(.plain)
+                    }
+
+                    if let next = viewModel.nextInSeries {
+                        Button {
+                            DesignTokens.Haptics.selection()
+                            navigatedBook = next
+                        } label: {
+                            HStack(spacing: 8) {
+                                Spacer()
+                                VStack(alignment: .trailing, spacing: 2) {
+                                    Text("NEXT IN SERIES")
+                                        .font(.system(size: 9, weight: .bold))
+                                        .foregroundStyle(Color.appPrimary)
+                                    Text(next.title)
+                                        .font(.system(size: 12, weight: .semibold))
+                                        .foregroundStyle(DesignTokens.Color.foreground)
+                                        .lineLimit(1)
+                                }
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundStyle(Color.appPrimary)
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 10)
+                            .glassCard(cornerRadius: 12)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+            .padding(.top, 4)
+        }
+    }
 }

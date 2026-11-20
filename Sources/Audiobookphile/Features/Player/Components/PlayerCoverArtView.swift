@@ -10,6 +10,8 @@ public struct PlayerCoverArtView: View {
     var coverURL: URL?
     var backgroundColor: Color
     @State private var isShowingFullscreenCover = false
+    @State private var seekFeedbackText: String? = nil
+    @State private var seekFeedbackIsForward = false
 
     public init(viewModel: AudioPlayerViewModel, coverURL: URL?, backgroundColor: Color) {
         self.viewModel = viewModel
@@ -82,8 +84,44 @@ public struct PlayerCoverArtView: View {
                 radius: 35,
                 y: 18
             )
+            .overlay {
+                // Directional Seek Gesture Overlay (Double-tap left = rewind, Double-tap right = fast-forward)
+                HStack(spacing: 0) {
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .onTapGesture(count: 2) {
+                            viewModel.jumpBackward()
+                            triggerSeekFeedback(text: "-\(viewModel.jumpBackwardTime)s", isForward: false)
+                        }
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .onTapGesture(count: 2) {
+                            viewModel.jumpForward()
+                            triggerSeekFeedback(text: "+\(viewModel.jumpForwardTime)s", isForward: true)
+                        }
+                }
+            }
+            .overlay {
+                // Visual Flash HUD for Seek Gestures
+                if let feedback = seekFeedbackText {
+                    VStack(spacing: 6) {
+                        Image(systemName: seekFeedbackIsForward ? "goforward" : "gobackward")
+                            .font(.system(size: 30, weight: .bold))
+                        Text(feedback)
+                            .font(.system(size: 13, weight: .bold, design: .rounded))
+                    }
+                    .foregroundStyle(.white)
+                    .padding(16)
+                    .background(
+                        Circle()
+                            .fill(Color.black.opacity(0.7))
+                            .background(.ultraThinMaterial, in: Circle())
+                    )
+                    .transition(.scale(scale: 0.8).combined(with: .opacity))
+                }
+            }
             .contentShape(Rectangle())
-            .onTapGesture {
+            .onTapGesture(count: 1) {
                 DesignTokens.Haptics.selection()
                 isShowingFullscreenCover = true
             }
@@ -96,6 +134,20 @@ public struct PlayerCoverArtView: View {
                 coverURL: coverURL,
                 onDismiss: { isShowingFullscreenCover = false }
             )
+        }
+    }
+
+    private func triggerSeekFeedback(text: String, isForward: Bool) {
+        DesignTokens.Haptics.medium()
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+            seekFeedbackText = text
+            seekFeedbackIsForward = isForward
+        }
+        Task {
+            try? await Task.sleep(nanoseconds: 650_000_000)
+            withAnimation(.easeOut(duration: 0.2)) {
+                seekFeedbackText = nil
+            }
         }
     }
 

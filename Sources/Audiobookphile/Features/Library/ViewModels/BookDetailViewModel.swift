@@ -18,6 +18,8 @@ public class BookDetailViewModel {
     public var showRemoveDownloadConfirmation = false
     public var isDescriptionExpanded = false
     public var similarBooks: [Book] = []
+    public var previousInSeries: Book?
+    public var nextInSeries: Book?
     public var hasCopiedRssFeed = false
     public var hasAddedToQueue = false
 
@@ -41,12 +43,37 @@ public class BookDetailViewModel {
             if let similar {
                 self.similarBooks = similar
             }
+
+            // Fetch Series Continuity if book belongs to a series
+            if let sName = detailed.seriesName ?? book.seriesName, !sName.isEmpty {
+                await loadSeriesContinuity(seriesName: sName, currentBookId: detailed.id)
+            }
         } catch {
             print("[BookDetailViewModel] Error fetching detailed metadata: \(error)")
             playbackError = error.localizedDescription
             showPlaybackError = true
         }
         isLoading = false
+    }
+
+    public func loadSeriesContinuity(seriesName: String, currentBookId: String) async {
+        let service: LibraryServiceProtocol = AppState.shared.isAuthenticated ? LiveLibraryService() : MockLibraryService()
+        let libId = detailedBook?.libraryId ?? book.libraryId
+        do {
+            let seriesBooks = try await service.fetchBooksBySeries(seriesName: seriesName, libraryId: libId)
+            guard !seriesBooks.isEmpty else { return }
+
+            if let idx = seriesBooks.firstIndex(where: { $0.id == currentBookId }) {
+                if idx > 0 {
+                    self.previousInSeries = seriesBooks[idx - 1]
+                }
+                if idx + 1 < seriesBooks.count {
+                    self.nextInSeries = seriesBooks[idx + 1]
+                }
+            }
+        } catch {
+            print("[BookDetailViewModel] Failed to load series continuity: \(error)")
+        }
     }
 
     public func playBook(_ detailed: Book, seekToTime: TimeInterval? = nil, dismiss: DismissAction) {

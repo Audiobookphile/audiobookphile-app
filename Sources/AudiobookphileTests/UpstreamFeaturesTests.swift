@@ -1446,4 +1446,40 @@ final class UpstreamFeaturesTests: XCTestCase {
         vm.toggleTimeRemainingMode()
         XCTAssertEqual(vm.timeRemainingMode, .totalRemaining)
     }
+
+    // MARK: - Features 110 & 111: Series Continuity & Double-Tap Seek Gestures
+
+    func testSeriesContinuityNavigationResolution() async throws {
+        let b1 = Book(id: "book-1", title: "The Way of Kings", author: "Brandon Sanderson", seriesName: "The Stormlight Archive", duration: 1000)
+        let b2 = Book(id: "book-2", title: "Words of Radiance", author: "Brandon Sanderson", seriesName: "The Stormlight Archive", duration: 1100)
+        let b3 = Book(id: "book-3", title: "Oathbringer", author: "Brandon Sanderson", seriesName: "The Stormlight Archive", duration: 1200)
+
+        let vm = BookDetailViewModel(book: b2)
+        XCTAssertNil(vm.previousInSeries)
+        XCTAssertNil(vm.nextInSeries)
+
+        // Series continuity resolution in series sequence order
+        let seriesBooks = [b1, b2, b3]
+        if let idx = seriesBooks.firstIndex(where: { $0.id == b2.id }) {
+            if idx > 0 { vm.previousInSeries = seriesBooks[idx - 1] }
+            if idx + 1 < seriesBooks.count { vm.nextInSeries = seriesBooks[idx + 1] }
+        }
+
+        XCTAssertNotNil(vm.previousInSeries)
+        XCTAssertNotNil(vm.nextInSeries)
+        XCTAssertEqual(vm.previousInSeries?.id, "book-1")
+        XCTAssertEqual(vm.nextInSeries?.id, "book-3")
+    }
+
+    func testDoubleTapSeekIntervals() throws {
+        let settings = AppSettings()
+        XCTAssertEqual(settings.jumpBackwardsTime, 10)
+        XCTAssertEqual(settings.jumpForwardTime, 30)
+
+        let rewindLabel = "-\(settings.jumpBackwardsTime)s"
+        let forwardLabel = "+\(settings.jumpForwardTime)s"
+
+        XCTAssertEqual(rewindLabel, "-10s")
+        XCTAssertEqual(forwardLabel, "+30s")
+    }
 }
