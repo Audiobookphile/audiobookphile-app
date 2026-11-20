@@ -15,6 +15,7 @@ public struct AuthorDetailView: View {
     @State private var selectedBook: Book?
     @State private var isBioExpanded = false
     @State private var sortOption: CatalogSortOption = .title
+    @State private var searchText = ""
 
     public init(authorName: String, libraryId: String? = nil, service: LibraryServiceProtocol? = nil) {
         self._viewModel = State(wrappedValue: AuthorDetailViewModel(
@@ -203,6 +204,15 @@ public struct AuthorDetailView: View {
         }
     }
 
+    private var filteredBooks: [Book] {
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return sortedBooks }
+        return sortedBooks.filter {
+            $0.title.localizedCaseInsensitiveContains(query) ||
+            ($0.media.metadata.subtitle?.localizedCaseInsensitiveContains(query) ?? false)
+        }
+    }
+
     private var audiobooksSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
@@ -234,6 +244,35 @@ public struct AuthorDetailView: View {
                     .foregroundStyle(.secondary)
             }
 
+            if viewModel.books.count > 1 {
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                    TextField("Filter audiobooks...", text: $searchText)
+                        .font(.subheadline)
+                        .textFieldStyle(.plain)
+                    if !searchText.isEmpty {
+                        Button {
+                            searchText = ""
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 13))
+                                .foregroundStyle(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color.white.opacity(0.06))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                )
+            }
+
             if viewModel.isLoading {
                 VStack(spacing: 12) {
                     ProgressView()
@@ -258,9 +297,22 @@ public struct AuthorDetailView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 24)
                 .glassCard(cornerRadius: 16)
+            } else if filteredBooks.isEmpty {
+                VStack(spacing: 10) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 28))
+                        .foregroundStyle(.secondary.opacity(0.6))
+                        .padding(.top, 8)
+                    Text("No audiobooks match '\(searchText)'")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 24)
+                .glassCard(cornerRadius: 16)
             } else {
                 VStack(spacing: 10) {
-                    ForEach(sortedBooks) { book in
+                    ForEach(filteredBooks) { book in
                         bookRow(book: book)
                     }
                 }

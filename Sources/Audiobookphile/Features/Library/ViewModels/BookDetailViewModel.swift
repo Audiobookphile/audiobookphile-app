@@ -21,6 +21,7 @@ public class BookDetailViewModel {
     public var previousInSeries: Book?
     public var nextInSeries: Book?
     public var hasCopiedRssFeed = false
+    public var hasCopiedShareLink = false
     public var hasAddedToQueue = false
 
     public var colorLoader = DynamicColorLoader()
@@ -191,6 +192,29 @@ public class BookDetailViewModel {
         Task {
             try? await Task.sleep(nanoseconds: 2_000_000_000)
             hasCopiedRssFeed = false
+        }
+    }
+
+    public func shareURL(for book: Book, withTimestamp: Bool = false) -> String {
+        let serverUrl = AppState.shared.serverURL.isEmpty ? "https://audiobookphile.app" : AppState.shared.serverURL
+        let cleanServer = serverUrl.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        let base = "\(cleanServer)/library/\(book.libraryId ?? "default")/item/\(book.id)"
+        if withTimestamp, let progress = detailedBook?.userMediaProgress?.currentTime, progress > 0 {
+            return "\(base)?t=\(Int(progress))"
+        }
+        return base
+    }
+
+    public func copyShareLink(for book: Book, withTimestamp: Bool = false) {
+        let url = shareURL(for: book, withTimestamp: withTimestamp)
+        #if !SKIP && os(iOS)
+        UIPasteboard.general.string = url
+        #endif
+        hasCopiedShareLink = true
+        DesignTokens.Haptics.success()
+        Task {
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            hasCopiedShareLink = false
         }
     }
 

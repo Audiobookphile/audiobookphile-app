@@ -14,6 +14,7 @@ public struct SeriesDetailView: View {
     @State private var viewModel: SeriesDetailViewModel
     @State private var selectedBook: Book?
     @State private var selectedAuthorName: String?
+    @State private var searchText = ""
 
     public init(seriesName: String, libraryId: String? = nil, service: LibraryServiceProtocol? = nil) {
         self._viewModel = State(wrappedValue: SeriesDetailViewModel(
@@ -185,6 +186,15 @@ public struct SeriesDetailView: View {
 
     // MARK: - Books Section
 
+    private var filteredBooks: [Book] {
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return viewModel.books }
+        return viewModel.books.filter {
+            $0.title.localizedCaseInsensitiveContains(query) ||
+            ($0.author?.localizedCaseInsensitiveContains(query) ?? false)
+        }
+    }
+
     private var booksSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
@@ -195,6 +205,35 @@ public struct SeriesDetailView: View {
                 Text("\(viewModel.books.count) books")
                     .font(.system(size: 12, weight: .semibold, design: .monospaced))
                     .foregroundStyle(.secondary)
+            }
+
+            if viewModel.books.count > 1 {
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                    TextField("Filter series books...", text: $searchText)
+                        .font(.subheadline)
+                        .textFieldStyle(.plain)
+                    if !searchText.isEmpty {
+                        Button {
+                            searchText = ""
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 13))
+                                .foregroundStyle(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color.white.opacity(0.06))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                )
             }
 
             if viewModel.isLoading {
@@ -221,9 +260,22 @@ public struct SeriesDetailView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 24)
                 .glassCard(cornerRadius: 16)
+            } else if filteredBooks.isEmpty {
+                VStack(spacing: 10) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 28))
+                        .foregroundStyle(.secondary.opacity(0.6))
+                        .padding(.top, 8)
+                    Text("No books in series match '\(searchText)'")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 24)
+                .glassCard(cornerRadius: 16)
             } else {
                 VStack(spacing: 10) {
-                    ForEach(Array(viewModel.books.enumerated()), id: \.element.id) { index, book in
+                    ForEach(Array(filteredBooks.enumerated()), id: \.element.id) { index, book in
                         seriesBookRow(index: index + 1, book: book)
                     }
                 }

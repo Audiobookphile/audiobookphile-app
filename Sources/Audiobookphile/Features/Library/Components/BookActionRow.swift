@@ -178,6 +178,39 @@ public struct BookActionRow: View {
             .accessibilityLabel("Podcast RSS Feed")
             .accessibilityHint("Copies private podcast feed link to clipboard")
 
+            // Share Menu (Copy Link & Copy Link with Timestamp)
+            Menu {
+                Button {
+                    #if os(iOS) && !SKIP
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    #endif
+                    viewModel.copyShareLink(for: detailed, withTimestamp: false)
+                } label: {
+                    Label("Copy Link", systemImage: "link")
+                }
+
+                if let current = detailed.userMediaProgress?.currentTime, current > 0 {
+                    Button {
+                        #if os(iOS) && !SKIP
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        #endif
+                        viewModel.copyShareLink(for: detailed, withTimestamp: true)
+                    } label: {
+                        Label("Copy Link at \(viewModel.formatDuration(current))", systemImage: "clock.badge.checkmark")
+                    }
+                }
+            } label: {
+                Image(systemName: viewModel.hasCopiedShareLink ? "checkmark" : "square.and.arrow.up")
+                    .font(.title3)
+                    .foregroundStyle(viewModel.hasCopiedShareLink ? DesignTokens.Color.success : DesignTokens.Color.foreground)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .background(DesignTokens.Color.surface.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+            .accessibilityLabel("Share Audiobook")
+            .accessibilityHint("Copies link to clipboard with optional playback timestamp")
+
             // Playback Queue Menu (Play Next & Add to Queue)
             Menu {
                 Button {

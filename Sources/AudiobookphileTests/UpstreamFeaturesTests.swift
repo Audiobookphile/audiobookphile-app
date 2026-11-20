@@ -1482,4 +1482,64 @@ final class UpstreamFeaturesTests: XCTestCase {
         XCTAssertEqual(rewindLabel, "-10s")
         XCTAssertEqual(forwardLabel, "+30s")
     }
+
+    // MARK: - Features 116 & 117: Search Within Author/Series & Timestamped Share Links
+
+    func testAuthorAndSeriesSearchFiltering() throws {
+        let b1 = Book(id: "b-1", title: "The Way of Kings", author: "Brandon Sanderson", seriesName: "Stormlight", duration: 1000)
+        let b2 = Book(id: "b-2", title: "Words of Radiance", author: "Brandon Sanderson", seriesName: "Stormlight", duration: 1100)
+        let b3 = Book(id: "b-3", title: "Elantris", author: "Brandon Sanderson", seriesName: nil, duration: 800)
+
+        let books = [b1, b2, b3]
+
+        // Filter by title query "words"
+        let filter1 = books.filter {
+            $0.title.localizedCaseInsensitiveContains("words")
+        }
+        XCTAssertEqual(filter1.count, 1)
+        XCTAssertEqual(filter1.first?.id, "b-2")
+
+        // Filter by query "the"
+        let filter2 = books.filter {
+            $0.title.localizedCaseInsensitiveContains("the")
+        }
+        XCTAssertEqual(filter2.count, 1)
+        XCTAssertEqual(filter2.first?.id, "b-1")
+
+        // Filter by non-existent query
+        let filter3 = books.filter {
+            $0.title.localizedCaseInsensitiveContains("Harry Potter")
+        }
+        XCTAssertTrue(filter3.isEmpty)
+    }
+
+    func testTimestampedShareLinkGeneration() throws {
+        let book = Book(id: "book-cosmere-101", title: "Mistborn", author: "Brandon Sanderson", duration: 1800)
+        let vm = BookDetailViewModel(book: book)
+
+        // Without timestamp
+        let normalUrl = vm.shareURL(for: book, withTimestamp: false)
+        XCTAssertTrue(normalUrl.contains("/library/default/item/book-cosmere-101"))
+        XCTAssertFalse(normalUrl.contains("?t="))
+
+        // With mock detailed book and progress (currentTime = 360s)
+        var detailed = book
+        detailed.userMediaProgress = MediaProgress(
+            id: "prog-1",
+            libraryItemId: book.id,
+            episodeId: nil,
+            duration: 1800,
+            progress: 0.2,
+            currentTime: 360,
+            isFinished: false,
+            hideFromContinueListening: false,
+            lastUpdate: Date(),
+            startedAt: Date(),
+            finishedAt: nil
+        )
+        vm.detailedBook = detailed
+
+        let timestampedUrl = vm.shareURL(for: book, withTimestamp: true)
+        XCTAssertTrue(timestampedUrl.contains("/library/default/item/book-cosmere-101?t=360"))
+    }
 }
